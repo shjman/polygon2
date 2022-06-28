@@ -1,4 +1,4 @@
-package com.example.polygon2.ui.theme
+package com.shjman.polygon2.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
