@@ -40,8 +40,8 @@ class MainActivity : ComponentActivity() {
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        myTextField(textField)
-                        buttonWithColor(label, textField)
+                        TextField(textField)
+                        ButtonWithColor(textField)
                     }
                 }
             }
@@ -57,7 +57,7 @@ fun Greeting(name: String) {
 }
 
 @Composable
-fun myTextField(textField: MutableState<String>) {
+fun TextField(textField: MutableState<String>) {
     TextField(
         value = textField.value,
         singleLine = true,
@@ -69,20 +69,19 @@ fun myTextField(textField: MutableState<String>) {
 }
 
 @Composable
-fun buttonWithColor(label: MutableState<String>, textField: MutableState<String>) {
+fun ButtonWithColor(textField: MutableState<String>) {
     val name = "Button"
     val labelInt = remember { mutableStateOf(0) }
     Button(
         onClick = {
-            Timber.d("button clicked textField.value = ${textField.value} ")
             //your onclick code
             labelInt.value = ++labelInt.value
-            label.value = name + labelInt.value
+            Timber.d("button clicked textField.value = ${textField.value} ")
         },
         colors = ButtonDefaults.buttonColors(backgroundColor = Color.DarkGray)
     )
     {
-        Text(text = label.value, color = Color.White)
+        Text(text = name + labelInt.value, color = Color.White)
     }
 }
 
