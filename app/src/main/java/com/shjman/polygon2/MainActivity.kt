@@ -9,30 +9,34 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Face
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.shjman.polygon2.ui.theme.Polygon2Theme
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val label = remember { mutableStateOf("Button") }
-            val textField = remember { mutableStateOf("") }
             Polygon2Theme {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    Greeting("Android5")
+                    Greeting("My dear friend")
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -40,8 +44,7 @@ class MainActivity : ComponentActivity() {
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        TextField(textField)
-                        ButtonWithColor(textField)
+                        InputAmountSpendScreen()
                     }
                 }
             }
@@ -49,39 +52,50 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@Composable
-fun Greeting(name: String) {
-    MaterialTheme {
-        Text(text = "Hello $name!")
+class SpentViewModel : ViewModel() {
+    private val _amountSpent: MutableLiveData<Int> = MutableLiveData<Int>(0)
+    val amountSpent: LiveData<Int> = _amountSpent
+
+    fun onAmountSpentChanged(amountSpent: Int) {
+        _amountSpent.value = amountSpent
+    }
+
+    fun onSaveButtonClicked() {
+        viewModelScope.launch {
+            delay(3000)
+            Timber.d("save this amount  == ${amountSpent.value}")
+            _amountSpent.value = 0
+        }
     }
 }
 
 @Composable
-fun TextField(textField: MutableState<String>) {
+fun InputAmountSpendScreen(spentViewModel: SpentViewModel = viewModel()) {
+    val amountSpent: Int by spentViewModel.amountSpent.observeAsState(0)
+    TextField(amountSpent = amountSpent, amountSpentChanged = { spentViewModel.onAmountSpentChanged(it.toIntOrNull() ?: 0) })
+    SaveButton { spentViewModel.onSaveButtonClicked() }
+}
+
+
+@Composable
+fun TextField(amountSpent: Int, amountSpentChanged: (String) -> Unit) {
     TextField(
-        value = textField.value,
+        value = if (amountSpent == 0) "" else amountSpent.toString(),
         singleLine = true,
-        onValueChange = { newText -> textField.value = newText },
+        onValueChange = amountSpentChanged,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        trailingIcon = { Icon(Icons.Outlined.Face, contentDescription = "Дополнительная информация") },
-        placeholder = { Text("Hello Work!") }
+        trailingIcon = { Icon(Icons.Outlined.Face, contentDescription = "trailing icon") },
+        placeholder = { Text("enter the amount spent") }
     )
 }
 
 @Composable
-fun ButtonWithColor(textField: MutableState<String>) {
-    val name = "Button"
-    val labelInt = remember { mutableStateOf(0) }
+fun SaveButton(onSaveAmountClicked: () -> Unit) {
     Button(
-        onClick = {
-            //your onclick code
-            labelInt.value = ++labelInt.value
-            Timber.d("button clicked textField.value = ${textField.value} ")
-        },
+        onClick = onSaveAmountClicked,
         colors = ButtonDefaults.buttonColors(backgroundColor = Color.DarkGray)
-    )
-    {
-        Text(text = name + labelInt.value, color = Color.White)
+    ) {
+        Text(text = "save this amount", color = Color.White)
     }
 }
 
@@ -90,5 +104,12 @@ fun ButtonWithColor(textField: MutableState<String>) {
 fun DefaultPreview() {
     Polygon2Theme {
         Greeting("Android4")
+    }
+}
+
+@Composable
+fun Greeting(name: String) {
+    MaterialTheme {
+        Text(text = "Hello $name!")
     }
 }
