@@ -8,30 +8,26 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Face
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.LifecycleCoroutineScope
+import androidx.lifecycle.lifecycleScope
 import com.shjman.polygon2.ui.theme.Polygon2Theme
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import timber.log.Timber
+import kotlinx.coroutines.flow.collect
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : ComponentActivity() {
+    private val spentViewModel: SpentViewModel by viewModel()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+
             Polygon2Theme {
                 // A surface container using the 'background' color from the theme
                 Surface(
@@ -46,50 +42,39 @@ class MainActivity : ComponentActivity() {
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        InputAmountSpendScreen()
+                        InputAmountSpendScreen(lifecycleScope, spentViewModel)
                     }
                 }
             }
         }
+
     }
 }
 
-class SpentViewModel : ViewModel() {
-    private val spentRepository = SpentRepository()
-
-    private val _amountSpent: MutableLiveData<Int> = MutableLiveData<Int>(0)
-    val amountSpent: LiveData<Int> = _amountSpent
-
-    fun onAmountSpentChanged(amountSpent: Int) {
-        _amountSpent.value = amountSpent
-    }
-
-    fun onSaveButtonClicked() {
-        Timber.d("save this spent amount  == ${amountSpent.value}")
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                spentRepository.saveSpentAmount(_amountSpent.value ?: 0)
-//                Timber.d("aaa 2")
-            }
-//            Timber.d("aaa 3")
-            _amountSpent.value = 0
+@Composable
+fun InputAmountSpendScreen(lifecycleScope: LifecycleCoroutineScope, spentViewModel: SpentViewModel) {
+    val amountSpent: Int by spentViewModel.amountSpent.observeAsState(0)
+    val isLoadingUI = remember { mutableStateOf(false) }
+//    val isLoadingViewModel : Boolean by spentViewModel.isLoading.observeAsState(false)
+    lifecycleScope.launchWhenCreated {
+        spentViewModel.isLoading.collect {
+            isLoadingUI.value = it
         }
     }
-}
-
-@Composable
-fun InputAmountSpendScreen(spentViewModel: SpentViewModel = viewModel()) {
-    val amountSpent: Int by spentViewModel.amountSpent.observeAsState(0)
-    TextField(amountSpent = amountSpent, amountSpentChanged = { spentViewModel.onAmountSpentChanged(it.toIntOrNull() ?: 0) })
-    SaveButton { spentViewModel.onSaveButtonClicked() }
+    TextField(
+        isLoadingUI = isLoadingUI,
+        amountSpent = amountSpent
+    ) { spentViewModel.onAmountSpentChanged(it.toIntOrNull() ?: 0) }
+    SaveButton(isLoadingUI) { spentViewModel.onSaveButtonClicked() }
 }
 
 
 @Composable
-fun TextField(amountSpent: Int, amountSpentChanged: (String) -> Unit) {
+fun TextField(isLoadingUI: MutableState<Boolean>, amountSpent: Int, amountSpentChanged: (String) -> Unit) {
     TextField(
         value = if (amountSpent == 0) "" else amountSpent.toString(),
         singleLine = true,
+        enabled = !isLoadingUI.value,
         onValueChange = amountSpentChanged,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         trailingIcon = { Icon(Icons.Outlined.Face, contentDescription = "trailing icon") },
@@ -98,12 +83,16 @@ fun TextField(amountSpent: Int, amountSpentChanged: (String) -> Unit) {
 }
 
 @Composable
-fun SaveButton(onSaveAmountClicked: () -> Unit) {
+fun SaveButton(isLoading: MutableState<Boolean>, onSaveAmountClicked: () -> Unit) {
     Button(
         onClick = onSaveAmountClicked,
         colors = ButtonDefaults.buttonColors(backgroundColor = Color.DarkGray)
     ) {
-        Text(text = "save this amount", color = Color.White)
+        if (isLoading.value) {
+            CircularProgressIndicator(color = Color.Green)
+        } else {
+            Text(text = "save this amount", color = Color.White)
+        }
     }
 }
 
