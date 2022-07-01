@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'com.google.gms.google-services'
 }
 
 android {
@@ -56,12 +57,20 @@ dependencies {
     implementation "androidx.compose.runtime:runtime-livedata:$compose_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
 
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.5.2"
+
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.4.1"
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.4.1'
     implementation 'androidx.activity:activity-compose:1.4.0'
 
     /* Utils */
     api 'com.jakewharton.timber:timber:5.0.1'
+    implementation 'joda-time:joda-time:2.9.4'
+
+    // Firebase
+    implementation 'com.google.firebase:firebase-common-ktx:20.1.1'
+    implementation 'com.google.firebase:firebase-firestore-ktx:24.2.0'
+    implementation platform('com.google.firebase:firebase-bom:30.2.0')
 
 //    tests
     testImplementation 'junit:junit:4.13.2'

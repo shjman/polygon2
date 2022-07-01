@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "559011324766",
+    "firebase_url": "https://shjmantest-16013.firebaseio.com",
+    "project_id": "shjmantest-16013",
+    "storage_bucket": "shjmantest-16013.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:559011324766:android:ed9d987eddf2dee05ea5cf",
+        "android_client_info": {
+          "package_name": "com.shjman.polygon2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "559011324766-392uq1uo5l3bqrsiqn2be1ku98njor1i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAf_PEJcYJYsIVxh9sM3RlQMTQhfYjvogY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "559011324766-392uq1uo5l3bqrsiqn2be1ku98njor1i.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

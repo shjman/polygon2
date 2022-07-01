@@ -22,8 +22,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.shjman.polygon2.ui.theme.Polygon2Theme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 class MainActivity : ComponentActivity() {
@@ -53,6 +55,8 @@ class MainActivity : ComponentActivity() {
 }
 
 class SpentViewModel : ViewModel() {
+    private val spentRepository = SpentRepository()
+
     private val _amountSpent: MutableLiveData<Int> = MutableLiveData<Int>(0)
     val amountSpent: LiveData<Int> = _amountSpent
 
@@ -61,9 +65,13 @@ class SpentViewModel : ViewModel() {
     }
 
     fun onSaveButtonClicked() {
+        Timber.d("save this spent amount  == ${amountSpent.value}")
         viewModelScope.launch {
-            delay(3000)
-            Timber.d("save this amount  == ${amountSpent.value}")
+            withContext(Dispatchers.IO) {
+                spentRepository.saveSpentAmount(_amountSpent.value ?: 0)
+//                Timber.d("aaa 2")
+            }
+//            Timber.d("aaa 3")
             _amountSpent.value = 0
         }
     }
