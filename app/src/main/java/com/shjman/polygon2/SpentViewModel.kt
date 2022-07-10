@@ -30,9 +30,7 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
             withContext(Dispatchers.IO) {
                 spentRepository.saveSpentAmount(_amountSpent.value ?: 0)
                 delay(2000)
-//                Timber.d("aaa 2")
             }
-//            Timber.d("aaa 3")
             _amountSpent.value = 0
             _isLoading.value = false
         }

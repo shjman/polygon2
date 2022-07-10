@@ -8,27 +8,36 @@ import org.joda.time.format.DateTimeFormatter
 import timber.log.Timber
 
 
-class SpentRepositoryImpl(private val fireStore : FirebaseFirestore) : SpentRepository {
+class SpentRepositoryImpl(private val fireStore: FirebaseFirestore) : SpentRepository {
 
     override suspend fun saveSpentAmount(spentAmount: Int) {
-        val result = fireStore
-            .collection("family")
-            .document("K0sLqKCYoHGpcGLTEEzY")
-            .get()
-            .await()
-        val resultData = result.data ?: mutableMapOf<String, Any>()
+        val newData = mutableMapOf<String, Any>()
         val dateTime = DateTime()
-        val dateTimeFormatter: DateTimeFormatter = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss")
+        val dateTimeFormatter: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
         val currentDateTimeInString = dateTimeFormatter.print(dateTime)
-        Timber.d("old values == $resultData")
-        resultData[currentDateTimeInString] = spentAmount
-        Timber.d("new values == $resultData")
+        newData["date"] = currentDateTimeInString
+        newData["spentAmount"] = spentAmount
+        newData["category"] = "home"
+        newData["currency"] = "zl"
+        Timber.d("newData == $newData")
 
         fireStore
             .collection("family")
-            .document("K0sLqKCYoHGpcGLTEEzY")
-            .set(resultData)
+            .document(currentDateTimeInString)
+            .set(newData)
             .await()
-//        Timber.d("aaa 1")
+    }
+
+    override suspend fun getAllSpending() {
+        val querySnapshot = fireStore
+            .collection("family")
+            .get()
+            .await()
+
+        val documents = querySnapshot.documents
+        documents.onEach {
+            val spendingRemote = it.toObject(SpendingRemote::class.java)
+            Timber.d("spendingRemote == $spendingRemote")
+        }
     }
 }
