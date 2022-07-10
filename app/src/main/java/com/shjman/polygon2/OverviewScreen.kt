@@ -10,7 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
 @Composable
-fun ReviewBody() {
+fun OverviewScreen() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -18,6 +18,6 @@ fun ReviewBody() {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "review screen")
+        Text(text = "Overview screen")
     }
 }

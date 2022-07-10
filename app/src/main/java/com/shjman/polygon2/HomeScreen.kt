@@ -10,27 +10,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
 @Composable
-fun HomeBody(
+fun HomeScreen(
     onClickGoNext: () -> Unit = {},
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
-    ) {
-        Text(text = "home body screen", color = Color.Green)
-    }
     Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+            .fillMaxSize()
+            .wrapContentSize(Alignment.Center)
     ) {
-        Button(
-            onClick = onClickGoNext,
-            colors = ButtonDefaults.buttonColors(backgroundColor = Color.White)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
         ) {
-            Text(text = "go next screen", color = Color.Black)
+            Text(
+                text = "home screen",
+                color = Color.Green,
+            )
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Button(
+                onClick = onClickGoNext,
+                colors = ButtonDefaults.buttonColors(backgroundColor = Color.White)
+            ) {
+                Text(text = "go spent screen", color = Color.Black)
+            }
         }
     }
 }

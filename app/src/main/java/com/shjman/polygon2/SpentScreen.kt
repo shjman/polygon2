@@ -14,7 +14,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.LifecycleCoroutineScope
 
 @Composable
-fun SpentBody(
+fun SpentScreen(
     lifecycleScope: LifecycleCoroutineScope,
     spentViewModel: SpentViewModel,
 ) {
