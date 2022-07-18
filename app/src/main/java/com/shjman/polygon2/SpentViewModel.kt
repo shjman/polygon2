@@ -35,4 +35,9 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
             _isLoading.value = false
         }
     }
+
+    suspend fun getAllSpending(): List<Spending> {
+        delay(1000)
+        return spentRepository.getAllSpending()
+    }
 }

@@ -27,16 +27,18 @@ class SpentRepositoryImpl(private val fireStore: FirebaseFirestore) : SpentRepos
             .await()
     }
 
-    override suspend fun getAllSpending() {
+    override suspend fun getAllSpending(): List<Spending> {
         val querySnapshot = fireStore
             .collection("family")
             .get()
             .await()
 
         val documents = querySnapshot.documents
-        documents.onEach {
+
+        return documents.mapNotNull {
             val spendingRemote = it.toObject(SpendingRemote::class.java)
             Timber.d("spendingRemote == $spendingRemote")
+            spendingRemote?.toSpending()
         }
     }
 }
