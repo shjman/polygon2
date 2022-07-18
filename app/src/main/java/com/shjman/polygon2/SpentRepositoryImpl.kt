@@ -2,20 +2,19 @@ package com.shjman.polygon2
 
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormat
-import org.joda.time.format.DateTimeFormatter
 import timber.log.Timber
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 
 class SpentRepositoryImpl(private val fireStore: FirebaseFirestore) : SpentRepository {
 
     override suspend fun saveSpentAmount(spentAmount: Int) {
         val newData = mutableMapOf<String, Any>()
-        val dateTime = DateTime()
-        val dateTimeFormatter: DateTimeFormatter = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss")
-        val currentDateTimeInString = dateTimeFormatter.print(dateTime)
-        newData["date"] = currentDateTimeInString
+        val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")
+        val currentLocalDateTime = LocalDateTime.now()
+        val currentDateTimeString = currentLocalDateTime.format(formatter)
+        newData["date"] = currentDateTimeString
         newData["spentAmount"] = spentAmount
         newData["category"] = "home"
         newData["currency"] = "zl"
@@ -23,7 +22,7 @@ class SpentRepositoryImpl(private val fireStore: FirebaseFirestore) : SpentRepos
 
         fireStore
             .collection("family")
-            .document(currentDateTimeInString)
+            .document(currentDateTimeString)
             .set(newData)
             .await()
     }
