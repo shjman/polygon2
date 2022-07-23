@@ -40,4 +40,9 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
         delay(1000)
         return spentRepository.getAllSpending()
     }
+
+    suspend fun getAllCategories(): List<Category> {
+        delay(1500)
+        return spentRepository.getAllCategories()
+    }
 }

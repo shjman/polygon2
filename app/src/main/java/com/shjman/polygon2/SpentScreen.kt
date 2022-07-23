@@ -35,16 +35,23 @@ fun SpentScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        InputCategoryView()
+        InputCategoryView(lifecycleScope, spentViewModel)
         InputAmountSpendScreen(lifecycleScope, spentViewModel)
     }
 }
 
 @Composable
-fun InputCategoryView() {
-    val categories = listOf("home", "car", "pets", "eat", "entertainment")
+fun InputCategoryView(
+    lifecycleScope: LifecycleCoroutineScope,
+    spentViewModel: SpentViewModel,
+) {
+    val categories = remember { mutableStateOf(emptyList<Category>()) }
+    var selectedCategory by remember { mutableStateOf(Category(null,"")) }
     var expanded by remember { mutableStateOf(false) }
-    var selectedCategory by remember { mutableStateOf(categories[0]) }
+    lifecycleScope.launchWhenCreated {
+        categories.value = spentViewModel.getAllCategories()
+        selectedCategory = categories.value.first()
+    }
     Row(
         modifier = Modifier
             .padding(8.dp)
@@ -58,7 +65,7 @@ fun InputCategoryView() {
             modifier = Modifier.padding(4.dp),
         )
         Text(
-            text = selectedCategory,
+            text = selectedCategory.name,
             modifier = Modifier.padding(4.dp),
         )
         Icon(
@@ -69,7 +76,7 @@ fun InputCategoryView() {
             expanded = expanded,
             onDismissRequest = { expanded = false },
         ) {
-            categories.forEach { category ->
+            categories.value.forEach { category ->
                 DropdownMenuItem(onClick = {
                     selectedCategory = category
                     expanded = false
@@ -86,7 +93,7 @@ fun InputCategoryView() {
                             color = MaterialTheme.colors.onSurface
                         )
                     }
-                    Text(text = category, style = style)
+                    Text(text = category.name, style = style)
                 }
             }
         }

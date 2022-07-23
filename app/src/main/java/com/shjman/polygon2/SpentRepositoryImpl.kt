@@ -45,4 +45,21 @@ class SpentRepositoryImpl(private val fireStore: FirebaseFirestore) : SpentRepos
             spendingRemote?.toSpending()
         }
     }
+
+    override suspend fun getAllCategories(): List<Category> {
+        val documentSnapshot = fireStore
+            .collection("family")
+            .document("preferences")
+            .collection("categories")
+            .document("categories")
+            .get()
+            .await()
+
+        val remoteCategories: Map<String, Any> = documentSnapshot.data ?: mapOf()
+        return remoteCategories.map {
+            val categoryRemote = CategoryRemote(it.key, it.value as String?)
+            Timber.d("categoryRemote == $categoryRemote")
+            categoryRemote.toCategory()
+        }
+    }
 }
