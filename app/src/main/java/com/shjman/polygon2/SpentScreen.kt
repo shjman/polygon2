@@ -1,16 +1,20 @@
 package com.shjman.polygon2
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.outlined.Face
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LifecycleCoroutineScope
 
 @Composable
@@ -31,7 +35,61 @@ fun SpentScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        InputCategoryView()
         InputAmountSpendScreen(lifecycleScope, spentViewModel)
+    }
+}
+
+@Composable
+fun InputCategoryView() {
+    val categories = listOf("home", "car", "pets", "eat", "entertainment")
+    var expanded by remember { mutableStateOf(false) }
+    var selectedCategory by remember { mutableStateOf(categories[0]) }
+    Row(
+        modifier = Modifier
+            .padding(8.dp)
+            .clickable { expanded = !expanded }
+            .wrapContentSize(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = "category:",
+            modifier = Modifier.padding(4.dp),
+        )
+        Text(
+            text = selectedCategory,
+            modifier = Modifier.padding(4.dp),
+        )
+        Icon(
+            imageVector = Icons.Filled.ArrowDropDown,
+            contentDescription = Icons.Filled.ArrowDropDown.toString(),
+        )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            categories.forEach { category ->
+                DropdownMenuItem(onClick = {
+                    selectedCategory = category
+                    expanded = false
+                }) {
+                    val isSelected = category == selectedCategory
+                    val style = if (isSelected) {
+                        MaterialTheme.typography.body1.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colors.secondary
+                        )
+                    } else {
+                        MaterialTheme.typography.body1.copy(
+                            fontWeight = FontWeight.Normal,
+                            color = MaterialTheme.colors.onSurface
+                        )
+                    }
+                    Text(text = category, style = style)
+                }
+            }
+        }
     }
 }
 
