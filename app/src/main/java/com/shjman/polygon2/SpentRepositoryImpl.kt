@@ -22,6 +22,8 @@ class SpentRepositoryImpl(private val fireStore: FirebaseFirestore) : SpentRepos
 
         fireStore
             .collection("family")
+            .document("spending")
+            .collection("spending")
             .document(currentDateTimeString)
             .set(newData)
             .await()
@@ -30,6 +32,8 @@ class SpentRepositoryImpl(private val fireStore: FirebaseFirestore) : SpentRepos
     override suspend fun getAllSpending(): List<Spending> {
         val querySnapshot = fireStore
             .collection("family")
+            .document("spending")
+            .collection("spending")
             .get()
             .await()
 
