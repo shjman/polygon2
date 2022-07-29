@@ -21,7 +21,13 @@ import androidx.lifecycle.LifecycleCoroutineScope
 fun SpentScreen(
     lifecycleScope: LifecycleCoroutineScope,
     spentViewModel: SpentViewModel,
+    categories: MutableState<List<Category>> = remember { mutableStateOf(emptyList()) },
+    selectedCategory: MutableState<Category> = remember { mutableStateOf(Category.empty()) },
 ) {
+    LaunchedEffect(Unit) {
+        categories.value = spentViewModel.getAllCategories()
+        categories.value.firstOrNull()?.let { selectedCategory.value = it }
+    }
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
@@ -35,27 +41,21 @@ fun SpentScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        InputCategoryView(lifecycleScope, spentViewModel)
+        InputCategoryView(categories, selectedCategory)
         InputAmountSpendScreen(lifecycleScope, spentViewModel)
     }
 }
 
 @Composable
 fun InputCategoryView(
-    lifecycleScope: LifecycleCoroutineScope,
-    spentViewModel: SpentViewModel,
+    categories: State<List<Category>>,
+    selectedCategory: MutableState<Category>,
+    expanded: MutableState<Boolean> = remember { mutableStateOf(false) },
 ) {
-    val categories = remember { mutableStateOf(emptyList<Category>()) }
-    var selectedCategory by remember { mutableStateOf(Category(null,"")) }
-    var expanded by remember { mutableStateOf(false) }
-    lifecycleScope.launchWhenCreated {
-        categories.value = spentViewModel.getAllCategories()
-        selectedCategory = categories.value.first()
-    }
     Row(
         modifier = Modifier
             .padding(8.dp)
-            .clickable { expanded = !expanded }
+            .clickable { expanded.value = !expanded.value }
             .wrapContentSize(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
@@ -65,7 +65,7 @@ fun InputCategoryView(
             modifier = Modifier.padding(4.dp),
         )
         Text(
-            text = selectedCategory.name,
+            text = selectedCategory.value.name,
             modifier = Modifier.padding(4.dp),
         )
         Icon(
@@ -73,15 +73,15 @@ fun InputCategoryView(
             contentDescription = Icons.Filled.ArrowDropDown.toString(),
         )
         DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
+            expanded = expanded.value,
+            onDismissRequest = { expanded.value = false },
         ) {
             categories.value.forEach { category ->
                 DropdownMenuItem(onClick = {
-                    selectedCategory = category
-                    expanded = false
+                    selectedCategory.value = category
+                    expanded.value = false
                 }) {
-                    val isSelected = category == selectedCategory
+                    val isSelected = category == selectedCategory.value
                     val style = if (isSelected) {
                         MaterialTheme.typography.body1.copy(
                             fontWeight = FontWeight.Bold,

@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.Color
 
 @Composable
 fun HomeScreen(
-    onClickGoNext: () -> Unit = {},
+    onClickGoNext: () -> Unit,
 ) {
     Column(
         modifier = Modifier
