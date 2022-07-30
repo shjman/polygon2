@@ -101,7 +101,17 @@ fun NavigationGraph(
     ) {
         composable(BottomNavItem.Home.screenRoute) {
             HomeScreen(
-                onClickGoNext = { navController.navigate(BottomNavItem.Spent.screenRoute) },
+                onClickGoNext = {
+                    navController.navigate(BottomNavItem.Spent.screenRoute) {
+                        navController.graph.startDestinationRoute?.let { screenRoute ->
+                            popUpTo(screenRoute) {
+                                saveState = true
+                            }
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
             )
         }
         composable(BottomNavItem.Spent.screenRoute) {
