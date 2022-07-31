@@ -29,9 +29,7 @@ fun OverviewScreen(
         allSpending.value = spentViewModel.getAllSpending()
     }
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .fillMaxHeight(),
+        modifier = Modifier.fillMaxSize(),
     ) {
         Text(
             text = "Overview screen",

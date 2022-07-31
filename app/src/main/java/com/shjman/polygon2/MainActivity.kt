@@ -3,6 +3,8 @@ package com.shjman.polygon2
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,13 +33,14 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 Scaffold(
                     bottomBar = { BottomNavigation(navController) }
-                ) {
-                    NavigationGraph(
-                        navController = navController,
-                        modifier = Modifier,
-                        lifecycleScope,
-                        spentViewModel,
-                    )
+                ) { paddingValues ->
+                    Box(modifier = Modifier.padding(paddingValues)) {
+                        NavigationGraph(
+                            navController = navController,
+                            lifecycleScope,
+                            spentViewModel,
+                        )
+                    }
                 }
             }
         }
@@ -90,14 +93,12 @@ fun BottomNavigation(navController: NavController) {
 @Composable
 fun NavigationGraph(
     navController: NavHostController,
-    modifier: Modifier,
     lifecycleScope: LifecycleCoroutineScope,
-    spentViewModel: SpentViewModel
+    spentViewModel: SpentViewModel,
 ) {
     NavHost(
         navController = navController,
         startDestination = BottomNavItem.Home.screenRoute,
-        modifier = modifier
     ) {
         composable(BottomNavItem.Home.screenRoute) {
             HomeScreen(
