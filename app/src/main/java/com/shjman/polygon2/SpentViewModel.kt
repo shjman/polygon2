@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -17,10 +18,17 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
     val amountSpent: LiveData<Int> = _amountSpent
 
     private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isLoading: MutableStateFlow<Boolean> = _isLoading
+    val isLoading: StateFlow<Boolean> = _isLoading
+
+    private val _note: MutableLiveData<String> = MutableLiveData<String>("")
+    val note: LiveData<String> = _note
 
     fun onAmountSpentChanged(amountSpent: Int) {
         _amountSpent.value = amountSpent
+    }
+
+    fun onNoteChanged(note: String) {
+        _note.value = note
     }
 
     fun onSaveButtonClicked() {
@@ -28,10 +36,14 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
         viewModelScope.launch {
             _isLoading.value = true
             withContext(Dispatchers.IO) {
-                spentRepository.saveSpentAmount(_amountSpent.value ?: 0)
+                spentRepository.saveSpentAmount(
+                    spentAmount = _amountSpent.value ?: 0,
+                    note = _note.value ?: "",
+                )
                 delay(2000)
             }
             _amountSpent.value = 0
+            _note.value = ""
             _isLoading.value = false
         }
     }

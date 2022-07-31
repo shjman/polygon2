@@ -115,7 +115,7 @@ fun NavigationGraph(
             )
         }
         composable(BottomNavItem.Spent.screenRoute) {
-            SpentScreen(lifecycleScope = lifecycleScope, spentViewModel = spentViewModel)
+            SpentScreen(spentViewModel = spentViewModel)
         }
         composable(BottomNavItem.Overview.screenRoute) {
             OverviewScreen(lifecycleScope = lifecycleScope, spentViewModel = spentViewModel)

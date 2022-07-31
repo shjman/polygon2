@@ -1,7 +1,7 @@
 package com.shjman.polygon2
 
 interface SpentRepository {
-    suspend fun saveSpentAmount(spentAmount: Int)
+    suspend fun saveSpentAmount(spentAmount: Int, note: String)
     suspend fun getAllSpending(): List<Spending>
     suspend fun getAllCategories(): List<Category>
 }

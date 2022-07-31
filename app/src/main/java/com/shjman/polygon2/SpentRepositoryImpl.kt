@@ -9,7 +9,7 @@ import java.time.format.DateTimeFormatter
 
 class SpentRepositoryImpl(private val fireStore: FirebaseFirestore) : SpentRepository {
 
-    override suspend fun saveSpentAmount(spentAmount: Int) {
+    override suspend fun saveSpentAmount(spentAmount: Int, note: String) {
         val newData = mutableMapOf<String, Any>()
         val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")
         val currentLocalDateTime = LocalDateTime.now()
@@ -18,6 +18,7 @@ class SpentRepositoryImpl(private val fireStore: FirebaseFirestore) : SpentRepos
         newData["spentAmount"] = spentAmount
         newData["category"] = "home"
         newData["currency"] = "zl"
+        newData["note"] = note
         Timber.d("newData == $newData")
 
         fireStore

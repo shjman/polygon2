@@ -15,22 +15,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.LifecycleCoroutineScope
+import timber.log.Timber
 
 @Composable
 fun SpentScreen(
-    lifecycleScope: LifecycleCoroutineScope,
     spentViewModel: SpentViewModel,
     categories: MutableState<List<Category>> = remember { mutableStateOf(emptyList()) },
     selectedCategory: MutableState<Category> = remember { mutableStateOf(Category.empty()) },
+    isLoadingUI: MutableState<Boolean> = remember { mutableStateOf(false) },
+    amountSpent: Int = spentViewModel.amountSpent.observeAsState(0).value,
+    note: String = spentViewModel.note.observeAsState("").value,
 ) {
     LaunchedEffect(Unit) {
         categories.value = spentViewModel.getAllCategories()
         categories.value.firstOrNull()?.let { selectedCategory.value = it }
+        spentViewModel.isLoading.collect { isLoadingUI.value = it }
+        Timber.e("aaaa after spentViewModel.isLoading.collect { isLoadingUI.value = it }")
     }
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
+        horizontalArrangement = Arrangement.Center,
     ) {
         Text(text = "home spent screen", color = Color.Green)
     }
@@ -39,10 +43,20 @@ fun SpentScreen(
             .fillMaxWidth()
             .fillMaxHeight(),
         verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         InputCategoryView(categories, selectedCategory)
-        InputAmountSpendScreen(lifecycleScope, spentViewModel)
+        InputAmountSpendView(
+            isLoadingUI = isLoadingUI,
+            amountSpent = amountSpent,
+            onSpentValueChanged = { spentViewModel.onAmountSpentChanged(it.toIntOrNull() ?: 0) },
+        )
+        InputNoteView(
+            isLoadingUI = isLoadingUI,
+            note = note,
+            onNoteChanged = { spentViewModel.onNoteChanged(it) },
+        )
+        SaveButton(isLoadingUI) { spentViewModel.onSaveButtonClicked() }
     }
 }
 
@@ -101,29 +115,16 @@ fun InputCategoryView(
 }
 
 @Composable
-fun InputAmountSpendScreen(lifecycleScope: LifecycleCoroutineScope, spentViewModel: SpentViewModel) {
-    val amountSpent: Int by spentViewModel.amountSpent.observeAsState(0)
-    val isLoadingUI = remember { mutableStateOf(false) }
-//    val isLoadingViewModel : Boolean by spentViewModel.isLoading.observeAsState(false)
-    lifecycleScope.launchWhenCreated {
-        spentViewModel.isLoading.collect {
-            isLoadingUI.value = it
-        }
-    }
-    TextField(
-        isLoadingUI = isLoadingUI,
-        amountSpent = amountSpent
-    ) { spentViewModel.onAmountSpentChanged(it.toIntOrNull() ?: 0) }
-    SaveButton(isLoadingUI) { spentViewModel.onSaveButtonClicked() }
-}
-
-@Composable
-fun TextField(isLoadingUI: MutableState<Boolean>, amountSpent: Int, amountSpentChanged: (String) -> Unit) {
+fun InputAmountSpendView(
+    isLoadingUI: MutableState<Boolean>,
+    amountSpent: Int,
+    onSpentValueChanged: (String) -> Unit,
+) {
     TextField(
         value = if (amountSpent == 0) "" else amountSpent.toString(),
         singleLine = true,
         enabled = !isLoadingUI.value,
-        onValueChange = amountSpentChanged,
+        onValueChange = onSpentValueChanged,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         trailingIcon = { Icon(Icons.Outlined.Face, contentDescription = "trailing icon") },
         placeholder = { Text("enter the amount spent") }
@@ -131,10 +132,25 @@ fun TextField(isLoadingUI: MutableState<Boolean>, amountSpent: Int, amountSpentC
 }
 
 @Composable
+fun InputNoteView(
+    isLoadingUI: MutableState<Boolean>,
+    note: String,
+    onNoteChanged: (String) -> Unit,
+) {
+    TextField(
+        value = note,
+        onValueChange = onNoteChanged,
+        maxLines = 4,
+        enabled = !isLoadingUI.value,
+        placeholder = { Text("write note") },
+    )
+}
+
+@Composable
 fun SaveButton(isLoading: MutableState<Boolean>, onSaveAmountClicked: () -> Unit) {
     Button(
         onClick = onSaveAmountClicked,
-        colors = ButtonDefaults.buttonColors(backgroundColor = Color.DarkGray)
+        colors = ButtonDefaults.buttonColors(backgroundColor = Color.DarkGray),
     ) {
         if (isLoading.value) {
             CircularProgressIndicator(color = Color.Green)

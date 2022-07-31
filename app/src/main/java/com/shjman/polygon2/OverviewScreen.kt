@@ -70,7 +70,10 @@ fun SpendingItem(spending: Spending, selectedSpending: (Spending) -> Unit) {
     ) {
         Row {
             Text(
-                "date = ${spending.date}\nspentAmount = ${spending.spentAmount}\ncategory = ${spending.category}"
+                "date = ${spending.date}" +
+                        "\nspentAmount = ${spending.spentAmount}" +
+                        "\ncategory = ${spending.category}" +
+                        "\nnote = ${spending.note}"
             )
         }
     }
