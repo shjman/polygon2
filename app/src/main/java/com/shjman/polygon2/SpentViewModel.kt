@@ -23,12 +23,19 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
     private val _note: MutableLiveData<String> = MutableLiveData<String>("")
     val note: LiveData<String> = _note
 
+    private val _selectedCategory: MutableLiveData<Category> = MutableLiveData<Category>(Category.empty())
+    val selectedCategory: LiveData<Category> = _selectedCategory
+
     fun onAmountSpentChanged(amountSpent: Int) {
         _amountSpent.value = amountSpent
     }
 
     fun onNoteChanged(note: String) {
         _note.value = note
+    }
+
+    fun onSelectedCategoryChanged(category: Category) {
+        _selectedCategory.value = category
     }
 
     fun onSaveButtonClicked() {
@@ -39,8 +46,9 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
                 spentRepository.saveSpentAmount(
                     spentAmount = _amountSpent.value ?: 0,
                     note = _note.value ?: "",
+                    category = selectedCategory.value ?: Category.empty(),
                 )
-                delay(2000)
+                delay(1500)
             }
             _amountSpent.value = 0
             _note.value = ""
@@ -54,7 +62,9 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
     }
 
     suspend fun getAllCategories(): List<Category> {
-        delay(1500)
-        return spentRepository.getAllCategories()
+        delay(1000)
+        val allCategories = spentRepository.getAllCategories()
+        allCategories.firstOrNull()?.let { _selectedCategory.value = it }
+        return allCategories
     }
 }

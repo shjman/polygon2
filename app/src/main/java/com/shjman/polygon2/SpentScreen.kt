@@ -21,14 +21,14 @@ import timber.log.Timber
 fun SpentScreen(
     spentViewModel: SpentViewModel,
     categories: MutableState<List<Category>> = remember { mutableStateOf(emptyList()) },
-    selectedCategory: MutableState<Category> = remember { mutableStateOf(Category.empty()) },
+    selectedCategory: Category = spentViewModel.selectedCategory.observeAsState(Category.empty()).value,
     isLoadingUI: MutableState<Boolean> = remember { mutableStateOf(false) },
     amountSpent: Int = spentViewModel.amountSpent.observeAsState(0).value,
     note: String = spentViewModel.note.observeAsState("").value,
+    isDropdownMenuExpanded: MutableState<Boolean> = remember { mutableStateOf(false) },
 ) {
     LaunchedEffect(Unit) {
         categories.value = spentViewModel.getAllCategories()
-        categories.value.firstOrNull()?.let { selectedCategory.value = it }
         spentViewModel.isLoading.collect { isLoadingUI.value = it }
         Timber.e("aaaa after spentViewModel.isLoading.collect { isLoadingUI.value = it }")
     }
@@ -45,7 +45,15 @@ fun SpentScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        InputCategoryView(categories, selectedCategory)
+        InputCategoryView(
+            categories = categories,
+            selectedCategory = selectedCategory,
+            isDropdownMenuExpanded = isDropdownMenuExpanded,
+            onDropdownMenuItemClicked = {
+                spentViewModel.onSelectedCategoryChanged(it)
+                isDropdownMenuExpanded.value = false
+            }
+        )
         InputAmountSpendView(
             isLoadingUI = isLoadingUI,
             amountSpent = amountSpent,
@@ -63,13 +71,14 @@ fun SpentScreen(
 @Composable
 fun InputCategoryView(
     categories: State<List<Category>>,
-    selectedCategory: MutableState<Category>,
-    expanded: MutableState<Boolean> = remember { mutableStateOf(false) },
+    selectedCategory: Category,
+    isDropdownMenuExpanded: MutableState<Boolean>,
+    onDropdownMenuItemClicked: (Category) -> Unit,
 ) {
     Row(
         modifier = Modifier
             .padding(8.dp)
-            .clickable { expanded.value = !expanded.value }
+            .clickable { isDropdownMenuExpanded.value = !isDropdownMenuExpanded.value }
             .wrapContentSize(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
@@ -79,7 +88,7 @@ fun InputCategoryView(
             modifier = Modifier.padding(4.dp),
         )
         Text(
-            text = selectedCategory.value.name,
+            text = selectedCategory.name,
             modifier = Modifier.padding(4.dp),
         )
         Icon(
@@ -87,15 +96,14 @@ fun InputCategoryView(
             contentDescription = Icons.Filled.ArrowDropDown.toString(),
         )
         DropdownMenu(
-            expanded = expanded.value,
-            onDismissRequest = { expanded.value = false },
+            expanded = isDropdownMenuExpanded.value,
+            onDismissRequest = { isDropdownMenuExpanded.value = false },
         ) {
             categories.value.forEach { category ->
-                DropdownMenuItem(onClick = {
-                    selectedCategory.value = category
-                    expanded.value = false
-                }) {
-                    val isSelected = category == selectedCategory.value
+                DropdownMenuItem(
+                    onClick = { onDropdownMenuItemClicked(category) }
+                ) {
+                    val isSelected = category == selectedCategory
                     val style = if (isSelected) {
                         MaterialTheme.typography.body1.copy(
                             fontWeight = FontWeight.Bold,
