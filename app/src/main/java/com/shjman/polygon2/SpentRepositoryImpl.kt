@@ -9,6 +9,10 @@ import java.time.format.DateTimeFormatter
 
 class SpentRepositoryImpl(private val fireStore: FirebaseFirestore) : SpentRepository {
 
+    companion object{
+        const val mainCollectionPath = "family2"
+    }
+
     override suspend fun saveSpentAmount(spentAmount: Int, note: String, category: Category) {
         val newData = mutableMapOf<String, Any>()
         val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")
@@ -22,7 +26,7 @@ class SpentRepositoryImpl(private val fireStore: FirebaseFirestore) : SpentRepos
         Timber.d("newData == $newData")
 
         fireStore
-            .collection("family")
+            .collection(mainCollectionPath)
             .document("spending")
             .collection("spending")
             .document(currentDateTimeString)
@@ -32,7 +36,7 @@ class SpentRepositoryImpl(private val fireStore: FirebaseFirestore) : SpentRepos
 
     override suspend fun getAllSpending(): List<Spending> {
         val querySnapshot = fireStore
-            .collection("family")
+            .collection(mainCollectionPath)
             .document("spending")
             .collection("spending")
             .get()
@@ -49,7 +53,7 @@ class SpentRepositoryImpl(private val fireStore: FirebaseFirestore) : SpentRepos
 
     override suspend fun getAllCategories(): List<Category> {
         val documentSnapshot = fireStore
-            .collection("family")
+            .collection(mainCollectionPath)
             .document("preferences")
             .collection("categories")
             .document("categories")
