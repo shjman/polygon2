@@ -20,6 +20,17 @@ android {
         }
     }
 
+    flavorDimensions "environment"
+    productFlavors {
+        for_all {
+            dimension "environment"
+        }
+        my_custom {
+            dimension "environment"
+            applicationIdSuffix ".custom"
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
