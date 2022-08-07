@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter
 class SpentRepositoryImpl(private val fireStore: FirebaseFirestore) : SpentRepository {
 
     companion object{
-        const val mainCollectionPath = "family2"
+        const val mainCollectionPath = BuildConfig.mainCollectionPath
     }
 
     override suspend fun saveSpentAmount(spentAmount: Int, note: String, category: Category) {

@@ -24,10 +24,12 @@ android {
     productFlavors {
         for_all {
             dimension "environment"
+            buildConfigField "String", "mainCollectionPath", "\"family2\""
         }
         my_custom {
             dimension "environment"
             applicationIdSuffix ".custom"
+            buildConfigField "String", "mainCollectionPath", "\"family\""
         }
     }
 
