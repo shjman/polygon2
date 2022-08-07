@@ -62,9 +62,11 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
     }
 
     suspend fun getAllCategories(): List<Category> {
-        delay(1000)
+        Timber.e("aaaa getAllCategories()")
+        delay(3000)
         val allCategories = spentRepository.getAllCategories()
         allCategories.firstOrNull()?.let { _selectedCategory.value = it }
+        Timber.e("aaaa allCategories == $allCategories")
         return allCategories
     }
 }

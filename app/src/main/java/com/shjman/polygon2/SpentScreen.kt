@@ -15,22 +15,29 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @Composable
 fun SpentScreen(
     spentViewModel: SpentViewModel,
-    categories: MutableState<List<Category>> = remember { mutableStateOf(emptyList()) },
+    categoriesState: MutableState<List<Category>?> = remember { mutableStateOf(null) },
+    isLoadingUIState: MutableState<Boolean> = remember { mutableStateOf(false) },
     selectedCategory: Category = spentViewModel.selectedCategory.observeAsState(Category.empty()).value,
-    isLoadingUI: MutableState<Boolean> = remember { mutableStateOf(false) },
     amountSpent: Int = spentViewModel.amountSpent.observeAsState(0).value,
     note: String = spentViewModel.note.observeAsState("").value,
     isDropdownMenuExpanded: MutableState<Boolean> = remember { mutableStateOf(false) },
 ) {
+    val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
-        categories.value = spentViewModel.getAllCategories()
-        spentViewModel.isLoading.collect { isLoadingUI.value = it }
-        Timber.e("aaaa after spentViewModel.isLoading.collect { isLoadingUI.value = it }")
+        scope.launch {
+            categoriesState.value = spentViewModel.getAllCategories()
+        }
+        spentViewModel.isLoading
+            .onEach { isLoadingUIState.value = it }
+            .launchIn(scope)
     }
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -46,7 +53,7 @@ fun SpentScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         InputCategoryView(
-            categories = categories,
+            categories = categoriesState.value,
             selectedCategory = selectedCategory,
             isDropdownMenuExpanded = isDropdownMenuExpanded,
             onDropdownMenuItemClicked = {
@@ -55,22 +62,22 @@ fun SpentScreen(
             }
         )
         InputAmountSpendView(
-            isLoadingUI = isLoadingUI,
+            isLoadingUI = isLoadingUIState,
             amountSpent = amountSpent,
             onSpentValueChanged = { spentViewModel.onAmountSpentChanged(it.toIntOrNull() ?: 0) },
         )
         InputNoteView(
-            isLoadingUI = isLoadingUI,
+            isLoadingUI = isLoadingUIState,
             note = note,
             onNoteChanged = { spentViewModel.onNoteChanged(it) },
         )
-        SaveButton(isLoadingUI) { spentViewModel.onSaveButtonClicked() }
+        SaveButton(isLoadingUIState) { spentViewModel.onSaveButtonClicked() }
     }
 }
 
 @Composable
 fun InputCategoryView(
-    categories: State<List<Category>>,
+    categories: List<Category>?,
     selectedCategory: Category,
     isDropdownMenuExpanded: MutableState<Boolean>,
     onDropdownMenuItemClicked: (Category) -> Unit,
@@ -87,35 +94,51 @@ fun InputCategoryView(
             text = "category:",
             modifier = Modifier.padding(4.dp),
         )
-        Text(
-            text = selectedCategory.name,
-            modifier = Modifier.padding(4.dp),
-        )
-        Icon(
-            imageVector = Icons.Filled.ArrowDropDown,
-            contentDescription = Icons.Filled.ArrowDropDown.toString(),
-        )
-        DropdownMenu(
-            expanded = isDropdownMenuExpanded.value,
-            onDismissRequest = { isDropdownMenuExpanded.value = false },
-        ) {
-            categories.value.forEach { category ->
-                DropdownMenuItem(
-                    onClick = { onDropdownMenuItemClicked(category) }
+        when {
+            categories == null -> {
+                Text(
+                    text = "loading...",
+                    modifier = Modifier.padding(4.dp),
+                )
+            }
+            categories.isEmpty() -> {
+                Text(
+                    text = "list is empty",
+                    modifier = Modifier.padding(4.dp),
+                )
+            }
+            categories.isNotEmpty() -> {
+                Text(
+                    text = selectedCategory.name,
+                    modifier = Modifier.padding(4.dp),
+                )
+                Icon(
+                    imageVector = Icons.Filled.ArrowDropDown,
+                    contentDescription = Icons.Filled.ArrowDropDown.toString(),
+                )
+                DropdownMenu(
+                    expanded = isDropdownMenuExpanded.value,
+                    onDismissRequest = { isDropdownMenuExpanded.value = false },
                 ) {
-                    val isSelected = category == selectedCategory
-                    val style = if (isSelected) {
-                        MaterialTheme.typography.body1.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colors.secondary
-                        )
-                    } else {
-                        MaterialTheme.typography.body1.copy(
-                            fontWeight = FontWeight.Normal,
-                            color = MaterialTheme.colors.onSurface
-                        )
+                    categories.forEach { category ->
+                        DropdownMenuItem(
+                            onClick = { onDropdownMenuItemClicked(category) }
+                        ) {
+                            val isSelected = category == selectedCategory
+                            val style = if (isSelected) {
+                                MaterialTheme.typography.body1.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colors.secondary
+                                )
+                            } else {
+                                MaterialTheme.typography.body1.copy(
+                                    fontWeight = FontWeight.Normal,
+                                    color = MaterialTheme.colors.onSurface
+                                )
+                            }
+                            Text(text = category.name, style = style)
+                        }
                     }
-                    Text(text = category.name, style = style)
                 }
             }
         }
