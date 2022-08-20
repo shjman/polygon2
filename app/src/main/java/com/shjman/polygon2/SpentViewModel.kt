@@ -58,7 +58,7 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
 
     suspend fun getAllSpending(): List<Spending> {
         delay(1000)
-        return spentRepository.getAllSpending()
+        return spentRepository.getAllSpending().sortedByDescending { it.date }
     }
 
     suspend fun getAllCategories(): List<Category> {

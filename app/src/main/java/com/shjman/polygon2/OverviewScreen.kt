@@ -8,6 +8,7 @@ import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -25,7 +26,7 @@ fun OverviewScreen(
     spentViewModel: SpentViewModel,
 ) {
     val onSelectedSpendingClicked = { spending: Spending -> Timber.d("clicked on == $spending") }
-    val allSpending = remember { mutableStateOf(emptyList<Spending>()) }
+    val allSpending: MutableState<List<Spending>?> = remember { mutableStateOf(null) }
     lifecycleScope.launchWhenCreated {
         allSpending.value = spentViewModel.getAllSpending()
     }
@@ -37,7 +38,8 @@ fun OverviewScreen(
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center
         )
-        if (allSpending.value.isEmpty()) {
+        val allSpendingValue = allSpending.value
+        if (allSpendingValue == null) {
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
@@ -45,10 +47,12 @@ fun OverviewScreen(
             ) {
                 CircularProgressIndicator(color = Color.Green)
             }
+        } else if (allSpendingValue.isEmpty()) {
+            Text(text = "no data / empty")
         } else {
             LazyColumn {
                 items(
-                    items = allSpending.value,
+                    items = allSpendingValue,
                     itemContent = {
                         SpendingItem(spending = it, selectedSpending = onSelectedSpendingClicked)
                     }
