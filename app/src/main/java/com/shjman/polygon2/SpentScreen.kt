@@ -11,14 +11,15 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 @Composable
 fun SpentScreen(
@@ -29,6 +30,7 @@ fun SpentScreen(
     amountSpent: Int = spentViewModel.amountSpent.observeAsState(0).value,
     note: String = spentViewModel.note.observeAsState("").value,
     isDropdownMenuExpanded: MutableState<Boolean> = remember { mutableStateOf(false) },
+    focusManager: FocusManager = LocalFocusManager.current,
 ) {
     val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
@@ -71,7 +73,13 @@ fun SpentScreen(
             note = note,
             onNoteChanged = { spentViewModel.onNoteChanged(it) },
         )
-        SaveButton(isLoadingUIState) { spentViewModel.onSaveButtonClicked() }
+        SaveButton(
+            isLoading = isLoadingUIState,
+            onSaveAmountClicked = {
+                spentViewModel.onSaveButtonClicked()
+                focusManager.clearFocus()
+            },
+        )
     }
 }
 
