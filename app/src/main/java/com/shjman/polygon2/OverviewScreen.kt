@@ -3,7 +3,6 @@ package com.shjman.polygon2
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
@@ -18,6 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LifecycleCoroutineScope
 import timber.log.Timber
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
@@ -25,7 +25,7 @@ fun OverviewScreen(
     lifecycleScope: LifecycleCoroutineScope,
     spentViewModel: SpentViewModel,
 ) {
-    val onSelectedSpendingClicked = { spending: Spending -> Timber.d("clicked on == $spending") }
+    val onSpendingClicked = { spending: Spending -> Timber.d("clicked on == $spending") }
     val allSpending: MutableState<List<Spending>?> = remember { mutableStateOf(null) }
     lifecycleScope.launchWhenCreated {
         allSpending.value = spentViewModel.getAllSpending()
@@ -51,24 +51,58 @@ fun OverviewScreen(
             Text(text = "no data / empty")
         } else {
             LazyColumn {
-                items(
-                    items = allSpendingValue,
-                    itemContent = {
-                        SpendingItem(spending = it, selectedSpending = onSelectedSpendingClicked)
+//                itemsIndexed(allSpendingValue) { index, item ->
+//                    SpendingItem(spending = item, onSpendingClicked = onSpendingClicked)
+//                }
+                item {
+                    val currentLocalDateTime = LocalDateTime.now()
+                    val beginOfCurrentMonth = LocalDateTime.of(
+                        currentLocalDateTime.year,
+                        currentLocalDateTime.month,
+                        1,
+                        0,
+                        0
+                    )
+//                    val beginOfNextMonth = beginOfCurrentMonth.plusMonths(1)
+//                    val lastDayOfCurrentMonth = LocalDateTime.of(
+//                        currentLocalDateTime.year,
+//                        currentLocalDateTime.month,
+//                        currentLocalDateTime.month.maxLength(),
+//                        23,
+//                        59
+//                    )
+                    var amountByMonth = 0
+                    allSpendingValue
+                        .filter { it.date?.isAfter(beginOfCurrentMonth) == true }
+                        .onEach { spending -> spending.spentAmount?.let { amountByMonth += it } }
+                    Text(text = "amount spent this month == $amountByMonth")
+                }
+
+                allSpendingValue.onEach {
+                    item(
+                        key = it.date.toString(),
+                    ) {
+                        SpendingItem(spending = it, onSpendingClicked = onSpendingClicked)
                     }
-                )
+                }
+//                items(
+//                    items = allSpendingValue,
+//                    itemContent = {
+//                        SpendingItem(spending = it, onSpendingClicked = onSpendingClicked)
+//                    }
+//                )
             }
         }
     }
 }
 
 @Composable
-fun SpendingItem(spending: Spending, selectedSpending: (Spending) -> Unit) {
+fun SpendingItem(spending: Spending, onSpendingClicked: (Spending) -> Unit) {
     Card(
         modifier = Modifier
             .padding(4.dp)
             .fillMaxWidth()
-            .clickable { selectedSpending(spending) },
+            .clickable { onSpendingClicked(spending) },
         elevation = 4.dp,
     ) {
         Row {
