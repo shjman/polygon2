@@ -15,7 +15,7 @@ class SpentRepositoryImpl(private val fireStore: FirebaseFirestore) : SpentRepos
 
     override suspend fun saveSpentAmount(spentAmount: Int, note: String, category: Category) {
         val newData = mutableMapOf<String, Any>()
-        val formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")
+        val formatter = DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER)
         val currentLocalDateTime = LocalDateTime.now()
         val currentDateTimeString = currentLocalDateTime.format(formatter)
         newData["date"] = currentDateTimeString

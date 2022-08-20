@@ -17,6 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.LifecycleCoroutineScope
 import timber.log.Timber
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun OverviewScreen(
@@ -67,8 +68,9 @@ fun SpendingItem(spending: Spending, selectedSpending: (Spending) -> Unit) {
         elevation = 4.dp,
     ) {
         Row {
+            val dateStr = spending.date?.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER))
             Text(
-                "date = ${spending.date}" +
+                "date = $dateStr" +
                         "\nspentAmount = ${spending.spentAmount}" +
                         "\ncategory = ${spending.category}" +
                         "\nnote = ${spending.note}"
