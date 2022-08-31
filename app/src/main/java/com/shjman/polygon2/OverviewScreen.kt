@@ -6,30 +6,25 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.LifecycleCoroutineScope
 import timber.log.Timber
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
 fun OverviewScreen(
-    lifecycleScope: LifecycleCoroutineScope,
     spentViewModel: SpentViewModel,
+    allSpending: MutableState<List<Spending>?> = remember { mutableStateOf(null) },
 ) {
-    val onSpendingClicked = { spending: Spending -> Timber.d("clicked on == $spending") }
-    val allSpending: MutableState<List<Spending>?> = remember { mutableStateOf(null) }
-    lifecycleScope.launchWhenCreated {
+    LaunchedEffect(Unit) {
         allSpending.value = spentViewModel.getAllSpending()
     }
+    val onSpendingClicked = { spending: Spending -> Timber.d("clicked on == $spending") }
     Column(
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -71,11 +66,26 @@ fun OverviewScreen(
 //                        23,
 //                        59
 //                    )
-                    var amountByMonth = 0
-                    allSpendingValue
-                        .filter { it.date?.isAfter(beginOfCurrentMonth) == true }
-                        .onEach { spending -> spending.spentAmount?.let { amountByMonth += it } }
-                    Text(text = "amount spent this month == $amountByMonth")
+                    var amountByLastMonth = 0
+                    val allSpendingValueFilteredByLastMonth = allSpendingValue.filter { it.date?.isAfter(beginOfCurrentMonth) == true }
+                    allSpendingValueFilteredByLastMonth.onEach { spending -> spending.spentAmount?.let { amountByLastMonth += it } }
+                    Text(text = "amount spent this month == $amountByLastMonth")
+                    val categories = mutableSetOf<String>()
+                    allSpendingValueFilteredByLastMonth.onEach { spending -> spending.category?.let { it -> categories.add(it) } }
+                    when {
+                        categories.isEmpty() -> Text(text = "categories == empty")
+                        else -> {
+                            val amountsByCategories = StringBuffer()
+                            categories.onEach { categoryString ->
+                                var amountByCategory = 0
+                                allSpendingValueFilteredByLastMonth
+                                    .filter { it.category == categoryString }
+                                    .onEach { spending -> spending.spentAmount?.let { amountByCategory += it } }
+                                amountsByCategories.append("$categoryString == $amountByCategory, ")
+                            }
+                            Text(text = "$amountsByCategories")
+                        }
+                    }
                 }
 
                 allSpendingValue.onEach {

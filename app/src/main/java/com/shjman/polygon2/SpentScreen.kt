@@ -17,6 +17,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -31,12 +32,10 @@ fun SpentScreen(
     note: String = spentViewModel.note.observeAsState("").value,
     isDropdownMenuExpanded: MutableState<Boolean> = remember { mutableStateOf(false) },
     focusManager: FocusManager = LocalFocusManager.current,
+    scope: CoroutineScope = rememberCoroutineScope(),
 ) {
-    val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
-        scope.launch {
-            categoriesState.value = spentViewModel.getAllCategories()
-        }
+        categoriesState.value = spentViewModel.getAllCategories()
         spentViewModel.isLoading
             .onEach { isLoadingUIState.value = it }
             .launchIn(scope)

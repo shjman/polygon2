@@ -37,8 +37,7 @@ class MainActivity : ComponentActivity() {
                     Box(modifier = Modifier.padding(paddingValues)) {
                         NavigationGraph(
                             navController = navController,
-                            lifecycleScope,
-                            spentViewModel,
+                            spentViewModel = spentViewModel,
                         )
                     }
                 }
@@ -93,7 +92,6 @@ fun BottomNavigation(navController: NavController) {
 @Composable
 fun NavigationGraph(
     navController: NavHostController,
-    lifecycleScope: LifecycleCoroutineScope,
     spentViewModel: SpentViewModel,
 ) {
     NavHost(
@@ -119,7 +117,7 @@ fun NavigationGraph(
             SpentScreen(spentViewModel = spentViewModel)
         }
         composable(BottomNavItem.Overview.screenRoute) {
-            OverviewScreen(lifecycleScope = lifecycleScope, spentViewModel = spentViewModel)
+            OverviewScreen(spentViewModel = spentViewModel)
         }
         composable(BottomNavItem.Setting.screenRoute) {
             SettingScreen()
