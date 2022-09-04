@@ -1,16 +1,17 @@
 package com.shjman.polygon2
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import timber.log.Timber
 import java.time.LocalDateTime
@@ -25,24 +26,12 @@ fun OverviewScreen(
         allSpending.value = spentViewModel.getAllSpending()
     }
     val onSpendingClicked = { spending: Spending -> Timber.d("clicked on == $spending") }
-    var isTopAppBarDropdownMenuExpanded by remember { mutableStateOf(false) }
+    var overviewType by remember { mutableStateOf(OverviewType.STANDARD) } // isMonthlyComparison: Boolean -> can be simplified
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(text = "Overview screen") },
-                actions = {
-                    IconButton(onClick = { isTopAppBarDropdownMenuExpanded = !isTopAppBarDropdownMenuExpanded }) {
-                        Icon(Icons.Default.MoreVert, "")
-                    }
-                    DropdownMenu(
-                        expanded = isTopAppBarDropdownMenuExpanded,
-                        onDismissRequest = { isTopAppBarDropdownMenuExpanded = false }
-                    ) {
-                        DropdownMenuItem(onClick = { /*TODO*/ }) {
-                            Text("Compare monthly spends")
-                        }
-                    }
-                }
+            topBar(
+                overviewType = overviewType,
+                onMonthlyComparisonTypeChanged = { overviewType = overviewType.switch() }
             )
         },
         content = {
@@ -124,6 +113,36 @@ fun OverviewScreen(
 }
 
 @Composable
+fun topBar(
+    overviewType: OverviewType,
+    onMonthlyComparisonTypeChanged: (Boolean) -> Unit,
+) {
+    var isTopAppBarDropdownMenuExpanded by remember { mutableStateOf(false) }
+    Timber.e("aaaa topBar() isTopAppBarDropdownMenuExpanded.hashCode() == ${isTopAppBarDropdownMenuExpanded.hashCode()}")
+    TopAppBar(
+        title = { Text(text = "Overview screen") },
+        actions = {
+            IconButton(onClick = { isTopAppBarDropdownMenuExpanded = !isTopAppBarDropdownMenuExpanded }) {
+                Icon(Icons.Default.MoreVert, "")
+            }
+            DropdownMenu(
+                expanded = isTopAppBarDropdownMenuExpanded,
+                onDismissRequest = { isTopAppBarDropdownMenuExpanded = false },
+                Modifier.background(colorResource(R.color.lightGray))
+            ) {
+                DropdownMenuItem(enabled = false, onClick = {}) {
+                    Text("Monthly comparison", color = Color.Black)
+                    Switch(
+                        checked = overviewType == OverviewType.MONTHLY_COMPARISON,
+                        onCheckedChange = onMonthlyComparisonTypeChanged
+                    )
+                }
+            }
+        }
+    )
+}
+
+@Composable
 fun SpendingItem(spending: Spending, onSpendingClicked: (Spending) -> Unit) {
     Card(
         modifier = Modifier
@@ -142,4 +161,14 @@ fun SpendingItem(spending: Spending, onSpendingClicked: (Spending) -> Unit) {
             )
         }
     }
+}
+
+enum class OverviewType {
+    STANDARD,
+    MONTHLY_COMPARISON,
+}
+
+private fun OverviewType.switch() = when (this) {
+    OverviewType.STANDARD -> OverviewType.MONTHLY_COMPARISON
+    OverviewType.MONTHLY_COMPARISON -> OverviewType.STANDARD
 }
