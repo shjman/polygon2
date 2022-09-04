@@ -51,61 +51,22 @@ fun OverviewScreen(
                     Text(text = "no data / empty")
                 } else {
                     LazyColumn {
-//                itemsIndexed(allSpendingValue) { index, item ->
-//                    SpendingItem(spending = item, onSpendingClicked = onSpendingClicked)
-//                }
-                        item {
-                            val currentLocalDateTime = LocalDateTime.now()
-                            val beginOfCurrentMonth = LocalDateTime.of(
-                                currentLocalDateTime.year,
-                                currentLocalDateTime.month,
-                                1,
-                                0,
-                                0
-                            )
-//                    val beginOfNextMonth = beginOfCurrentMonth.plusMonths(1)
-//                    val lastDayOfCurrentMonth = LocalDateTime.of(
-//                        currentLocalDateTime.year,
-//                        currentLocalDateTime.month,
-//                        currentLocalDateTime.month.maxLength(),
-//                        23,
-//                        59
-//                    )
-                            var amountByLastMonth = 0
-                            val allSpendingValueFilteredByLastMonth = allSpendingValue.filter { it.date?.isAfter(beginOfCurrentMonth) == true }
-                            allSpendingValueFilteredByLastMonth.onEach { spending -> spending.spentAmount?.let { amountByLastMonth += it } }
-                            Text(text = "amount spent this month == $amountByLastMonth")
-                            val categories = mutableSetOf<String>()
-                            allSpendingValueFilteredByLastMonth.onEach { spending -> spending.category?.let { it -> categories.add(it) } }
-                            when {
-                                categories.isEmpty() -> Text(text = "categories == empty")
-                                else -> {
-                                    val amountsByCategories = StringBuffer()
-                                    categories.onEach { categoryString ->
-                                        var amountByCategory = 0
-                                        allSpendingValueFilteredByLastMonth
-                                            .filter { it.category == categoryString }
-                                            .onEach { spending -> spending.spentAmount?.let { amountByCategory += it } }
-                                        amountsByCategories.append("$categoryString == $amountByCategory, ")
-                                    }
-                                    Text(text = "$amountsByCategories")
-                                }
+                        val beginOfCurrentMonth = LocalDateTime.now().beginOfCurrentMonth()
+                        val allSpendingValueFilteredByLastMonth = allSpendingValue.filter { it.date?.isAfter(beginOfCurrentMonth) == true }
+                        item { summaryOfMonth(beginOfCurrentMonth, allSpendingValueFilteredByLastMonth) }
+                        if (overviewType == OverviewType.STANDARD) {
+                            allSpendingValue.onEach { item(key = it.date.toString()) { SpendingItem(spending = it, onSpendingClicked = onSpendingClicked) } }
+                        } else {
+                            var beginOfPreviousMonth = beginOfCurrentMonth.minusMonths(1)
+                            var allSpendingMinusPreviousMonth: List<Spending> = allSpendingValue.minus(allSpendingValueFilteredByLastMonth.toSet())
+                            while (allSpendingMinusPreviousMonth.isNotEmpty()) {
+                                val beginOfMonth = beginOfPreviousMonth
+                                val allSpendingFilteredByLastMonth = allSpendingMinusPreviousMonth.filter { it.date?.isAfter(beginOfPreviousMonth) == true }
+                                item { summaryOfMonth(beginOfMonth, allSpendingFilteredByLastMonth) }
+                                beginOfPreviousMonth = beginOfPreviousMonth.minusMonths(1)
+                                allSpendingMinusPreviousMonth = allSpendingMinusPreviousMonth.minus(allSpendingFilteredByLastMonth.toSet())
                             }
                         }
-
-                        allSpendingValue.onEach {
-                            item(
-                                key = it.date.toString(),
-                            ) {
-                                SpendingItem(spending = it, onSpendingClicked = onSpendingClicked)
-                            }
-                        }
-//                items(
-//                    items = allSpendingValue,
-//                    itemContent = {
-//                        SpendingItem(spending = it, onSpendingClicked = onSpendingClicked)
-//                    }
-//                )
                     }
                 }
             }
@@ -143,6 +104,33 @@ fun topBar(
 }
 
 @Composable
+fun summaryOfMonth(beginOfCurrentMonth: LocalDateTime, allSpendingFilteredByMonth: List<Spending>) {
+    val date = beginOfCurrentMonth.month.toString() + "." + beginOfCurrentMonth.year.toString()
+    var amountByMonth = 0
+    allSpendingFilteredByMonth.onEach { spending -> spending.spentAmount?.let { amountByMonth += it } }
+    Text(text = "amount spent $date == $amountByMonth")
+    val categories = mutableSetOf<String>()
+    allSpendingFilteredByMonth.onEach { spending -> spending.category?.let { it -> categories.add(it) } }
+    when {
+        categories.isEmpty() -> Text(text = "categories == empty")
+        else -> {
+            val amountsByCategories = StringBuffer()
+            categories.onEach { categoryString ->
+                var amountByCategory = 0
+                allSpendingFilteredByMonth
+                    .filter { it.category == categoryString }
+                    .onEach { spending -> spending.spentAmount?.let { amountByCategory += it } }
+                if (categoryString.isBlank()) {
+                    amountsByCategories.append("empty category")
+                }
+                amountsByCategories.append("$categoryString == $amountByCategory, ")
+            }
+            Text(text = "$amountsByCategories")
+        }
+    }
+}
+
+@Composable
 fun SpendingItem(spending: Spending, onSpendingClicked: (Spending) -> Unit) {
     Card(
         modifier = Modifier
@@ -162,6 +150,8 @@ fun SpendingItem(spending: Spending, onSpendingClicked: (Spending) -> Unit) {
         }
     }
 }
+
+private fun LocalDateTime.beginOfCurrentMonth(): LocalDateTime = LocalDateTime.of(this.year, this.month, 1, 0, 0)
 
 enum class OverviewType {
     STANDARD,
