@@ -21,17 +21,18 @@ data class Spending(
 )
 
 fun SpendingRemote.toSpending(): Spending {
-    val localDateTime = LocalDateTime.parse(
-        this.date,
-        DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER),
-    )
     return Spending(
-        date = localDateTime,
+        date = convertDateStringToLocalDateTime(this.date),
         category = this.category,
         spentAmount = this.spentAmount,
         currency = this.currency,
         note = this.note,
     )
 }
+
+fun convertDateStringToLocalDateTime(date: String?): LocalDateTime? = LocalDateTime.parse(
+    date,
+    DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER),
+)
 
 const val LOCALE_DATE_TIME_FORMATTER = "dd.MM.yyyy HH:mm:ss"

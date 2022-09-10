@@ -1,7 +1,8 @@
 package com.shjman.polygon2
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
@@ -26,6 +27,10 @@ fun OverviewScreen(
         allSpending.value = spentViewModel.getAllSpending()
     }
     val onSpendingClicked = { spending: Spending -> Timber.d("clicked on == $spending") }
+    val onSpendingLongClicked = { spending: Spending, isDropdownMenuExpanded: MutableState<Boolean> ->
+        Timber.d("clicked long on == $spending")
+        isDropdownMenuExpanded.value = !isDropdownMenuExpanded.value
+    }
     var overviewType by remember { mutableStateOf(OverviewType.STANDARD) } // isMonthlyComparison: Boolean -> can be simplified
     Scaffold(
         topBar = {
@@ -55,7 +60,15 @@ fun OverviewScreen(
                         val allSpendingValueFilteredByLastMonth = allSpendingValue.filter { it.date?.isAfter(beginOfCurrentMonth) == true }
                         item { summaryOfMonth(beginOfCurrentMonth, allSpendingValueFilteredByLastMonth) }
                         if (overviewType == OverviewType.STANDARD) {
-                            allSpendingValue.onEach { item(key = it.date.toString()) { SpendingItem(spending = it, onSpendingClicked = onSpendingClicked) } }
+                            allSpendingValue.onEach {
+                                item(key = it.date.toString()) {
+                                    SpendingItem(
+                                        spending = it,
+                                        onSpendingClicked = onSpendingClicked,
+                                        onSpendingLongClicked = onSpendingLongClicked,
+                                    )
+                                }
+                            }
                         } else {
                             var beginOfPreviousMonth = beginOfCurrentMonth.minusMonths(1)
                             var allSpendingMinusPreviousMonth: List<Spending> = allSpendingValue.minus(allSpendingValueFilteredByLastMonth.toSet())
@@ -130,13 +143,23 @@ fun summaryOfMonth(beginOfCurrentMonth: LocalDateTime, allSpendingFilteredByMont
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun SpendingItem(spending: Spending, onSpendingClicked: (Spending) -> Unit) {
+fun SpendingItem(
+    spending: Spending,
+    onSpendingClicked: (Spending) -> Unit,
+    onSpendingLongClicked: (Spending, MutableState<Boolean>) -> Unit,
+    isExpandedDropdownMenu: MutableState<Boolean> = remember { mutableStateOf(false) },
+) {
     Card(
         modifier = Modifier
             .padding(4.dp)
             .fillMaxWidth()
-            .clickable { onSpendingClicked(spending) },
+            .combinedClickable(
+                onClick = { onSpendingClicked(spending) },
+                onLongClick = { onSpendingLongClicked(spending, isExpandedDropdownMenu) },
+                onDoubleClick = { onSpendingLongClicked(spending, isExpandedDropdownMenu) },
+            ),
         elevation = 4.dp,
     ) {
         Row {
@@ -147,6 +170,27 @@ fun SpendingItem(spending: Spending, onSpendingClicked: (Spending) -> Unit) {
                         "\ncategory = ${spending.category}" +
                         "\nnote = ${spending.note}"
             )
+        }
+        Row(
+            horizontalArrangement = Arrangement.End,
+        ) {
+            Box {
+                DropdownMenu(
+                    expanded = isExpandedDropdownMenu.value,
+                    onDismissRequest = { isExpandedDropdownMenu.value = false }
+                ) {
+                    DropdownMenuItem(
+                        onClick = { isExpandedDropdownMenu.value = false }
+                    ) {
+                        Text("Edit")
+                    }
+                    DropdownMenuItem(
+                        onClick = { isExpandedDropdownMenu.value = false }
+                    ) {
+                        Text("Remove")
+                    }
+                }
+            }
         }
     }
 }
