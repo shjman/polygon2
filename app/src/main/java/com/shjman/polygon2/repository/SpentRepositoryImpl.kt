@@ -1,6 +1,8 @@
-package com.shjman.polygon2
+package com.shjman.polygon2.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.shjman.polygon2.BuildConfig
+import com.shjman.polygon2.data.*
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import java.time.LocalDateTime

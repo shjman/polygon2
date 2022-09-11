@@ -1,4 +1,4 @@
-package com.shjman.polygon2
+package com.shjman.polygon2.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -14,6 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
+import com.shjman.polygon2.R
+import com.shjman.polygon2.data.LOCALE_DATE_TIME_FORMATTER
+import com.shjman.polygon2.data.Spending
 import timber.log.Timber
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter

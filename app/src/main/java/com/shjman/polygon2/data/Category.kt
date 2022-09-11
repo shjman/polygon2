@@ -1,4 +1,4 @@
-package com.shjman.polygon2
+package com.shjman.polygon2.data
 
 data class CategoryRemote(
     val id: String? = null,

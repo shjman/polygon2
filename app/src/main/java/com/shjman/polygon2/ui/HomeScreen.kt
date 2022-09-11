@@ -1,4 +1,4 @@
-package com.shjman.polygon2
+package com.shjman.polygon2.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button

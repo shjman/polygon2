@@ -1,4 +1,4 @@
-package com.shjman.polygon2
+package com.shjman.polygon2.data
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter

@@ -1,4 +1,4 @@
-package com.shjman.polygon2
+package com.shjman.polygon2.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -12,14 +12,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.LifecycleCoroutineScope
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.shjman.polygon2.R
 import com.shjman.polygon2.ui.theme.Polygon2Theme
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
