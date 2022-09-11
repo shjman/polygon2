@@ -25,6 +25,7 @@ import java.time.format.DateTimeFormatter
 fun OverviewScreen(
     spentViewModel: SpentViewModel,
     allSpending: MutableState<List<Spending>?> = remember { mutableStateOf(null) },
+    onEditSpendingClicked: () -> Unit,
 ) {
     LaunchedEffect(Unit) {
         allSpending.value = spentViewModel.getAllSpending()
@@ -69,6 +70,7 @@ fun OverviewScreen(
                                         spending = it,
                                         onSpendingClicked = onSpendingClicked,
                                         onSpendingLongClicked = onSpendingLongClicked,
+                                        onEditSpendingClicked = onEditSpendingClicked,
                                     )
                                 }
                             }
@@ -153,6 +155,7 @@ fun SpendingItem(
     onSpendingClicked: (Spending) -> Unit,
     onSpendingLongClicked: (Spending, MutableState<Boolean>) -> Unit,
     isExpandedDropdownMenu: MutableState<Boolean> = remember { mutableStateOf(false) },
+    onEditSpendingClicked: () -> Unit,
 ) {
     Card(
         modifier = Modifier
@@ -183,7 +186,10 @@ fun SpendingItem(
                     onDismissRequest = { isExpandedDropdownMenu.value = false }
                 ) {
                     DropdownMenuItem(
-                        onClick = { isExpandedDropdownMenu.value = false }
+                        onClick = {
+                            isExpandedDropdownMenu.value = false
+                            onEditSpendingClicked()
+                        }
                     ) {
                         Text("Edit")
                     }

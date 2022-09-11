@@ -60,13 +60,13 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
     }
 
     suspend fun getAllSpending(): List<Spending> {
-        delay(1000)
+        delay(500)
         return spentRepository.getAllSpending().sortedByDescending { it.date }
     }
 
     suspend fun getAllCategories(): List<Category> {
         Timber.e("aaaa getAllCategories()")
-        delay(3000)
+        delay(1500)
         val allCategories = spentRepository.getAllCategories()
         allCategories.firstOrNull()?.let { _selectedCategory.value = it }
         Timber.e("aaaa allCategories == $allCategories")
