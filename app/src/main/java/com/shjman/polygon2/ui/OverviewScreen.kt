@@ -25,7 +25,7 @@ import java.time.format.DateTimeFormatter
 fun OverviewScreen(
     spentViewModel: SpentViewModel,
     allSpending: MutableState<List<Spending>?> = remember { mutableStateOf(null) },
-    onEditSpendingClicked: () -> Unit,
+    onEditSpendingClicked: (LocalDateTime) -> Unit,
 ) {
     LaunchedEffect(Unit) {
         allSpending.value = spentViewModel.getAllSpending()
@@ -61,7 +61,7 @@ fun OverviewScreen(
                 } else {
                     LazyColumn {
                         val beginOfCurrentMonth = LocalDateTime.now().beginOfCurrentMonth()
-                        val allSpendingValueFilteredByLastMonth = allSpendingValue.filter { it.date?.isAfter(beginOfCurrentMonth) == true }
+                        val allSpendingValueFilteredByLastMonth = allSpendingValue.filter { it.date.isAfter(beginOfCurrentMonth) }
                         item { summaryOfMonth(beginOfCurrentMonth, allSpendingValueFilteredByLastMonth) }
                         if (overviewType == OverviewType.STANDARD) {
                             allSpendingValue.onEach {
@@ -79,7 +79,7 @@ fun OverviewScreen(
                             var allSpendingMinusPreviousMonth: List<Spending> = allSpendingValue.minus(allSpendingValueFilteredByLastMonth.toSet())
                             while (allSpendingMinusPreviousMonth.isNotEmpty()) {
                                 val beginOfMonth = beginOfPreviousMonth
-                                val allSpendingFilteredByLastMonth = allSpendingMinusPreviousMonth.filter { it.date?.isAfter(beginOfPreviousMonth) == true }
+                                val allSpendingFilteredByLastMonth = allSpendingMinusPreviousMonth.filter { it.date.isAfter(beginOfPreviousMonth) }
                                 item { summaryOfMonth(beginOfMonth, allSpendingFilteredByLastMonth) }
                                 beginOfPreviousMonth = beginOfPreviousMonth.minusMonths(1)
                                 allSpendingMinusPreviousMonth = allSpendingMinusPreviousMonth.minus(allSpendingFilteredByLastMonth.toSet())
@@ -97,7 +97,6 @@ fun topBar(
     onMonthlyComparisonTypeChanged: (Boolean) -> Unit,
 ) {
     var isTopAppBarDropdownMenuExpanded by remember { mutableStateOf(false) }
-    Timber.e("aaaa topBar() isTopAppBarDropdownMenuExpanded.hashCode() == ${isTopAppBarDropdownMenuExpanded.hashCode()}")
     TopAppBar(
         title = { Text(text = "Overview screen") },
         actions = {
@@ -155,7 +154,7 @@ fun SpendingItem(
     onSpendingClicked: (Spending) -> Unit,
     onSpendingLongClicked: (Spending, MutableState<Boolean>) -> Unit,
     isExpandedDropdownMenu: MutableState<Boolean> = remember { mutableStateOf(false) },
-    onEditSpendingClicked: () -> Unit,
+    onEditSpendingClicked: (LocalDateTime) -> Unit,
 ) {
     Card(
         modifier = Modifier
@@ -169,7 +168,7 @@ fun SpendingItem(
         elevation = 4.dp,
     ) {
         Row {
-            val dateStr = spending.date?.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER))
+            val dateStr = spending.date.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER))
             Text(
                 "date = $dateStr" +
                         "\nspentAmount = ${spending.spentAmount}" +
@@ -188,7 +187,7 @@ fun SpendingItem(
                     DropdownMenuItem(
                         onClick = {
                             isExpandedDropdownMenu.value = false
-                            onEditSpendingClicked()
+                            onEditSpendingClicked(spending.date)
                         }
                     ) {
                         Text("Edit")

@@ -13,7 +13,7 @@ data class SpendingRemote(
 )
 
 data class Spending(
-    val date: LocalDateTime? = null,
+    val date: LocalDateTime,
     val category: String? = null,
     val spentAmount: Int? = null,
     val currency: String? = null,
@@ -30,7 +30,7 @@ fun SpendingRemote.toSpending(): Spending {
     )
 }
 
-fun convertDateStringToLocalDateTime(date: String?): LocalDateTime? = LocalDateTime.parse(
+fun convertDateStringToLocalDateTime(date: String?): LocalDateTime = LocalDateTime.parse(
     date,
     DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER),
 )

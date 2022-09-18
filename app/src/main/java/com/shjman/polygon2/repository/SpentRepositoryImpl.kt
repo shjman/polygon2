@@ -9,9 +9,11 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 
-class SpentRepositoryImpl(private val fireStore: FirebaseFirestore) : SpentRepository {
+class SpentRepositoryImpl(
+    private val fireStore: FirebaseFirestore,
+) : SpentRepository {
 
-    companion object{
+    companion object {
         const val mainCollectionPath = BuildConfig.mainCollectionPath
     }
 
@@ -36,6 +38,21 @@ class SpentRepositoryImpl(private val fireStore: FirebaseFirestore) : SpentRepos
             .await()
     }
 
+    override suspend fun getSpending(localDateTime: LocalDateTime): Spending? {
+        val querySnapshot = fireStore.collection(mainCollectionPath)
+            .document("spending")
+            .collection("spending")
+            .get()
+            .await()
+
+        val documents = querySnapshot.documents
+
+        return documents
+            .mapNotNull { it.toObject(SpendingRemote::class.java) }
+            .firstOrNull { localDateTime.isEqual(convertDateStringToLocalDateTime(it.date)) }
+            ?.toSpending()
+    }
+
     override suspend fun getAllSpending(): List<Spending> {
         val querySnapshot = fireStore
             .collection(mainCollectionPath)
@@ -46,11 +63,9 @@ class SpentRepositoryImpl(private val fireStore: FirebaseFirestore) : SpentRepos
 
         val documents = querySnapshot.documents
 
-        return documents.mapNotNull {
-            val spendingRemote = it.toObject(SpendingRemote::class.java)
-            Timber.d("spendingRemote == $spendingRemote")
-            spendingRemote?.toSpending()
-        }
+        return documents
+            .mapNotNull { it.toObject(SpendingRemote::class.java) }
+            .map { it.toSpending() }
     }
 
     override suspend fun getAllCategories(): List<Category> {

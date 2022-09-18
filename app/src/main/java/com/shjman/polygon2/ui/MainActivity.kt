@@ -19,17 +19,23 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.shjman.polygon2.R
+import com.shjman.polygon2.data.LOCALE_DATE_TIME_FORMATTER
+import com.shjman.polygon2.data.convertDateStringToLocalDateTime
 import com.shjman.polygon2.ui.MainActivity.Companion.SHOW_HIDE_BOTTOM_BAR_ANIMATION_SPEED
 import com.shjman.polygon2.ui.theme.Polygon2Theme
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import java.time.format.DateTimeFormatter
 
 class MainActivity : ComponentActivity() {
     private val spentViewModel: SpentViewModel by viewModel()
+    private val editSpendingViewModel: EditSpendingViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,6 +53,7 @@ class MainActivity : ComponentActivity() {
                         NavigationGraph(
                             navController = navController,
                             spentViewModel = spentViewModel,
+                            editSpendingViewModel = editSpendingViewModel,
                         )
                     }
                 }
@@ -142,6 +149,7 @@ fun BottomNavigation(
 fun NavigationGraph(
     navController: NavHostController,
     spentViewModel: SpentViewModel,
+    editSpendingViewModel: EditSpendingViewModel,
 ) {
     NavHost(
         navController = navController,
@@ -168,14 +176,27 @@ fun NavigationGraph(
         composable(Screens.BottomNavItem.Overview.screenRoute) {
             OverviewScreen(
                 spentViewModel = spentViewModel,
-                onEditSpendingClicked = { navController.navigate(Screens.EditSpending.screenRoute) },
+                onEditSpendingClicked = { localDateTime ->
+                    val localDateTimeString = localDateTime.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER))
+                    navController.navigate(Screens.EditSpending.screenRoute + "/$localDateTimeString")
+                },
             )
         }
         composable(Screens.BottomNavItem.Setting.screenRoute) {
             SettingScreen()
         }
-        composable(Screens.EditSpending.screenRoute) {
-            EditSpendingScreen()
+        composable(
+            route = Screens.EditSpending.screenRoute + "/{localDateTime}",
+            arguments = listOf(navArgument("localDateTime") { type = NavType.StringType })
+        )
+        { backStackEntry ->
+            val localDateTimeString = backStackEntry.arguments?.getString("localDateTime")
+            localDateTimeString?.let {
+                EditSpendingScreen(
+                    localDateTime = convertDateStringToLocalDateTime(it),
+                    editSpendingViewModel = editSpendingViewModel,
+                )
+            }
         }
     }
 }
