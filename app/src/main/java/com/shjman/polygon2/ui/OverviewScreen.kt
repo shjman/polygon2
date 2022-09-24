@@ -131,7 +131,7 @@ fun topBar(
 fun summaryOfMonth(beginOfCurrentMonth: LocalDateTime, allSpendingFilteredByMonth: List<Spending>) {
     val date = beginOfCurrentMonth.month.toString() + "." + beginOfCurrentMonth.year.toString()
     var amountByMonth = 0
-    allSpendingFilteredByMonth.onEach { spending -> spending.spentAmount?.let { amountByMonth += it } }
+    allSpendingFilteredByMonth.onEach { spending -> spending.spentAmount.let { amountByMonth += it } }
     Text(text = "amount spent $date == $amountByMonth")
     val categories = mutableSetOf<String>()
     allSpendingFilteredByMonth.onEach { spending -> spending.category?.let { it -> categories.add(it) } }
@@ -139,16 +139,18 @@ fun summaryOfMonth(beginOfCurrentMonth: LocalDateTime, allSpendingFilteredByMont
         categories.isEmpty() -> Text(text = "categories == empty")
         else -> {
             val amountsByCategories = StringBuffer()
-            categories.onEach { categoryString ->
-                var amountByCategory = 0
-                allSpendingFilteredByMonth
-                    .filter { it.category == categoryString }
-                    .onEach { spending -> spending.spentAmount?.let { amountByCategory += it } }
-                if (categoryString.isBlank()) {
-                    amountsByCategories.append("empty category")
+            categories
+                .sorted()
+                .onEach { categoryString ->
+                    var amountByCategory = 0
+                    allSpendingFilteredByMonth
+                        .filter { it.category == categoryString }
+                        .onEach { spending -> spending.spentAmount.let { amountByCategory += it } }
+                    if (categoryString.isBlank()) {
+                        amountsByCategories.append("empty category")
+                    }
+                    amountsByCategories.append("$categoryString == $amountByCategory, ")
                 }
-                amountsByCategories.append("$categoryString == $amountByCategory, ")
-            }
             Text(text = "$amountsByCategories")
         }
     }
