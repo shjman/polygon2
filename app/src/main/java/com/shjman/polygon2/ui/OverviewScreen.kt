@@ -17,6 +17,9 @@ import androidx.compose.ui.unit.dp
 import com.shjman.polygon2.R
 import com.shjman.polygon2.data.LOCALE_DATE_TIME_FORMATTER
 import com.shjman.polygon2.data.Spending
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import timber.log.Timber
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -26,9 +29,13 @@ fun OverviewScreen(
     spentViewModel: SpentViewModel,
     allSpending: MutableState<List<Spending>?> = remember { mutableStateOf(null) },
     onEditSpendingClicked: (LocalDateTime) -> Unit,
+    scope: CoroutineScope = rememberCoroutineScope(),
 ) {
     LaunchedEffect(Unit) {
-        allSpending.value = spentViewModel.getAllSpending()
+        spentViewModel.loadAllSpending()
+        spentViewModel.allSpending
+            .onEach { allSpending.value = it }
+            .launchIn(scope)
     }
     val onSpendingClicked = { spending: Spending -> Timber.d("clicked on == $spending") }
     val onSpendingLongClicked = { spending: Spending, isDropdownMenuExpanded: MutableState<Boolean> ->

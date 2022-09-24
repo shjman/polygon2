@@ -23,6 +23,9 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
     private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
+    private val _allSpending: MutableStateFlow<List<Spending>?> = MutableStateFlow(null)
+    val allSpending: StateFlow<List<Spending>?> = _allSpending
+
     private val _note: MutableLiveData<String> = MutableLiveData<String>("")
     val note: LiveData<String> = _note
 
@@ -59,8 +62,8 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
         }
     }
 
-    suspend fun getAllSpending(): List<Spending> {
-        return spentRepository.getAllSpending().sortedByDescending { it.date }
+    suspend fun loadAllSpending() {
+        _allSpending.value = spentRepository.getAllSpending().sortedByDescending { it.date }
     }
 
     suspend fun getAllCategories(): List<Category> {
