@@ -73,6 +73,9 @@ class MainActivity : ComponentActivity() {
             Screens.EditSpending.screenRoute -> {
                 isShowingBottomBar.value = false
             }
+            else -> {
+                isShowingBottomBar.value = false
+            }
         }
     }
 
@@ -178,7 +181,13 @@ fun NavigationGraph(
                 spentViewModel = spentViewModel,
                 onEditSpendingClicked = { localDateTime ->
                     val localDateTimeString = localDateTime.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER))
-                    navController.navigate(Screens.EditSpending.screenRoute + "/$localDateTimeString")
+                    navController.navigate(Screens.EditSpending.screenRoute + "/$localDateTimeString") {
+                        popUpTo(Screens.BottomNavItem.Overview.screenRoute) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
                 },
             )
         }
@@ -186,11 +195,11 @@ fun NavigationGraph(
             SettingScreen()
         }
         composable(
-            route = Screens.EditSpending.screenRoute + "/{localDateTime}",
-            arguments = listOf(navArgument("localDateTime") { type = NavType.StringType })
+            route = Screens.EditSpending.screenRoute + "/{localDateTimeString}",
+            arguments = listOf(navArgument("localDateTimeString") { type = NavType.StringType })
         )
         { backStackEntry ->
-            val localDateTimeString = backStackEntry.arguments?.getString("localDateTime")
+            val localDateTimeString = backStackEntry.arguments?.getString("localDateTimeString")
             localDateTimeString?.let {
                 EditSpendingScreen(
                     localDateTime = convertDateStringToLocalDateTime(it),

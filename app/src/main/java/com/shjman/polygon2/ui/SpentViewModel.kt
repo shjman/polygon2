@@ -60,7 +60,6 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
     }
 
     suspend fun getAllSpending(): List<Spending> {
-        delay(500)
         return spentRepository.getAllSpending().sortedByDescending { it.date }
     }
 

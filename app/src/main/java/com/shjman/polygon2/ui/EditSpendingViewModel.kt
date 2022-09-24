@@ -66,7 +66,6 @@ class EditSpendingViewModel(
     }
 
     suspend fun loadSpending(localDateTime: LocalDateTime) {
-        delay(500)
         _spending.value = spentRepository.getSpending(localDateTime)
     }
 }
