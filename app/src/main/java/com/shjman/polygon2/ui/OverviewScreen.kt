@@ -168,7 +168,8 @@ fun SpendingItem(
             .padding(4.dp)
             .fillMaxWidth()
             .combinedClickable(
-                onClick = { onSpendingClicked(spending) },
+//                onClick = { onSpendingClicked(spending) },
+                onClick = { onEditSpendingClicked(spending.date) }, // optional implementation
                 onLongClick = { onSpendingLongClicked(spending, isExpandedDropdownMenu) },
                 onDoubleClick = { onSpendingLongClicked(spending, isExpandedDropdownMenu) },
             ),

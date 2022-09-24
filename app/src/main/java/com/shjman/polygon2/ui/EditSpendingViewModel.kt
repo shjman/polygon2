@@ -20,11 +20,8 @@ class EditSpendingViewModel(
     private val spentRepository: SpentRepository,
 ) : ViewModel() {
 
-    private val _amountSpent: MutableLiveData<Int> = MutableLiveData<Int>(0)
-    val amountSpent: LiveData<Int> = _amountSpent
-
-    private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
+    private val _amountSpent = MutableStateFlow<Int?>(0)
+    val amountSpent: StateFlow<Int?> = _amountSpent
 
     private val _spending = MutableStateFlow<Spending?>(null)
     val spending: StateFlow<Spending?> = _spending
@@ -35,7 +32,7 @@ class EditSpendingViewModel(
     private val _selectedCategory: MutableLiveData<Category> = MutableLiveData<Category>(Category.empty())
     val selectedCategory: LiveData<Category> = _selectedCategory
 
-    fun onAmountSpentChanged(amountSpent: Int) {
+    fun onAmountSpentChanged(amountSpent: Int?) {
         _amountSpent.value = amountSpent
     }
 
@@ -50,7 +47,7 @@ class EditSpendingViewModel(
     fun onSaveButtonClicked() {
         Timber.d("save this spent amount  == ${amountSpent.value}")
         viewModelScope.launch {
-            _isLoading.value = true
+//            _isLoading.value = true
             withContext(Dispatchers.IO) {
                 spentRepository.saveSpentAmount(
                     spentAmount = _amountSpent.value ?: 0,
@@ -61,11 +58,12 @@ class EditSpendingViewModel(
             }
             _amountSpent.value = 0
             _note.value = ""
-            _isLoading.value = false
+//            _isLoading.value = false
         }
     }
 
     suspend fun loadSpending(localDateTime: LocalDateTime) {
         _spending.value = spentRepository.getSpending(localDateTime)
+        _amountSpent.value = spending.value?.spentAmount
     }
 }

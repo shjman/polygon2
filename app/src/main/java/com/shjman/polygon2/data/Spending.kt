@@ -15,7 +15,7 @@ data class SpendingRemote(
 data class Spending(
     val date: LocalDateTime,
     val category: String? = null,
-    val spentAmount: Int? = null,
+    val spentAmount: Int,
     val currency: String? = null,
     val note: String? = null,
 )
@@ -24,7 +24,7 @@ fun SpendingRemote.toSpending(): Spending {
     return Spending(
         date = convertDateStringToLocalDateTime(this.date),
         category = this.category,
-        spentAmount = this.spentAmount,
+        spentAmount = this.spentAmount ?: 0,
         currency = this.currency,
         note = this.note,
     )

@@ -1,12 +1,15 @@
 package com.shjman.polygon2.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
 import com.shjman.polygon2.data.LOCALE_DATE_TIME_FORMATTER
 import com.shjman.polygon2.data.Spending
 import kotlinx.coroutines.CoroutineScope
@@ -20,12 +23,16 @@ fun EditSpendingScreen(
     localDateTime: LocalDateTime,
     editSpendingViewModel: EditSpendingViewModel,
     spending: MutableState<Spending?> = remember { mutableStateOf(null) },
+    amountSpent: MutableState<Int?> = remember { mutableStateOf(null) },
     scope: CoroutineScope = rememberCoroutineScope(),
 ) {
     LaunchedEffect(Unit) {
         editSpendingViewModel.loadSpending(localDateTime)
         editSpendingViewModel.spending
             .onEach { spending.value = it }
+            .launchIn(scope)
+        editSpendingViewModel.amountSpent
+            .onEach { amountSpent.value = it }
             .launchIn(scope)
     }
     Column(
@@ -43,7 +50,13 @@ fun EditSpendingScreen(
             }
             Row {
                 Text(text = "amount == ")
-                Text(text = spendingValue.spentAmount.toString())
+
+                TextField(
+                    value = if (amountSpent.value == null) "" else amountSpent.value.toString(),
+                    onValueChange = { editSpendingViewModel.onAmountSpentChanged(calculateLimitAmount(it)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    placeholder = { Text("enter the amount spent") }
+                )
             }
             Row {
                 Text(text = "note == ")
@@ -53,4 +66,10 @@ fun EditSpendingScreen(
             CircularProgressIndicator(color = Color.Green)
         }
     }
+}
+
+fun calculateLimitAmount(text: String): Int? {
+    val maxIntAmount = 99999999
+    val amountLengthLimit = 9
+    return if (text.length >= amountLengthLimit) maxIntAmount else text.toIntOrNull()
 }
