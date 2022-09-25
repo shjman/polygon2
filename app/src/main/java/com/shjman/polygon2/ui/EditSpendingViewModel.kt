@@ -66,4 +66,20 @@ class EditSpendingViewModel(
         _spending.value = spentRepository.getSpending(localDateTime)
         _amountSpent.value = spending.value?.spentAmount
     }
+
+    fun onSpendingDateChanged(newYear: Int, newMonth: Int, newDayOfMonth: Int) {
+        spending.value?.date?.let {
+            _spending.value = spending.value?.copy(
+                date = it.withYear(newYear).withMonth(newMonth).withDayOfMonth(newDayOfMonth)
+            )
+        }
+    }
+
+    fun onSpendingTimeChanged(newHour: Int, newMinute: Int) {
+        spending.value?.date?.let {
+            _spending.value = spending.value?.copy(
+                date = it.withHour(newHour).withMinute(newMinute)
+            )
+        }
+    }
 }

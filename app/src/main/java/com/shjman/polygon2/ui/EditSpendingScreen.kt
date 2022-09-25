@@ -1,7 +1,12 @@
 package com.shjman.polygon2.ui
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
+import android.content.Context
+import android.widget.DatePicker
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
@@ -25,6 +30,7 @@ fun EditSpendingScreen(
     spending: MutableState<Spending?> = remember { mutableStateOf(null) },
     amountSpent: MutableState<Int?> = remember { mutableStateOf(null) },
     scope: CoroutineScope = rememberCoroutineScope(),
+    context: Context,
 ) {
     LaunchedEffect(Unit) {
         editSpendingViewModel.loadSpending(localDateTime)
@@ -44,14 +50,36 @@ fun EditSpendingScreen(
     ) {
         val spendingValue = spending.value
         if (spendingValue != null) {
-            Row {
-                Text(text = "date == ")
-                Text(text = spendingValue.date.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER)))
+            Row(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "date == ",
+                    modifier = Modifier
+                        .align(alignment = Alignment.CenterVertically)
+                        .weight(0.3f),
+                )
+                Button(
+                    modifier = Modifier.weight(0.7f),
+                    onClick = {
+                        getDatePickerDialog(context, editSpendingViewModel, spending)?.show()
+                        getTimePickerDialog(context, editSpendingViewModel, spending)?.show()
+                    },
+                ) {
+                    Text(text = spendingValue.date.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER)))
+                }
             }
-            Row {
-                Text(text = "amount == ")
-
+            Row(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "amount == ",
+                    modifier = Modifier
+                        .align(alignment = Alignment.CenterVertically)
+                        .weight(0.3f),
+                )
                 TextField(
+                    modifier = Modifier.weight(0.7f),
                     value = if (amountSpent.value == null) "" else amountSpent.value.toString(),
                     onValueChange = { editSpendingViewModel.onAmountSpentChanged(calculateLimitAmount(it)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -65,6 +93,42 @@ fun EditSpendingScreen(
         } else {
             CircularProgressIndicator(color = Color.Green)
         }
+    }
+}
+
+fun getDatePickerDialog(
+    context: Context,
+    editSpendingViewModel: EditSpendingViewModel,
+    spending: MutableState<Spending?>,
+): DatePickerDialog? {
+    return spending.value?.date?.let {
+        DatePickerDialog(
+            context,
+            { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
+                editSpendingViewModel.onSpendingDateChanged(year, month + 1, dayOfMonth)
+            },
+            it.year,
+            it.monthValue - 1,
+            it.dayOfMonth,
+        )
+    }
+}
+
+fun getTimePickerDialog(
+    context: Context,
+    editSpendingViewModel: EditSpendingViewModel,
+    spending: MutableState<Spending?>,
+): TimePickerDialog? {
+    return spending.value?.date?.let {
+        TimePickerDialog(
+            context,
+            { _, newHour: Int, newMinute: Int ->
+                editSpendingViewModel.onSpendingTimeChanged(newHour, newMinute)
+            },
+            it.hour,
+            it.minute,
+            true,
+        )
     }
 }
 

@@ -7,6 +7,7 @@ import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.UUID
 
 
 class SpentRepositoryImpl(
@@ -33,7 +34,7 @@ class SpentRepositoryImpl(
             .collection(mainCollectionPath)
             .document("spending")
             .collection("spending")
-            .document(currentDateTimeString)
+            .document(currentDateTimeString + " " + UUID.randomUUID().toString())
             .set(newData)
             .await()
     }

@@ -1,5 +1,6 @@
 package com.shjman.polygon2.ui
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,14 +18,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import androidx.navigation.NavHostController
-import androidx.navigation.NavType
+import androidx.navigation.*
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.shjman.polygon2.R
 import com.shjman.polygon2.data.LOCALE_DATE_TIME_FORMATTER
 import com.shjman.polygon2.data.convertDateStringToLocalDateTime
@@ -39,6 +37,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             val navController = rememberNavController()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -54,6 +53,7 @@ class MainActivity : ComponentActivity() {
                             navController = navController,
                             spentViewModel = spentViewModel,
                             editSpendingViewModel = editSpendingViewModel,
+                            context = this@MainActivity,
                         )
                     }
                 }
@@ -153,6 +153,7 @@ fun NavigationGraph(
     navController: NavHostController,
     spentViewModel: SpentViewModel,
     editSpendingViewModel: EditSpendingViewModel,
+    context: Context,
 ) {
     NavHost(
         navController = navController,
@@ -204,6 +205,7 @@ fun NavigationGraph(
                 EditSpendingScreen(
                     localDateTime = convertDateStringToLocalDateTime(it),
                     editSpendingViewModel = editSpendingViewModel,
+                    context = context,
                 )
             }
         }
