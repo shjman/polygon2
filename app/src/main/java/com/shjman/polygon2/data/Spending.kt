@@ -2,9 +2,11 @@ package com.shjman.polygon2.data
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
 
 
 data class SpendingRemote(
+    val uuid: String? = null,
     val date: String? = null,
     val category: String? = null,
     val spentAmount: Int? = null,
@@ -13,6 +15,7 @@ data class SpendingRemote(
 )
 
 data class Spending(
+    val uuid: String,
     val date: LocalDateTime,
     val category: String? = null,
     val spentAmount: Int,
@@ -22,6 +25,7 @@ data class Spending(
 
 fun SpendingRemote.toSpending(): Spending {
     return Spending(
+        uuid = this.uuid ?: this.date ?: (this.date + UUID.randomUUID()),
         date = convertDateStringToLocalDateTime(this.date),
         category = this.category,
         spentAmount = this.spentAmount ?: 0,

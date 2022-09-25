@@ -6,15 +6,13 @@ import android.content.Context
 import android.widget.DatePicker
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.Button
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Text
-import androidx.compose.material.TextField
+import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import com.shjman.polygon2.data.LOCALE_DATE_TIME_FORMATTER
 import com.shjman.polygon2.data.Spending
 import kotlinx.coroutines.CoroutineScope
@@ -44,7 +42,8 @@ fun EditSpendingScreen(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .fillMaxHeight(),
+            .fillMaxHeight()
+            .padding(4.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -86,9 +85,35 @@ fun EditSpendingScreen(
                     placeholder = { Text("enter the amount spent") }
                 )
             }
-            Row {
+            Row(
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text(text = "note == ")
                 Text(text = spendingValue.note.toString())
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Button(
+                    onClick = { /*TODO*/ },
+                    modifier = Modifier
+                        .align(alignment = Alignment.CenterVertically)
+                        .weight(0.5f)
+                        .padding(8.dp),
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)
+                ) {
+                    Text(text = "Cancel")
+                }
+                Button(
+                    onClick = { editSpendingViewModel.onSaveButtonClicked() },
+                    modifier = Modifier
+                        .align(alignment = Alignment.CenterVertically)
+                        .weight(0.5f)
+                        .padding(8.dp),
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Green)
+                ) {
+                    Text(text = "Save")
+                }
             }
         } else {
             CircularProgressIndicator(color = Color.Green)

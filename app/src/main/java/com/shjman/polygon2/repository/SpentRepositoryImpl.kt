@@ -7,7 +7,7 @@ import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.UUID
+import java.util.*
 
 
 class SpentRepositoryImpl(
@@ -23,6 +23,8 @@ class SpentRepositoryImpl(
         val formatter = DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER)
         val currentLocalDateTime = LocalDateTime.now()
         val currentDateTimeString = currentLocalDateTime.format(formatter)
+        val uuid = currentDateTimeString + UUID.randomUUID()
+        newData["uuid"] = uuid
         newData["date"] = currentDateTimeString
         newData["spentAmount"] = spentAmount
         newData["category"] = category.name
@@ -34,7 +36,24 @@ class SpentRepositoryImpl(
             .collection(mainCollectionPath)
             .document("spending")
             .collection("spending")
-            .document(currentDateTimeString + " " + UUID.randomUUID().toString())
+            .document(uuid)
+            .set(newData)
+            .await()
+    }
+
+    override suspend fun updateSpending(spending: Spending) {
+        val newData = mutableMapOf<String, Any>()
+        newData["uuid"] = spending.uuid
+        newData["date"] = spending.date.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER))
+        newData["spentAmount"] = spending.spentAmount
+        newData["category"] = spending.category.toString()
+        newData["note"] = spending.note.toString()
+
+        fireStore
+            .collection(mainCollectionPath)
+            .document("spending")
+            .collection("spending")
+            .document(spending.uuid)
             .set(newData)
             .await()
     }

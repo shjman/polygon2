@@ -45,20 +45,12 @@ class EditSpendingViewModel(
     }
 
     fun onSaveButtonClicked() {
-        Timber.d("save this spent amount  == ${amountSpent.value}")
         viewModelScope.launch {
-//            _isLoading.value = true
             withContext(Dispatchers.IO) {
-                spentRepository.saveSpentAmount(
-                    spentAmount = _amountSpent.value ?: 0,
-                    note = _note.value ?: "",
-                    category = selectedCategory.value ?: Category.empty(),
-                )
-                delay(1500)
+                spending.value?.let {
+                    spentRepository.updateSpending(it)
+                }
             }
-            _amountSpent.value = 0
-            _note.value = ""
-//            _isLoading.value = false
         }
     }
 
