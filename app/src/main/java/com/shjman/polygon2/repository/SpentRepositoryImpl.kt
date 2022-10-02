@@ -84,17 +84,9 @@ class SpentRepositoryImpl(
 
         val documents = querySnapshot.documents
 
-        var spendingWithoutUUIDExist = false
-        val remoteSpendings = documents
+        return documents
             .mapNotNull { it.toObject(SpendingRemote::class.java) }
-            .onEach { if (it.uuid == null) spendingWithoutUUIDExist = true }
-
-        return if (spendingWithoutUUIDExist) {
-            addUUIDToSpendings(remoteSpendings)
-            getAllSpending()
-        } else {
-            remoteSpendings.map { it.toSpending() }
-        }
+            .map { it.toSpending() }
     }
 
     private suspend fun addUUIDToSpendings(remoteSpendings: List<SpendingRemote>) {
