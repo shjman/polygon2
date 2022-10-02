@@ -47,7 +47,7 @@ class SpentRepositoryImpl(
         newData["date"] = spending.date.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER))
         newData["spentAmount"] = spending.spentAmount
         newData["category"] = spending.category.toString()
-        newData["note"] = spending.note.toString()
+        newData["note"] = spending.note
 
         fireStore
             .collection(mainCollectionPath)
@@ -59,7 +59,8 @@ class SpentRepositoryImpl(
     }
 
     override suspend fun getSpending(localDateTime: LocalDateTime): Spending? {
-        val querySnapshot = fireStore.collection(mainCollectionPath)
+        val querySnapshot = fireStore
+            .collection(mainCollectionPath)
             .document("spending")
             .collection("spending")
             .get()
@@ -83,9 +84,40 @@ class SpentRepositoryImpl(
 
         val documents = querySnapshot.documents
 
-        return documents
+        var spendingWithoutUUIDExist = false
+        val remoteSpendings = documents
             .mapNotNull { it.toObject(SpendingRemote::class.java) }
-            .map { it.toSpending() }
+            .onEach { if (it.uuid == null) spendingWithoutUUIDExist = true }
+
+        return if (spendingWithoutUUIDExist) {
+            addUUIDToSpendings(remoteSpendings)
+            getAllSpending()
+        } else {
+            remoteSpendings.map { it.toSpending() }
+        }
+    }
+
+    private suspend fun addUUIDToSpendings(remoteSpendings: List<SpendingRemote>) {
+        remoteSpendings
+            .filter { it.uuid == null }
+            .onEach { addUUIDToSpending(it) }
+    }
+
+    private suspend fun addUUIDToSpending(spendingRemote: SpendingRemote) {
+        val newSpendingData = mutableMapOf<String, Any>()
+        newSpendingData["uuid"] = spendingRemote.date + UUID.randomUUID()
+        newSpendingData["date"] = spendingRemote.date ?: ""
+        newSpendingData["spentAmount"] = spendingRemote.spentAmount ?: 0
+        newSpendingData["category"] = spendingRemote.category ?: ""
+        newSpendingData["note"] = spendingRemote.note ?: ""
+
+        fireStore
+            .collection(mainCollectionPath)
+            .document("spending")
+            .collection("spending")
+            .document(spendingRemote.date.toString())
+            .update(newSpendingData)
+            .await()
     }
 
     override suspend fun getAllCategories(): List<Category> {

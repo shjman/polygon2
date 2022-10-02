@@ -72,7 +72,7 @@ fun OverviewScreen(
                         item { summaryOfMonth(beginOfCurrentMonth, allSpendingValueFilteredByLastMonth) }
                         if (overviewType == OverviewType.STANDARD) {
                             allSpendingValue.onEach {
-                                item(key = it.date.toString()) {
+                                item(key = it.uuid) {
                                     SpendingItem(
                                         spending = it,
                                         onSpendingClicked = onSpendingClicked,

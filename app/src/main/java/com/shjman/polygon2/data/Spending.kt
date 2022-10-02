@@ -20,17 +20,17 @@ data class Spending(
     val category: String? = null,
     val spentAmount: Int,
     val currency: String? = null,
-    val note: String? = null,
+    val note: String,
 )
 
 fun SpendingRemote.toSpending(): Spending {
     return Spending(
-        uuid = this.uuid ?: this.date ?: (this.date + UUID.randomUUID()),
+        uuid = this.uuid ?: (this.date + UUID.randomUUID()),
         date = convertDateStringToLocalDateTime(this.date),
         category = this.category,
         spentAmount = this.spentAmount ?: 0,
         currency = this.currency,
-        note = this.note,
+        note = this.note ?: "",
     )
 }
 
