@@ -27,7 +27,8 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun OverviewScreen(
     spentViewModel: SpentViewModel,
-    allSpending: MutableState<List<Spending>?> = remember { mutableStateOf(null) },
+    isLoadingUIState: MutableState<Boolean> = remember { mutableStateOf(false) },
+    allSpending: MutableState<List<Spending>> = remember { mutableStateOf(listOf()) },
     onEditSpendingClicked: (LocalDateTime) -> Unit,
     scope: CoroutineScope = rememberCoroutineScope(),
 ) {
@@ -36,11 +37,17 @@ fun OverviewScreen(
         spentViewModel.allSpending
             .onEach { allSpending.value = it }
             .launchIn(scope)
+        spentViewModel.isLoading
+            .onEach { isLoadingUIState.value = it }
+            .launchIn(scope)
     }
     val onSpendingClicked = { spending: Spending -> Timber.d("clicked on == $spending") }
     val onSpendingLongClicked = { spending: Spending, isDropdownMenuExpanded: MutableState<Boolean> ->
         Timber.d("clicked long on == $spending")
         isDropdownMenuExpanded.value = !isDropdownMenuExpanded.value
+    }
+    val onRemoveSpendingClicked = { uuid: String ->
+        spentViewModel.onRemoveSpendingClicked(uuid)
     }
     var overviewType by remember { mutableStateOf(OverviewType.STANDARD) } // isMonthlyComparison: Boolean -> can be simplified
     Scaffold(
@@ -54,8 +61,7 @@ fun OverviewScreen(
             Column(
                 modifier = Modifier.fillMaxSize(),
             ) {
-                val allSpendingValue = allSpending.value
-                if (allSpendingValue == null) {
+                if (isLoadingUIState.value) {
                     Column(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.Center,
@@ -63,33 +69,37 @@ fun OverviewScreen(
                     ) {
                         CircularProgressIndicator(color = Color.Green)
                     }
-                } else if (allSpendingValue.isEmpty()) {
-                    Text(text = "no data / empty")
                 } else {
-                    LazyColumn {
-                        val beginOfCurrentMonth = LocalDateTime.now().beginOfCurrentMonth()
-                        val allSpendingValueFilteredByLastMonth = allSpendingValue.filter { it.date.isAfter(beginOfCurrentMonth) }
-                        item { summaryOfMonth(beginOfCurrentMonth, allSpendingValueFilteredByLastMonth) }
-                        if (overviewType == OverviewType.STANDARD) {
-                            allSpendingValue.onEach {
-                                item(key = it.uuid) {
-                                    SpendingItem(
-                                        spending = it,
-                                        onSpendingClicked = onSpendingClicked,
-                                        onSpendingLongClicked = onSpendingLongClicked,
-                                        onEditSpendingClicked = onEditSpendingClicked,
-                                    )
+                    val allSpendingValue = allSpending.value
+                    if (allSpendingValue.isEmpty()) {
+                        Text(text = "no data / empty")
+                    } else {
+                        LazyColumn {
+                            val beginOfCurrentMonth = LocalDateTime.now().beginOfCurrentMonth()
+                            val allSpendingValueFilteredByLastMonth = allSpendingValue.filter { it.date.isAfter(beginOfCurrentMonth) }
+                            item { summaryOfMonth(beginOfCurrentMonth, allSpendingValueFilteredByLastMonth) }
+                            if (overviewType == OverviewType.STANDARD) {
+                                allSpendingValue.onEach {
+                                    item(key = it.uuid) {
+                                        SpendingItem(
+                                            spending = it,
+                                            onSpendingClicked = onSpendingClicked,
+                                            onSpendingLongClicked = onSpendingLongClicked,
+                                            onEditSpendingClicked = onEditSpendingClicked,
+                                            onRemoveSpendingClicked = onRemoveSpendingClicked,
+                                        )
+                                    }
                                 }
-                            }
-                        } else {
-                            var beginOfPreviousMonth = beginOfCurrentMonth.minusMonths(1)
-                            var allSpendingMinusPreviousMonth: List<Spending> = allSpendingValue.minus(allSpendingValueFilteredByLastMonth.toSet())
-                            while (allSpendingMinusPreviousMonth.isNotEmpty()) {
-                                val beginOfMonth = beginOfPreviousMonth
-                                val allSpendingFilteredByLastMonth = allSpendingMinusPreviousMonth.filter { it.date.isAfter(beginOfPreviousMonth) }
-                                item { summaryOfMonth(beginOfMonth, allSpendingFilteredByLastMonth) }
-                                beginOfPreviousMonth = beginOfPreviousMonth.minusMonths(1)
-                                allSpendingMinusPreviousMonth = allSpendingMinusPreviousMonth.minus(allSpendingFilteredByLastMonth.toSet())
+                            } else {
+                                var beginOfPreviousMonth = beginOfCurrentMonth.minusMonths(1)
+                                var allSpendingMinusPreviousMonth: List<Spending> = allSpendingValue.minus(allSpendingValueFilteredByLastMonth.toSet())
+                                while (allSpendingMinusPreviousMonth.isNotEmpty()) {
+                                    val beginOfMonth = beginOfPreviousMonth
+                                    val allSpendingFilteredByLastMonth = allSpendingMinusPreviousMonth.filter { it.date.isAfter(beginOfPreviousMonth) }
+                                    item { summaryOfMonth(beginOfMonth, allSpendingFilteredByLastMonth) }
+                                    beginOfPreviousMonth = beginOfPreviousMonth.minusMonths(1)
+                                    allSpendingMinusPreviousMonth = allSpendingMinusPreviousMonth.minus(allSpendingFilteredByLastMonth.toSet())
+                                }
                             }
                         }
                     }
@@ -164,6 +174,7 @@ fun SpendingItem(
     onSpendingLongClicked: (Spending, MutableState<Boolean>) -> Unit,
     isExpandedDropdownMenu: MutableState<Boolean> = remember { mutableStateOf(false) },
     onEditSpendingClicked: (LocalDateTime) -> Unit,
+    onRemoveSpendingClicked: (String) -> Unit,
 ) {
     Card(
         modifier = Modifier
@@ -203,7 +214,10 @@ fun SpendingItem(
                         Text("Edit")
                     }
                     DropdownMenuItem(
-                        onClick = { isExpandedDropdownMenu.value = false }
+                        onClick = {
+                            isExpandedDropdownMenu.value = false
+                            onRemoveSpendingClicked(spending.uuid)
+                        }
                     ) {
                         Text("Remove")
                     }

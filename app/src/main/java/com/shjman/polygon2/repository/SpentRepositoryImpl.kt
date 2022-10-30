@@ -1,9 +1,12 @@
 package com.shjman.polygon2.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ktx.snapshots
 import com.shjman.polygon2.BuildConfig
 import com.shjman.polygon2.data.*
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import java.time.LocalDateTime
@@ -59,6 +62,15 @@ class SpentRepositoryImpl(
         showSpendingUpdated.emit(Unit)
     }
 
+    override suspend fun removeSpending(uuid: String) {
+        fireStore
+            .collection(mainCollectionPath)
+            .document("spending")
+            .collection("spending")
+            .document(uuid)
+            .delete()
+    }
+
     override suspend fun getSpending(localDateTime: LocalDateTime): Spending? {
         val querySnapshot = fireStore
             .collection(mainCollectionPath)
@@ -75,19 +87,14 @@ class SpentRepositoryImpl(
             ?.toSpending()
     }
 
-    override suspend fun getAllSpending(): List<Spending> {
-        val querySnapshot = fireStore
+    override fun getAllSpendingFlow(): Flow<List<Spending>> {
+        return fireStore
             .collection(mainCollectionPath)
             .document("spending")
             .collection("spending")
-            .get()
-            .await()
-
-        val documents = querySnapshot.documents
-
-        return documents
-            .mapNotNull { it.toObject(SpendingRemote::class.java) }
-            .map { it.toSpending() }
+            .snapshots()
+            .map { it.toObjects(SpendingRemote::class.java) }
+            .map { it.map { spendingRemote -> spendingRemote.toSpending() } }
     }
 
     private suspend fun addUUIDToSpendings(remoteSpendings: List<SpendingRemote>) {

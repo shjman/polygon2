@@ -9,8 +9,7 @@ import com.shjman.polygon2.data.Spending
 import com.shjman.polygon2.repository.SpentRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -23,8 +22,8 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
     private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    private val _allSpending: MutableStateFlow<List<Spending>?> = MutableStateFlow(null)
-    val allSpending: StateFlow<List<Spending>?> = _allSpending
+    private val _allSpending: MutableStateFlow<List<Spending>> = MutableStateFlow(listOf())
+    val allSpending: StateFlow<List<Spending>> = _allSpending
 
     private val _note: MutableLiveData<String> = MutableLiveData<String>("")
     val note: LiveData<String> = _note
@@ -62,8 +61,21 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
         }
     }
 
-    suspend fun loadAllSpending() {
-        _allSpending.value = spentRepository.getAllSpending().sortedByDescending { it.date }
+    fun onRemoveSpendingClicked(uuid: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            withContext(Dispatchers.IO) {
+                spentRepository.removeSpending(uuid)
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun loadAllSpending() {
+        spentRepository.getAllSpendingFlow()
+            .map { it.sortedByDescending { spending -> spending.date } }
+            .onEach { _allSpending.value = it }
+            .launchIn(viewModelScope)
     }
 
     suspend fun getAllCategories(): List<Category> {
