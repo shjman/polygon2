@@ -3,6 +3,7 @@ package com.shjman.polygon2.repository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.shjman.polygon2.BuildConfig
 import com.shjman.polygon2.data.*
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import java.time.LocalDateTime
@@ -41,7 +42,7 @@ class SpentRepositoryImpl(
             .await()
     }
 
-    override suspend fun updateSpending(spending: Spending) {
+    override suspend fun updateSpending(spending: Spending, showSpendingUpdated: MutableSharedFlow<Unit>) {
         val newData = mutableMapOf<String, Any>()
         newData["uuid"] = spending.uuid
         newData["date"] = spending.date.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER))
@@ -56,6 +57,7 @@ class SpentRepositoryImpl(
             .document(spending.uuid)
             .set(newData)
             .await()
+        showSpendingUpdated.emit(Unit)
     }
 
     override suspend fun getSpending(localDateTime: LocalDateTime): Spending? {

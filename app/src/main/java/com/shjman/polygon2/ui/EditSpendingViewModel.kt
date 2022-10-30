@@ -8,20 +8,23 @@ import com.shjman.polygon2.data.Category
 import com.shjman.polygon2.data.Spending
 import com.shjman.polygon2.repository.SpentRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import timber.log.Timber
 import java.time.LocalDateTime
 
 class EditSpendingViewModel(
     private val spentRepository: SpentRepository,
 ) : ViewModel() {
 
-    private val _amountSpent = MutableStateFlow<Int?>(0)
+    private val _amountSpent = MutableStateFlow<Int?>(null)
     val amountSpent: StateFlow<Int?> = _amountSpent
+
+    private val _showSpendingUpdated = MutableSharedFlow<Unit>()
+    val showSpendingUpdated: SharedFlow<Unit> = _showSpendingUpdated
 
     private val _spending = MutableStateFlow<Spending?>(null)
     val spending: StateFlow<Spending?> = _spending
@@ -34,6 +37,9 @@ class EditSpendingViewModel(
 
     fun onAmountSpentChanged(amountSpent: Int?) {
         _amountSpent.value = amountSpent
+        _spending.value = spending.value?.copy(
+            spentAmount = amountSpent ?: 0
+        )
     }
 
     fun onNoteChanged(note: String) {
@@ -48,7 +54,7 @@ class EditSpendingViewModel(
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 spending.value?.let {
-                    spentRepository.updateSpending(it)
+                    spentRepository.updateSpending(it, _showSpendingUpdated)
                 }
             }
         }

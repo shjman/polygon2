@@ -37,9 +37,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContent {
             val navController = rememberNavController()
+            val scaffoldState = rememberScaffoldState()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
             val isShowingBottomBar = rememberSaveable { (mutableStateOf(true)) }
@@ -47,13 +47,15 @@ class MainActivity : ComponentActivity() {
                 setupBottomBarVisibility(currentRoute, isShowingBottomBar)
                 Scaffold(
                     bottomBar = { AnimatedBottomNavigation(navController, currentRoute, isShowingBottomBar) },
+                    scaffoldState = scaffoldState,
                 ) {
                     Box {
                         NavigationGraph(
-                            navController = navController,
+                            navHostController = navController,
                             spentViewModel = spentViewModel,
                             editSpendingViewModel = editSpendingViewModel,
                             context = this@MainActivity,
+                            scaffoldState = scaffoldState,
                         )
                     }
                 }
@@ -150,20 +152,21 @@ fun BottomNavigation(
 
 @Composable
 fun NavigationGraph(
-    navController: NavHostController,
+    navHostController: NavHostController,
     spentViewModel: SpentViewModel,
     editSpendingViewModel: EditSpendingViewModel,
     context: Context,
+    scaffoldState: ScaffoldState,
 ) {
     NavHost(
-        navController = navController,
+        navController = navHostController,
         startDestination = Screens.BottomNavItem.Home.screenRoute,
     ) {
         composable(Screens.BottomNavItem.Home.screenRoute) {
             HomeScreen(
                 onClickGoNext = {
-                    navController.navigate(Screens.BottomNavItem.Spent.screenRoute) {
-                        navController.graph.startDestinationRoute?.let { screenRoute ->
+                    navHostController.navigate(Screens.BottomNavItem.Spent.screenRoute) {
+                        navHostController.graph.startDestinationRoute?.let { screenRoute ->
                             popUpTo(screenRoute) {
                                 saveState = true
                             }
@@ -182,7 +185,7 @@ fun NavigationGraph(
                 spentViewModel = spentViewModel,
                 onEditSpendingClicked = { localDateTime ->
                     val localDateTimeString = localDateTime.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER))
-                    navController.navigate(Screens.EditSpending.screenRoute + "/$localDateTimeString") {
+                    navHostController.navigate(Screens.EditSpending.screenRoute + "/$localDateTimeString") {
                         popUpTo(Screens.BottomNavItem.Overview.screenRoute) {
                             saveState = true
                         }
@@ -206,6 +209,8 @@ fun NavigationGraph(
                     localDateTime = convertDateStringToLocalDateTime(it),
                     editSpendingViewModel = editSpendingViewModel,
                     context = context,
+                    scaffoldState = scaffoldState,
+                    navigatePopBackClicked = { navHostController.popBackStack() },
                 )
             }
         }

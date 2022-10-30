@@ -10,7 +10,9 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.shjman.polygon2.data.LOCALE_DATE_TIME_FORMATTER
@@ -18,6 +20,8 @@ import com.shjman.polygon2.data.Spending
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -29,6 +33,9 @@ fun EditSpendingScreen(
     amountSpent: MutableState<Int?> = remember { mutableStateOf(null) },
     scope: CoroutineScope = rememberCoroutineScope(),
     context: Context,
+    scaffoldState: ScaffoldState,
+    navigatePopBackClicked: () -> Unit,
+    focusManager: FocusManager = LocalFocusManager.current,
 ) {
     LaunchedEffect(Unit) {
         editSpendingViewModel.loadSpending(localDateTime)
@@ -37,6 +44,20 @@ fun EditSpendingScreen(
             .launchIn(scope)
         editSpendingViewModel.amountSpent
             .onEach { amountSpent.value = it }
+            .launchIn(scope)
+        editSpendingViewModel.showSpendingUpdated
+            .onEach {
+                scope.launch {
+                    val snackbarResult = scaffoldState.snackbarHostState.showSnackbar(
+                        message = "Spending updated",
+                        actionLabel = "OK. go back"
+                    )
+                    when (snackbarResult) {
+                        SnackbarResult.Dismissed -> Timber.e("aaaa Snackbar Dismissed")
+                        SnackbarResult.ActionPerformed -> navigatePopBackClicked()
+                    }
+                }
+            }
             .launchIn(scope)
     }
     Column(
@@ -100,17 +121,20 @@ fun EditSpendingScreen(
                         .align(alignment = Alignment.CenterVertically)
                         .weight(0.5f)
                         .padding(8.dp),
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.DarkGray)
                 ) {
                     Text(text = "Cancel")
                 }
                 Button(
-                    onClick = { editSpendingViewModel.onSaveButtonClicked() },
+                    onClick = {
+                        focusManager.clearFocus()
+                        editSpendingViewModel.onSaveButtonClicked()
+                    },
                     modifier = Modifier
                         .align(alignment = Alignment.CenterVertically)
                         .weight(0.5f)
                         .padding(8.dp),
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Green)
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Gray)
                 ) {
                     Text(text = "Save")
                 }
