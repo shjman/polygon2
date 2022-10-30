@@ -56,7 +56,6 @@ class SpentRepositoryImpl(
             .collection("spending")
             .document(spending.uuid)
             .set(newData)
-            .await()
         showSpendingUpdated.emit(Unit)
     }
 

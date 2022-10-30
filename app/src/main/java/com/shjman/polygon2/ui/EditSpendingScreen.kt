@@ -110,13 +110,13 @@ fun EditSpendingScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(text = "note == ")
-                Text(text = spendingValue.note.toString())
+                Text(text = spendingValue.note)
             }
             Row(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Button(
-                    onClick = { /*TODO*/ },
+                    onClick = { navigatePopBackClicked() },
                     modifier = Modifier
                         .align(alignment = Alignment.CenterVertically)
                         .weight(0.5f)
