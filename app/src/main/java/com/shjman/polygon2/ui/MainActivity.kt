@@ -186,9 +186,6 @@ fun NavigationGraph(
                 onEditSpendingClicked = { localDateTime ->
                     val localDateTimeString = localDateTime.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER))
                     navHostController.navigate(Screens.EditSpending.screenRoute + "/$localDateTimeString") {
-                        popUpTo(Screens.BottomNavItem.Overview.screenRoute) {
-                            saveState = true
-                        }
                         launchSingleTop = true
                         restoreState = true
                     }
