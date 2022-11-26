@@ -4,24 +4,27 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
 import android.widget.DatePicker
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.shjman.polygon2.data.Category
 import com.shjman.polygon2.data.LOCALE_DATE_TIME_FORMATTER
-import com.shjman.polygon2.data.Spending
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -29,8 +32,13 @@ import java.time.format.DateTimeFormatter
 fun EditSpendingScreen(
     localDateTime: LocalDateTime,
     editSpendingViewModel: EditSpendingViewModel,
-    spending: MutableState<Spending?> = remember { mutableStateOf(null) },
+    isLoading: MutableState<Boolean> = remember { mutableStateOf(true) },
     amountSpent: MutableState<Int?> = remember { mutableStateOf(null) },
+    date: MutableState<LocalDateTime?> = remember { mutableStateOf(null) },
+    note: MutableState<String?> = remember { mutableStateOf(null) },
+    categories: MutableState<List<Category>?> = remember { mutableStateOf(null) },
+    selectedCategory: MutableState<Category?> = remember { mutableStateOf(null) },
+    isDropdownMenuExpanded: MutableState<Boolean> = remember { mutableStateOf(false) },
     scope: CoroutineScope = rememberCoroutineScope(),
     context: Context,
     scaffoldState: ScaffoldState,
@@ -38,22 +46,34 @@ fun EditSpendingScreen(
     focusManager: FocusManager = LocalFocusManager.current,
 ) {
     LaunchedEffect(Unit) {
-        editSpendingViewModel.loadSpending(localDateTime)
-        editSpendingViewModel.spending
-            .onEach { spending.value = it }
+        editSpendingViewModel.loadData(localDateTime)
+        editSpendingViewModel.isLoading
+            .onEach { isLoading.value = it }
+            .launchIn(scope)
+        editSpendingViewModel.date
+            .onEach { date.value = it }
             .launchIn(scope)
         editSpendingViewModel.amountSpent
             .onEach { amountSpent.value = it }
+            .launchIn(scope)
+        editSpendingViewModel.note
+            .onEach { note.value = it }
+            .launchIn(scope)
+        editSpendingViewModel.categories
+            .onEach { categories.value = it }
+            .launchIn(scope)
+        editSpendingViewModel.selectedCategory
+            .onEach { selectedCategory.value = it }
             .launchIn(scope)
         editSpendingViewModel.showSpendingUpdated
             .onEach {
                 scope.launch {
                     val snackbarResult = scaffoldState.snackbarHostState.showSnackbar(
-                        message = "Spending updated",
-                        actionLabel = "OK. go back"
+                        message = "Spending updated. You will be moved back",
+                        actionLabel = "OK.Go"
                     )
                     when (snackbarResult) {
-                        SnackbarResult.Dismissed -> Timber.e("aaaa Snackbar Dismissed")
+                        SnackbarResult.Dismissed -> navigatePopBackClicked()
                         SnackbarResult.ActionPerformed -> navigatePopBackClicked()
                     }
                 }
@@ -68,79 +88,207 @@ fun EditSpendingScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        val spendingValue = spending.value
-        if (spendingValue != null) {
-            Row(
-                modifier = Modifier.fillMaxWidth()
-            ) {
+        when {
+            isLoading.value -> CircularProgressIndicator(color = Color.Green)
+            else -> {
+                DateRowView(
+                    context = context,
+                    date = date.value,
+                    editSpendingViewModel = editSpendingViewModel,
+                )
+                AmountRowView(
+                    amountSpent = amountSpent,
+                    editSpendingViewModel = editSpendingViewModel,
+                )
+                NoteRowView(
+                    note = note,
+                    editSpendingViewModel = editSpendingViewModel,
+                )
+                InputCategoryView2(
+                    categories = categories.value,
+                    selectedCategory = selectedCategory.value,
+                    isDropdownMenuExpanded = isDropdownMenuExpanded,
+                    onDropdownMenuItemClicked = {
+                        editSpendingViewModel.onSelectedCategoryChanged(it)
+                        isDropdownMenuExpanded.value = false
+                    }
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Button(
+                        onClick = { navigatePopBackClicked() },
+                        modifier = Modifier
+                            .align(alignment = Alignment.CenterVertically)
+                            .weight(0.5f)
+                            .padding(8.dp),
+                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.DarkGray)
+                    ) {
+                        Text(
+                            text = "Cancel",
+                            color = Color.White,
+                        )
+                    }
+                    Button(
+                        onClick = {
+                            focusManager.clearFocus()
+                            editSpendingViewModel.onSaveButtonClicked()
+                        },
+                        modifier = Modifier
+                            .align(alignment = Alignment.CenterVertically)
+                            .weight(0.5f)
+                            .padding(8.dp),
+                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.Gray)
+                    ) {
+                        Text(text = "Save")
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun NoteRowView(
+    note: MutableState<String?>,
+    editSpendingViewModel: EditSpendingViewModel,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = "note == ",
+            modifier = Modifier
+                .align(alignment = Alignment.CenterVertically)
+                .weight(0.3f),
+        )
+        TextField(
+            modifier = Modifier.weight(0.7f),
+            value = note.value ?: "",
+            onValueChange = { editSpendingViewModel.onNoteChanged(it) },
+            placeholder = { Text("enter note") },
+        )
+    }
+}
+
+@Composable
+fun AmountRowView(
+    amountSpent: MutableState<Int?>,
+    editSpendingViewModel: EditSpendingViewModel,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = "amount == ",
+            modifier = Modifier
+                .align(alignment = Alignment.CenterVertically)
+                .weight(0.3f),
+        )
+        TextField(
+            modifier = Modifier.weight(0.7f),
+            value = if (amountSpent.value == null) "" else amountSpent.value.toString(),
+            onValueChange = { editSpendingViewModel.onAmountSpentChanged(calculateLimitAmount(it) ?: 0) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            placeholder = { Text("enter the amount spent") }
+        )
+    }
+}
+
+@Composable
+fun DateRowView(
+    context: Context,
+    date: LocalDateTime?,
+    editSpendingViewModel: EditSpendingViewModel,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = "date == ",
+            modifier = Modifier
+                .align(alignment = Alignment.CenterVertically)
+                .weight(0.3f),
+        )
+        Button(
+            modifier = Modifier.weight(0.7f),
+            onClick = {
+                getDatePickerDialog(context, editSpendingViewModel, date)?.show()
+                getTimePickerDialog(context, editSpendingViewModel, date)?.show()
+            },
+        ) {
+            Text(text = date?.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER)) ?: "")
+        }
+    }
+}
+
+
+@Composable
+fun InputCategoryView2( // todo
+    categories: List<Category>?,
+    selectedCategory: Category?,
+    isDropdownMenuExpanded: MutableState<Boolean>,
+    onDropdownMenuItemClicked: (Category) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .padding(8.dp)
+            .clickable { isDropdownMenuExpanded.value = !isDropdownMenuExpanded.value }
+            .wrapContentSize(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            text = "category:",
+            modifier = Modifier.padding(4.dp),
+        )
+        when {
+            categories == null -> {
                 Text(
-                    text = "date == ",
-                    modifier = Modifier
-                        .align(alignment = Alignment.CenterVertically)
-                        .weight(0.3f),
+                    text = "loading...",
+                    modifier = Modifier.padding(4.dp),
                 )
-                Button(
-                    modifier = Modifier.weight(0.7f),
-                    onClick = {
-                        getDatePickerDialog(context, editSpendingViewModel, spending)?.show()
-                        getTimePickerDialog(context, editSpendingViewModel, spending)?.show()
-                    },
-                ) {
-                    Text(text = spendingValue.date.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER)))
-                }
             }
-            Row(
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            categories.isEmpty() -> {
                 Text(
-                    text = "amount == ",
-                    modifier = Modifier
-                        .align(alignment = Alignment.CenterVertically)
-                        .weight(0.3f),
-                )
-                TextField(
-                    modifier = Modifier.weight(0.7f),
-                    value = if (amountSpent.value == null) "" else amountSpent.value.toString(),
-                    onValueChange = { editSpendingViewModel.onAmountSpentChanged(calculateLimitAmount(it)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    placeholder = { Text("enter the amount spent") }
+                    text = "list is empty",
+                    modifier = Modifier.padding(4.dp),
                 )
             }
-            Row(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = "note == ")
-                Text(text = spendingValue.note)
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Button(
-                    onClick = { navigatePopBackClicked() },
-                    modifier = Modifier
-                        .align(alignment = Alignment.CenterVertically)
-                        .weight(0.5f)
-                        .padding(8.dp),
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.DarkGray)
+            categories.isNotEmpty() -> {
+                Text(
+                    text = selectedCategory?.name ?: "",  // todo fix it
+                    modifier = Modifier.padding(4.dp),
+                )
+                Icon(
+                    imageVector = Icons.Filled.ArrowDropDown,
+                    contentDescription = Icons.Filled.ArrowDropDown.toString(),
+                )
+                DropdownMenu(
+                    expanded = isDropdownMenuExpanded.value,
+                    onDismissRequest = { isDropdownMenuExpanded.value = false },
                 ) {
-                    Text(text = "Cancel")
-                }
-                Button(
-                    onClick = {
-                        focusManager.clearFocus()
-                        editSpendingViewModel.onSaveButtonClicked()
-                    },
-                    modifier = Modifier
-                        .align(alignment = Alignment.CenterVertically)
-                        .weight(0.5f)
-                        .padding(8.dp),
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Gray)
-                ) {
-                    Text(text = "Save")
+                    categories.forEach { category ->
+                        DropdownMenuItem(
+                            onClick = { onDropdownMenuItemClicked(category) }
+                        ) {
+                            val isSelected = category == selectedCategory
+                            val style = if (isSelected) {
+                                MaterialTheme.typography.body1.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colors.secondary
+                                )
+                            } else {
+                                MaterialTheme.typography.body1.copy(
+                                    fontWeight = FontWeight.Normal,
+                                    color = MaterialTheme.colors.onSurface
+                                )
+                            }
+                            Text(text = category.name, style = style)
+                        }
+                    }
                 }
             }
-        } else {
-            CircularProgressIndicator(color = Color.Green)
         }
     }
 }
@@ -148,9 +296,9 @@ fun EditSpendingScreen(
 fun getDatePickerDialog(
     context: Context,
     editSpendingViewModel: EditSpendingViewModel,
-    spending: MutableState<Spending?>,
+    localDateTime: LocalDateTime?,
 ): DatePickerDialog? {
-    return spending.value?.date?.let {
+    return localDateTime?.let {
         DatePickerDialog(
             context,
             { _: DatePicker, year: Int, month: Int, dayOfMonth: Int ->
@@ -166,9 +314,9 @@ fun getDatePickerDialog(
 fun getTimePickerDialog(
     context: Context,
     editSpendingViewModel: EditSpendingViewModel,
-    spending: MutableState<Spending?>,
+    localDateTime: LocalDateTime?,
 ): TimePickerDialog? {
-    return spending.value?.date?.let {
+    return localDateTime?.let {
         TimePickerDialog(
             context,
             { _, newHour: Int, newMinute: Int ->
@@ -182,7 +330,7 @@ fun getTimePickerDialog(
 }
 
 fun calculateLimitAmount(text: String): Int? {
-    val maxIntAmount = 99999999
+    val maxIntAmount = 99999999 // todo fix it
     val amountLengthLimit = 9
     return if (text.length >= amountLengthLimit) maxIntAmount else text.toIntOrNull()
 }

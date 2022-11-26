@@ -27,7 +27,7 @@ fun SpendingRemote.toSpending(): Spending {
     return Spending(
         uuid = this.uuid ?: (this.date + UUID.randomUUID()),
         date = convertDateStringToLocalDateTime(this.date),
-        category = this.category,
+        category = this.category, // mb there transformer string to Category? new request? // todo
         spentAmount = this.spentAmount ?: 0,
         currency = this.currency,
         note = this.note ?: "",
