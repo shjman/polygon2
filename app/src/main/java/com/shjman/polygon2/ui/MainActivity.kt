@@ -18,15 +18,22 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.sp
-import androidx.navigation.*
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.shjman.polygon2.R
 import com.shjman.polygon2.data.LOCALE_DATE_TIME_FORMATTER
 import com.shjman.polygon2.data.convertDateStringToLocalDateTime
 import com.shjman.polygon2.ui.MainActivity.Companion.SHOW_HIDE_BOTTOM_BAR_ANIMATION_SPEED
+import com.shjman.polygon2.ui.categories.CategoriesScreen
+import com.shjman.polygon2.ui.categories.CategoriesViewModel
+import com.shjman.polygon2.ui.categories.EditCategoryScreen
+import com.shjman.polygon2.ui.categories.EditCategoryViewModel
 import com.shjman.polygon2.ui.theme.Polygon2Theme
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.time.format.DateTimeFormatter
@@ -35,6 +42,7 @@ class MainActivity : ComponentActivity() {
     private val spentViewModel: SpentViewModel by viewModel()
     private val editSpendingViewModel: EditSpendingViewModel by viewModel()
     private val categoriesViewModel: CategoriesViewModel by viewModel()
+    private val editCategoryViewModel: EditCategoryViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,6 +64,7 @@ class MainActivity : ComponentActivity() {
                             spentViewModel = spentViewModel,
                             editSpendingViewModel = editSpendingViewModel,
                             categoriesViewModel = categoriesViewModel,
+                            editCategoryViewModel = editCategoryViewModel,
                             context = this@MainActivity,
                             scaffoldState = scaffoldState,
                         )
@@ -78,6 +87,9 @@ class MainActivity : ComponentActivity() {
                 isShowingBottomBar.value = false
             }
             Screens.Categories.screenRoute -> {
+                isShowingBottomBar.value = false
+            }
+            Screens.EditCategory.screenRoute -> {
                 isShowingBottomBar.value = false
             }
             else -> {
@@ -161,6 +173,7 @@ fun NavigationGraph(
     spentViewModel: SpentViewModel,
     editSpendingViewModel: EditSpendingViewModel,
     categoriesViewModel: CategoriesViewModel,
+    editCategoryViewModel: EditCategoryViewModel,
     context: Context,
     scaffoldState: ScaffoldState,
 ) {
@@ -221,10 +234,18 @@ fun NavigationGraph(
             }
         }
         composable(
+            route = Screens.EditCategory.screenRoute
+        ) {
+            EditCategoryScreen(
+                editCategoryViewModel = editCategoryViewModel,
+            )
+        }
+        composable(
             route = Screens.Categories.screenRoute
         ) {
             CategoriesScreen(
                 categoriesViewModel = categoriesViewModel,
+                navigateToEditCategory = { navHostController.navigate(Screens.EditCategory.screenRoute) },
             )
         }
     }

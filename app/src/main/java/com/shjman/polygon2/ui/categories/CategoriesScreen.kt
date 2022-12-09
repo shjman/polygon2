@@ -1,4 +1,4 @@
-package com.shjman.polygon2.ui
+package com.shjman.polygon2.ui.categories
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,17 +21,16 @@ fun CategoriesScreen(
     categoriesViewModel: CategoriesViewModel,
     scope: CoroutineScope = rememberCoroutineScope(),
     categoriesState: MutableState<List<Category>?> = remember { mutableStateOf(null) },
+    navigateToEditCategory: () -> Unit,
+    addNewCategoryClicked: () -> Unit = { categoriesViewModel.addNewCategoryClicked() }
 ) {
-    val addNewCategoryClicked = {
-        categoriesViewModel.addNewCategoryClicked()
-    }
     LaunchedEffect(Unit) {
         categoriesViewModel.loadCategories()
         categoriesViewModel.categories
             .onEach { categoriesState.value = it }
             .launchIn(scope)
-        categoriesViewModel.addNewCategoryClicked
-            .onEach { }
+        categoriesViewModel.onAddNewCategoryClicked
+            .onEach { navigateToEditCategory() }
             .launchIn(scope)
     }
     Column(

@@ -1,13 +1,11 @@
-package com.shjman.polygon2.ui
+package com.shjman.polygon2.ui.categories
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shjman.polygon2.data.Category
 import com.shjman.polygon2.repository.SpentRepository
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class CategoriesViewModel(
@@ -17,8 +15,8 @@ class CategoriesViewModel(
     private val _categories = MutableStateFlow<List<Category>?>(null)
     val categories: StateFlow<List<Category>?> = _categories.asStateFlow()
 
-    private val _addNewCategoryClicked = MutableStateFlow(Unit)
-    val addNewCategoryClicked = _addNewCategoryClicked.asStateFlow()
+    private val _onAddNewCategoryClicked = MutableSharedFlow<Unit>()
+    val onAddNewCategoryClicked = _onAddNewCategoryClicked.asSharedFlow()
 
     fun loadCategories() {
         viewModelScope.launch {
@@ -30,5 +28,8 @@ class CategoriesViewModel(
     }
 
     fun addNewCategoryClicked() {
+        viewModelScope.launch {
+            _onAddNewCategoryClicked.emit(Unit)
+        }
     }
 }
