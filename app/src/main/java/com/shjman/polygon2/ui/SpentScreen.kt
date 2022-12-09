@@ -1,12 +1,14 @@
 package com.shjman.polygon2.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Face
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -14,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -33,6 +36,7 @@ fun SpentScreen(
     isDropdownMenuExpanded: MutableState<Boolean> = remember { mutableStateOf(false) },
     focusManager: FocusManager = LocalFocusManager.current,
     scope: CoroutineScope = rememberCoroutineScope(),
+    onNavigateToCategoriesScreenClicked: () -> Unit,
 ) {
     LaunchedEffect(Unit) {
         categoriesState.value = spentViewModel.getAllCategories()
@@ -60,7 +64,8 @@ fun SpentScreen(
             onDropdownMenuItemClicked = {
                 spentViewModel.onSelectedCategoryChanged(it)
                 isDropdownMenuExpanded.value = false
-            }
+            },
+            onNavigateToCategoriesScreenClicked = onNavigateToCategoriesScreenClicked,
         )
         InputAmountSpendView(
             isLoadingUI = isLoadingUIState,
@@ -88,15 +93,18 @@ fun InputCategoryView(
     selectedCategory: Category,
     isDropdownMenuExpanded: MutableState<Boolean>,
     onDropdownMenuItemClicked: (Category) -> Unit,
+    onNavigateToCategoriesScreenClicked: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .padding(8.dp)
-            .clickable { isDropdownMenuExpanded.value = !isDropdownMenuExpanded.value }
             .wrapContentSize(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
+        IconButton(onClick = onNavigateToCategoriesScreenClicked) {
+            Icon(Icons.Default.EditNote, "")
+        }
         Text(
             text = "category:",
             modifier = Modifier.padding(4.dp),
@@ -109,12 +117,21 @@ fun InputCategoryView(
                 )
             }
             categories.isEmpty() -> {
-                Text(
-                    text = "list is empty",
-                    modifier = Modifier.padding(4.dp),
-                )
+                val interactionSource = remember { MutableInteractionSource() }
+                Card {
+                    Text(
+                        text = AnnotatedString("list is empty, click to add new category"),
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .clickable(
+                                onClick = onNavigateToCategoriesScreenClicked,
+                                interactionSource = interactionSource,
+                                indication = rememberRipple(bounded = true),
+                            ),
+                    )
+                }
             }
-            categories.isNotEmpty() -> {
+            else -> {
                 Text(
                     text = selectedCategory.name,
                     modifier = Modifier.padding(4.dp),

@@ -34,6 +34,7 @@ import java.time.format.DateTimeFormatter
 class MainActivity : ComponentActivity() {
     private val spentViewModel: SpentViewModel by viewModel()
     private val editSpendingViewModel: EditSpendingViewModel by viewModel()
+    private val categoriesViewModel: CategoriesViewModel by viewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,6 +55,7 @@ class MainActivity : ComponentActivity() {
                             navHostController = navController,
                             spentViewModel = spentViewModel,
                             editSpendingViewModel = editSpendingViewModel,
+                            categoriesViewModel = categoriesViewModel,
                             context = this@MainActivity,
                             scaffoldState = scaffoldState,
                         )
@@ -73,6 +75,9 @@ class MainActivity : ComponentActivity() {
                 isShowingBottomBar.value = true
             }
             Screens.EditSpending.screenRoute -> {
+                isShowingBottomBar.value = false
+            }
+            Screens.Categories.screenRoute -> {
                 isShowingBottomBar.value = false
             }
             else -> {
@@ -155,6 +160,7 @@ fun NavigationGraph(
     navHostController: NavHostController,
     spentViewModel: SpentViewModel,
     editSpendingViewModel: EditSpendingViewModel,
+    categoriesViewModel: CategoriesViewModel,
     context: Context,
     scaffoldState: ScaffoldState,
 ) {
@@ -178,7 +184,10 @@ fun NavigationGraph(
             )
         }
         composable(Screens.BottomNavItem.Spent.screenRoute) {
-            SpentScreen(spentViewModel = spentViewModel)
+            SpentScreen(
+                spentViewModel = spentViewModel,
+                onNavigateToCategoriesScreenClicked = { navHostController.navigate(Screens.Categories.screenRoute) },
+            )
         }
         composable(Screens.BottomNavItem.Overview.screenRoute) {
             OverviewScreen(
@@ -210,6 +219,13 @@ fun NavigationGraph(
                     navigatePopBackClicked = { navHostController.popBackStack() },
                 )
             }
+        }
+        composable(
+            route = Screens.Categories.screenRoute
+        ) {
+            CategoriesScreen(
+                categoriesViewModel = categoriesViewModel,
+            )
         }
     }
 }

@@ -224,7 +224,8 @@ fun DateRowView(
 
 
 @Composable
-fun InputCategoryView2( // todo
+fun InputCategoryView2(
+    // todo
     categories: List<Category>?,
     selectedCategory: Category?,
     isDropdownMenuExpanded: MutableState<Boolean>,
@@ -255,7 +256,7 @@ fun InputCategoryView2( // todo
                     modifier = Modifier.padding(4.dp),
                 )
             }
-            categories.isNotEmpty() -> {
+            else -> {
                 Text(
                     text = selectedCategory?.name ?: "",  // todo fix it
                     modifier = Modifier.padding(4.dp),
