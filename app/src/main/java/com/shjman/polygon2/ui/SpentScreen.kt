@@ -132,14 +132,19 @@ fun InputCategoryView(
                 }
             }
             else -> {
-                Text(
-                    text = selectedCategory.name,
-                    modifier = Modifier.padding(4.dp),
-                )
-                Icon(
-                    imageVector = Icons.Filled.ArrowDropDown,
-                    contentDescription = Icons.Filled.ArrowDropDown.toString(),
-                )
+                Row(
+                    modifier = Modifier
+                        .clickable { isDropdownMenuExpanded.value = !isDropdownMenuExpanded.value },
+                ) {
+                    Text(
+                        text = selectedCategory.name,
+                        modifier = Modifier.padding(4.dp)
+                    )
+                    Icon(
+                        imageVector = Icons.Filled.ArrowDropDown,
+                        contentDescription = Icons.Filled.ArrowDropDown.toString(),
+                    )
+                }
                 DropdownMenu(
                     expanded = isDropdownMenuExpanded.value,
                     onDismissRequest = { isDropdownMenuExpanded.value = false },
