@@ -85,7 +85,7 @@ fun AddNewCategoryButton(
             .fillMaxWidth()
             .padding(8.dp),
         onClick = addNewCategoryClicked,
-        colors = ButtonDefaults.buttonColors(backgroundColor = Color.DarkGray),
+        colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black),
     ) {
         Text(
             text = "add new category",

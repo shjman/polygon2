@@ -136,4 +136,29 @@ class SpentRepositoryImpl(
             categoryRemote.toCategory()
         }
     }
+
+    override fun getCategoriesFlow(): Flow<List<Category>> {
+        return fireStore
+            .collection(mainCollectionPath)
+            .document("preferences")
+            .collection("categories")
+            .snapshots()
+            .map { it.toObjects(CategoryRemote::class.java) }
+            .map { it.map { categoryRemote -> categoryRemote.toCategory() } }
+    }
+
+    override suspend fun saveCategory(category: Category) {
+        val newData = mutableMapOf<String, String>()
+        val id = category.id ?: UUID.randomUUID().toString() // todo make id not null
+        newData["id"] = id
+        newData["name"] = category.name
+
+        fireStore
+            .collection(mainCollectionPath)
+            .document("preferences")
+            .collection("categories")
+            .document(id)
+            .set(newData)
+            .await()
+    }
 }

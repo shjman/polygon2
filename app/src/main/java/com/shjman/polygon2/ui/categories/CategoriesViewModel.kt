@@ -19,12 +19,9 @@ class CategoriesViewModel(
     val onAddNewCategoryClicked = _onAddNewCategoryClicked.asSharedFlow()
 
     fun loadCategories() {
-        viewModelScope.launch {
-            delay(1000)
-            spentRepository.getAllCategories().let {
-                _categories.value = it
-            }
-        }
+        spentRepository.getCategoriesFlow()
+            .onEach { _categories.value = it }
+            .launchIn(viewModelScope)
     }
 
     fun addNewCategoryClicked() {

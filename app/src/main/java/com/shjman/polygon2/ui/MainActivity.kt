@@ -238,6 +238,7 @@ fun NavigationGraph(
         ) {
             EditCategoryScreen(
                 editCategoryViewModel = editCategoryViewModel,
+                popBackStack = { navHostController.popBackStack() },
             )
         }
         composable(
