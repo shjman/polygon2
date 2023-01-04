@@ -145,10 +145,7 @@ class SpentRepositoryImpl(
             .collection("categories")
             .snapshots()
             .map { it.toObjects(CategoryRemote::class.java) }
-            .map {
-                val newList = it.map { categoryRemote -> categoryRemote.toCategory() }
-                newList.minus(Category("", "empty category")) // todo remove after migration
-            }
+            .map { it.map { categoryRemote -> categoryRemote.toCategory() } }
     }
 
     override suspend fun saveCategory(category: Category) {

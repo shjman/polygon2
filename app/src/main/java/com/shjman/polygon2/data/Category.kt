@@ -11,13 +11,13 @@ data class Category(
 ) {
     companion object {
         fun empty() = Category(
-            id = "",
+            id = "id of the empty category",
             name = "empty category",
         )
     }
 }
 
 fun CategoryRemote.toCategory() = Category(
-    id = this.id ?: "",
-    name = this.name ?: "empty category",
+    id = this.id ?: Category.empty().id,
+    name = this.name ?: Category.empty().name,
 )

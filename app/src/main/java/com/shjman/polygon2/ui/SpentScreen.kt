@@ -123,7 +123,7 @@ fun InputCategoryView(
                     modifier = Modifier.padding(4.dp),
                 )
             }
-            categories.isEmpty() -> {
+            categories.isEmpty() -> { // todo remove impossible case
                 val interactionSource = remember { MutableInteractionSource() }
                 Card {
                     Text(

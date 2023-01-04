@@ -20,7 +20,7 @@ class CategoriesViewModel(
 
     fun loadCategories() {
         spentRepository.getCategoriesFlow()
-            .onEach { _categories.value = it }
+            .onEach { _categories.value = it.minus(Category.empty()) }
             .launchIn(viewModelScope)
     }
 

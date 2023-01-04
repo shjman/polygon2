@@ -82,13 +82,20 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
     }
 
     fun startObserveCategories() {
-        var isFirstElementReceived = false
+        var isSelectedCategorySet = false
         spentRepository.getCategoriesFlow()
-            .onEach {
-                _categories.value = it
-                if (!isFirstElementReceived) {
-                    _selectedCategory.value = it.first()
-                    isFirstElementReceived = true
+            .onEach { categories ->
+                when {
+                    categories.isEmpty() -> {
+                        spentRepository.saveCategory(Category.empty())
+                        return@onEach
+                    }
+                    categories.size == 1 -> _categories.value = categories
+                    else -> _categories.value = categories.minus(Category.empty())
+                }
+                if (!isSelectedCategorySet) {
+                    _selectedCategory.value = categories.first() // todo set the most popular category
+                    isSelectedCategorySet = true
                 }
             }
             .launchIn(viewModelScope)
