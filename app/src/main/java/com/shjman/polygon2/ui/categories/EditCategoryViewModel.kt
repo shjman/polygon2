@@ -4,10 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shjman.polygon2.data.Category
 import com.shjman.polygon2.repository.SpentRepository
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
 
@@ -16,13 +13,13 @@ class EditCategoryViewModel(
 ) : ViewModel() {
 
     private val _isProceedButtonEnabled = MutableStateFlow(false)
-    val isProceedButtonEnabled = _isProceedButtonEnabled as StateFlow<Boolean>
+    val isProceedButtonEnabled = _isProceedButtonEnabled.asStateFlow()
 
     private val _categoryName = MutableStateFlow("")
-    val categoryName = _categoryName as StateFlow<String>
+    val categoryName = _categoryName.asStateFlow()
 
     private val _popBackStack = MutableSharedFlow<Unit>()
-    val popBackStack = _popBackStack as SharedFlow<Unit>
+    val popBackStack = _popBackStack.asSharedFlow()
 
     fun categoryValueChanged(newValue: String) {
         _categoryName.value = newValue

@@ -9,6 +9,7 @@ data class SpendingRemote(
     val uuid: String? = null,
     val date: String? = null,
     val category: String? = null,
+    val categoryID: String? = null,
     val spentAmount: Int? = null,
     val currency: String? = null,
     val note: String? = null,
@@ -17,7 +18,8 @@ data class SpendingRemote(
 data class Spending(
     val uuid: String,
     val date: LocalDateTime,
-    val category: String? = null,
+    val category: String? = null, // todo remove it after migration
+    val categoryID: String? = null,
     val spentAmount: Int,
     val currency: String? = null,
     val note: String,
@@ -28,6 +30,7 @@ fun SpendingRemote.toSpending(): Spending {
         uuid = this.uuid ?: (this.date + UUID.randomUUID()),
         date = convertDateStringToLocalDateTime(this.date),
         category = this.category, // mb there transformer string to Category? new request? // todo
+        categoryID = this.categoryID,
         spentAmount = this.spentAmount ?: 0,
         currency = this.currency,
         note = this.note ?: "",

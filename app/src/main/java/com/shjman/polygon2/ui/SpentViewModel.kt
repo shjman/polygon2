@@ -25,11 +25,14 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
     private val _allSpending: MutableStateFlow<List<Spending>> = MutableStateFlow(listOf())
     val allSpending: StateFlow<List<Spending>> = _allSpending
 
+    private val _categories = MutableStateFlow<List<Category>?>(null)
+    val categories = _categories.asStateFlow()
+
     private val _note: MutableLiveData<String> = MutableLiveData<String>("")
     val note: LiveData<String> = _note
 
-    private val _selectedCategory: MutableLiveData<Category> = MutableLiveData<Category>(Category.empty())
-    val selectedCategory: LiveData<Category> = _selectedCategory
+    private val _selectedCategory = MutableStateFlow<Category?>(null)
+    val selectedCategory: StateFlow<Category?> = _selectedCategory.asStateFlow()
 
     fun onAmountSpentChanged(amountSpent: Int) {
         _amountSpent.value = amountSpent
@@ -78,12 +81,16 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
             .launchIn(viewModelScope)
     }
 
-    suspend fun getAllCategories(): List<Category> {
-        Timber.e("aaaa getAllCategories()")
-        delay(1500)
-        val allCategories = spentRepository.getAllCategories()
-        allCategories.firstOrNull()?.let { _selectedCategory.value = it }
-        Timber.e("aaaa allCategories == $allCategories")
-        return allCategories
+    fun startObserveCategories() {
+        var isFirstElementReceived = false
+        spentRepository.getCategoriesFlow()
+            .onEach {
+                _categories.value = it
+                if (!isFirstElementReceived) {
+                    _selectedCategory.value = it.first()
+                    isFirstElementReceived = true
+                }
+            }
+            .launchIn(viewModelScope)
     }
 }

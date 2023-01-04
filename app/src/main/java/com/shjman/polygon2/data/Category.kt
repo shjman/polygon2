@@ -6,18 +6,18 @@ data class CategoryRemote(
 )
 
 data class Category(
-    val id: String? = null,
+    val id: String,
     val name: String = "",
 ) {
     companion object {
         fun empty() = Category(
-            id = null,
-            name = "",
+            id = "",
+            name = "empty category",
         )
     }
 }
 
 fun CategoryRemote.toCategory() = Category(
-    id = this.id,
-    name = this.name ?: "",
+    id = this.id ?: "",
+    name = this.name ?: "empty category",
 )

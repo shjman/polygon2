@@ -30,7 +30,7 @@ fun SpentScreen(
     spentViewModel: SpentViewModel,
     categoriesState: MutableState<List<Category>?> = remember { mutableStateOf(null) },
     isLoadingUIState: MutableState<Boolean> = remember { mutableStateOf(false) },
-    selectedCategory: Category = spentViewModel.selectedCategory.observeAsState(Category.empty()).value,
+    selectedCategory: MutableState<Category?> = remember { mutableStateOf(null) },
     amountSpent: Int = spentViewModel.amountSpent.observeAsState(0).value,
     note: String = spentViewModel.note.observeAsState("").value,
     isDropdownMenuExpanded: MutableState<Boolean> = remember { mutableStateOf(false) },
@@ -39,7 +39,14 @@ fun SpentScreen(
     onNavigateToCategoriesScreenClicked: () -> Unit,
 ) {
     LaunchedEffect(Unit) {
-        categoriesState.value = spentViewModel.getAllCategories()
+        spentViewModel.startObserveCategories()
+
+        spentViewModel.selectedCategory
+            .onEach { selectedCategory.value = it }
+            .launchIn(scope)
+        spentViewModel.categories
+            .onEach { categoriesState.value = it }
+            .launchIn(scope)
         spentViewModel.isLoading
             .onEach { isLoadingUIState.value = it }
             .launchIn(scope)
@@ -59,7 +66,7 @@ fun SpentScreen(
     ) {
         InputCategoryView(
             categories = categoriesState.value,
-            selectedCategory = selectedCategory,
+            selectedCategory = selectedCategory.value,
             isDropdownMenuExpanded = isDropdownMenuExpanded,
             onDropdownMenuItemClicked = {
                 spentViewModel.onSelectedCategoryChanged(it)
@@ -90,7 +97,7 @@ fun SpentScreen(
 @Composable
 fun InputCategoryView(
     categories: List<Category>?,
-    selectedCategory: Category,
+    selectedCategory: Category?,
     isDropdownMenuExpanded: MutableState<Boolean>,
     onDropdownMenuItemClicked: (Category) -> Unit,
     onNavigateToCategoriesScreenClicked: () -> Unit,
@@ -120,7 +127,7 @@ fun InputCategoryView(
                 val interactionSource = remember { MutableInteractionSource() }
                 Card {
                     Text(
-                        text = AnnotatedString("list is empty, click to add new category"),
+                        text = AnnotatedString("list is empty"),
                         modifier = Modifier
                             .padding(4.dp)
                             .clickable(
@@ -137,7 +144,7 @@ fun InputCategoryView(
                         .clickable { isDropdownMenuExpanded.value = !isDropdownMenuExpanded.value },
                 ) {
                     Text(
-                        text = selectedCategory.name,
+                        text = selectedCategory?.name ?: "",
                         modifier = Modifier.padding(4.dp)
                     )
                     Icon(
@@ -157,12 +164,12 @@ fun InputCategoryView(
                             val style = if (isSelected) {
                                 MaterialTheme.typography.body1.copy(
                                     fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colors.secondary
+                                    color = MaterialTheme.colors.secondary,
                                 )
                             } else {
                                 MaterialTheme.typography.body1.copy(
                                     fontWeight = FontWeight.Normal,
-                                    color = MaterialTheme.colors.onSurface
+                                    color = MaterialTheme.colors.onSurface,
                                 )
                             }
                             Text(text = category.name, style = style)

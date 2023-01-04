@@ -32,6 +32,7 @@ class SpentRepositoryImpl(
         newData["date"] = currentDateTimeString
         newData["spentAmount"] = spentAmount
         newData["category"] = category.name
+        newData["categoryID"] = category.id
 //        newData["currency"] = "zl"
         newData["note"] = note
         Timber.d("newData == $newData")
@@ -144,12 +145,15 @@ class SpentRepositoryImpl(
             .collection("categories")
             .snapshots()
             .map { it.toObjects(CategoryRemote::class.java) }
-            .map { it.map { categoryRemote -> categoryRemote.toCategory() } }
+            .map {
+                val newList = it.map { categoryRemote -> categoryRemote.toCategory() }
+                newList.minus(Category("", "empty category")) // todo remove after migration
+            }
     }
 
     override suspend fun saveCategory(category: Category) {
         val newData = mutableMapOf<String, String>()
-        val id = category.id ?: UUID.randomUUID().toString() // todo make id not null
+        val id = category.id
         newData["id"] = id
         newData["name"] = category.name
 
