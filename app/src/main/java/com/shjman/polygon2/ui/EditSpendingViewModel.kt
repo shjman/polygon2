@@ -62,7 +62,7 @@ class EditSpendingViewModel(
                     spentAmount = _spentAmount.value,
                     note = _note.value,
                     date = _date.value,
-                    category = "",
+                    category = Category.empty(), // todo fix
                 ).let {
                     spentRepository.updateSpending(it, _showSpendingUpdated)
                 }

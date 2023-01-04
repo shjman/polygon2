@@ -22,8 +22,8 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
     private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    private val _allSpending: MutableStateFlow<List<Spending>> = MutableStateFlow(listOf())
-    val allSpending: StateFlow<List<Spending>> = _allSpending
+    private val _allSpending: MutableStateFlow<List<Spending>?> = MutableStateFlow(null)
+    val allSpending: StateFlow<List<Spending>?> = _allSpending
 
     private val _categories = MutableStateFlow<List<Category>?>(null)
     val categories = _categories.asStateFlow()
@@ -74,8 +74,8 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
         }
     }
 
-    fun loadAllSpending() {
-        spentRepository.getAllSpendingFlow()
+    fun startObserveSpendings() {
+        spentRepository.getSpendingsFlow()
             .map { it.sortedByDescending { spending -> spending.date } }
             .onEach { _allSpending.value = it }
             .launchIn(viewModelScope)
@@ -90,8 +90,7 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
                         spentRepository.saveCategory(Category.empty())
                         return@onEach
                     }
-                    categories.size == 1 -> _categories.value = categories
-                    else -> _categories.value = categories.minus(Category.empty())
+                    else -> _categories.value = categories
                 }
                 if (!isSelectedCategorySet) {
                     _selectedCategory.value = categories.first() // todo set the most popular category

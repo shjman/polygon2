@@ -2,6 +2,7 @@ package com.shjman.polygon2.repository
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.snapshots
+import com.google.firebase.firestore.ktx.toObject
 import com.shjman.polygon2.BuildConfig
 import com.shjman.polygon2.data.*
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +19,8 @@ class SpentRepositoryImpl(
     private val fireStore: FirebaseFirestore,
 ) : SpentRepository {
 
+    private var categoriesCache: List<Category>? = null
+
     companion object {
         const val mainCollectionPath = BuildConfig.mainCollectionPath
     }
@@ -31,7 +34,6 @@ class SpentRepositoryImpl(
         newData["uuid"] = uuid
         newData["date"] = currentDateTimeString
         newData["spentAmount"] = spentAmount
-        newData["category"] = category.name
         newData["categoryID"] = category.id
 //        newData["currency"] = "zl"
         newData["note"] = note
@@ -85,19 +87,39 @@ class SpentRepositoryImpl(
         return documents
             .mapNotNull { it.toObject(SpendingRemote::class.java) }
             .firstOrNull { localDateTime.isEqual(convertDateStringToLocalDateTime(it.date)) }
-            ?.toSpending()
+            ?.toSpending(getCategories())
     }
 
-    override fun getAllSpendingFlow(): Flow<List<Spending>> {
+    override fun getSpendingsFlow(): Flow<List<Spending>> {
         return fireStore
             .collection(mainCollectionPath)
             .document("spending")
             .collection("spending")
             .snapshots()
             .map { it.toObjects(SpendingRemote::class.java) }
-            .map { it.map { spendingRemote -> spendingRemote.toSpending() } }
+            .map { it.map { spendingRemote -> spendingRemote.toSpending(getCategories()) } }
     }
 
+    private suspend fun getCategories(): List<Category> {
+        if (categoriesCache != null) { // todo test it upgrade
+            return categoriesCache as List<Category>
+        }
+        val querySnapshot = fireStore
+            .collection(mainCollectionPath)
+            .document("preferences")
+            .collection("categories")
+            .get()
+            .await()
+
+        val documents = querySnapshot.documents
+
+        categoriesCache = documents
+            .mapNotNull { it.toObject(CategoryRemote::class.java) }
+            .map { it.toCategory() }
+        return categoriesCache as List<Category>
+    }
+
+    @Deprecated("")
     override suspend fun getAllCategories(): List<Category> {
         val documentSnapshot = fireStore
             .collection(mainCollectionPath)

@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import com.shjman.polygon2.R
+import com.shjman.polygon2.data.Category
 import com.shjman.polygon2.data.LOCALE_DATE_TIME_FORMATTER
 import com.shjman.polygon2.data.Spending
 import kotlinx.coroutines.CoroutineScope
@@ -28,12 +29,12 @@ import java.time.format.DateTimeFormatter
 fun OverviewScreen(
     spentViewModel: SpentViewModel,
     isLoadingUIState: MutableState<Boolean> = remember { mutableStateOf(false) },
-    allSpending: MutableState<List<Spending>> = remember { mutableStateOf(listOf()) },
+    allSpending: MutableState<List<Spending>?> = remember { mutableStateOf(null) },
     onEditSpendingClicked: (LocalDateTime) -> Unit,
     scope: CoroutineScope = rememberCoroutineScope(),
 ) {
     LaunchedEffect(Unit) {
-        spentViewModel.loadAllSpending()
+        spentViewModel.startObserveSpendings()
         spentViewModel.allSpending
             .onEach { allSpending.value = it }
             .launchIn(scope)
@@ -71,34 +72,36 @@ fun OverviewScreen(
                     }
                 } else {
                     val allSpendingValue = allSpending.value
-                    if (allSpendingValue.isEmpty()) {
-                        Text(text = "no data / empty")
-                    } else {
-                        LazyColumn {
-                            val beginOfCurrentMonth = LocalDateTime.now().beginOfCurrentMonth()
-                            val allSpendingValueFilteredByLastMonth = allSpendingValue.filter { it.date.isAfter(beginOfCurrentMonth) }
-                            item { summaryOfMonth(beginOfCurrentMonth, allSpendingValueFilteredByLastMonth) }
-                            if (overviewType == OverviewType.STANDARD) {
-                                allSpendingValue.onEach {
-                                    item(key = it.uuid) {
-                                        SpendingItem(
-                                            spending = it,
-                                            onSpendingClicked = onSpendingClicked,
-                                            onSpendingLongClicked = onSpendingLongClicked,
-                                            onEditSpendingClicked = onEditSpendingClicked,
-                                            onRemoveSpendingClicked = onRemoveSpendingClicked,
-                                        )
+                    when {
+                        allSpendingValue == null -> Text(text = "is loading...")
+                        allSpendingValue.isEmpty() -> Text(text = "no data / empty")
+                        else -> {
+                            LazyColumn {
+                                val beginOfCurrentMonth = LocalDateTime.now().beginOfCurrentMonth()
+                                val allSpendingValueFilteredByLastMonth = allSpendingValue.filter { it.date.isAfter(beginOfCurrentMonth) }
+                                item { summaryOfMonth(beginOfCurrentMonth, allSpendingValueFilteredByLastMonth) }
+                                if (overviewType == OverviewType.STANDARD) {
+                                    allSpendingValue.onEach {
+                                        item(key = it.uuid) {
+                                            SpendingItem(
+                                                spending = it,
+                                                onSpendingClicked = onSpendingClicked,
+                                                onSpendingLongClicked = onSpendingLongClicked,
+                                                onEditSpendingClicked = onEditSpendingClicked,
+                                                onRemoveSpendingClicked = onRemoveSpendingClicked,
+                                            )
+                                        }
                                     }
-                                }
-                            } else {
-                                var beginOfPreviousMonth = beginOfCurrentMonth.minusMonths(1)
-                                var allSpendingMinusPreviousMonth: List<Spending> = allSpendingValue.minus(allSpendingValueFilteredByLastMonth.toSet())
-                                while (allSpendingMinusPreviousMonth.isNotEmpty()) {
-                                    val beginOfMonth = beginOfPreviousMonth
-                                    val allSpendingFilteredByLastMonth = allSpendingMinusPreviousMonth.filter { it.date.isAfter(beginOfPreviousMonth) }
-                                    item { summaryOfMonth(beginOfMonth, allSpendingFilteredByLastMonth) }
-                                    beginOfPreviousMonth = beginOfPreviousMonth.minusMonths(1)
-                                    allSpendingMinusPreviousMonth = allSpendingMinusPreviousMonth.minus(allSpendingFilteredByLastMonth.toSet())
+                                } else {
+                                    var beginOfPreviousMonth = beginOfCurrentMonth.minusMonths(1)
+                                    var allSpendingMinusPreviousMonth: List<Spending> = allSpendingValue.minus(allSpendingValueFilteredByLastMonth.toSet())
+                                    while (allSpendingMinusPreviousMonth.isNotEmpty()) {
+                                        val beginOfMonth = beginOfPreviousMonth
+                                        val allSpendingFilteredByLastMonth = allSpendingMinusPreviousMonth.filter { it.date.isAfter(beginOfPreviousMonth) }
+                                        item { summaryOfMonth(beginOfMonth, allSpendingFilteredByLastMonth) }
+                                        beginOfPreviousMonth = beginOfPreviousMonth.minusMonths(1)
+                                        allSpendingMinusPreviousMonth = allSpendingMinusPreviousMonth.minus(allSpendingFilteredByLastMonth.toSet())
+                                    }
                                 }
                             }
                         }
@@ -143,23 +146,23 @@ fun summaryOfMonth(beginOfCurrentMonth: LocalDateTime, allSpendingFilteredByMont
     var amountByMonth = 0
     allSpendingFilteredByMonth.onEach { spending -> spending.spentAmount.let { amountByMonth += it } }
     Text(text = "amount spent $date == $amountByMonth")
-    val categories = mutableSetOf<String>()
-    allSpendingFilteredByMonth.onEach { spending -> spending.category?.let { it -> categories.add(it) } }
+    val categories = mutableSetOf<Category>()
+    allSpendingFilteredByMonth.onEach { spending -> categories.add(spending.category) }
     when {
         categories.isEmpty() -> Text(text = "categories == empty")
         else -> {
             val amountsByCategories = StringBuffer()
             categories
-                .sorted()
-                .onEach { categoryString ->
+                .sortedBy { it.name }
+                .onEach { category ->
                     var amountByCategory = 0
                     allSpendingFilteredByMonth
-                        .filter { it.category == categoryString }
+                        .filter { it.category == category }
                         .onEach { spending -> spending.spentAmount.let { amountByCategory += it } }
-                    if (categoryString.isBlank()) {
+                    if (category.name.isBlank()) {
                         amountsByCategories.append("empty category")
                     }
-                    amountsByCategories.append("$categoryString == $amountByCategory, ")
+                    amountsByCategories.append("${category.name} == $amountByCategory, ")
                 }
             Text(text = "$amountsByCategories")
         }
@@ -193,7 +196,7 @@ fun SpendingItem(
             Text(
                 "date = $dateStr" +
                         "\nspentAmount = ${spending.spentAmount}" +
-                        "\ncategory = ${spending.category}" +
+                        "\ncategory = ${spending.category.name}" +
                         "\nnote = ${spending.note}"
             )
         }

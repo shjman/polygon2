@@ -8,6 +8,7 @@ import java.util.*
 data class SpendingRemote(
     val uuid: String? = null,
     val date: String? = null,
+    @Deprecated("Use categoryId")
     val category: String? = null,
     val categoryID: String? = null,
     val spentAmount: Int? = null,
@@ -18,23 +19,31 @@ data class SpendingRemote(
 data class Spending(
     val uuid: String,
     val date: LocalDateTime,
-    val category: String? = null, // todo remove it after migration
+    val category: Category,
     val categoryID: String? = null,
     val spentAmount: Int,
     val currency: String? = null,
     val note: String,
 )
 
-fun SpendingRemote.toSpending(): Spending {
+fun SpendingRemote.toSpending(categories: List<Category>): Spending {
     return Spending(
-        uuid = this.uuid ?: (this.date + UUID.randomUUID()),
-        date = convertDateStringToLocalDateTime(this.date),
-        category = this.category, // mb there transformer string to Category? new request? // todo
-        categoryID = this.categoryID,
-        spentAmount = this.spentAmount ?: 0,
-        currency = this.currency,
-        note = this.note ?: "",
+        uuid = uuid ?: (date + UUID.randomUUID()),
+        date = convertDateStringToLocalDateTime(date),
+        category = getCategory(category, categoryID, categories),
+        categoryID = categoryID,
+        spentAmount = spentAmount ?: 0,
+        currency = currency,
+        note = note ?: "",
     )
+}
+
+fun getCategory(category: String?, categoryID: String?, categories: List<Category>): Category {
+    return if (category != null) {
+        categories.firstOrNull { it.name == category } ?: Category.empty() // to support legacy data
+    } else {
+        categories.firstOrNull { it.id == categoryID } ?: Category.empty()
+    }
 }
 
 fun convertDateStringToLocalDateTime(date: String?): LocalDateTime = LocalDateTime.parse(

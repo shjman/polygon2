@@ -11,7 +11,7 @@ interface SpentRepository {
     suspend fun updateSpending(spending: Spending, showSpendingUpdated: MutableSharedFlow<Unit>)
     suspend fun removeSpending(uuid:String)
     suspend fun getSpending(localDateTime: LocalDateTime): Spending?
-    fun getAllSpendingFlow(): Flow<List<Spending>>
+    fun getSpendingsFlow(): Flow<List<Spending>>
     suspend fun getAllCategories(): List<Category>
     fun getCategoriesFlow(): Flow<List<Category>>
     suspend fun saveCategory(category: Category)
