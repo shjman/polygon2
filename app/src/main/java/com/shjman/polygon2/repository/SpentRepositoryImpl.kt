@@ -1,13 +1,14 @@
 package com.shjman.polygon2.repository
 
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.snapshots
-import com.google.firebase.firestore.ktx.toObject
 import com.shjman.polygon2.BuildConfig
 import com.shjman.polygon2.data.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import java.time.LocalDateTime
@@ -17,12 +18,14 @@ import java.util.*
 
 class SpentRepositoryImpl(
     private val fireStore: FirebaseFirestore,
+    private val dataStore: DataStore<Preferences>,
 ) : SpentRepository {
 
     private var categoriesCache: List<Category>? = null
 
     companion object {
         const val mainCollectionPath = BuildConfig.mainCollectionPath
+        private val POPULAR_CATEGORY_ID = stringPreferencesKey("POPULAR_CATEGORY_ID")
     }
 
     override suspend fun saveSpentAmount(spentAmount: Int, note: String, category: Category) {
@@ -90,6 +93,21 @@ class SpentRepositoryImpl(
             ?.toSpending(getCategories())
     }
 
+    override suspend fun getSpendings(): List<Spending> {
+        val querySnapshot = fireStore
+            .collection(mainCollectionPath)
+            .document("spending")
+            .collection("spending")
+            .get()
+            .await()
+
+        val documents = querySnapshot.documents
+
+        return documents
+            .mapNotNull { it.toObject(SpendingRemote::class.java) }
+            .map { it.toSpending(getCategories()) }
+    }
+
     override fun getSpendingsFlow(): Flow<List<Spending>> {
         return fireStore
             .collection(mainCollectionPath)
@@ -101,7 +119,7 @@ class SpentRepositoryImpl(
     }
 
     private suspend fun getCategories(): List<Category> {
-        if (categoriesCache != null) { // todo test it upgrade
+        if (categoriesCache != null) { // todo test it upgrade add new category->add new spending->go overview screen -> empty category
             return categoriesCache as List<Category>
         }
         val querySnapshot = fireStore
@@ -160,5 +178,18 @@ class SpentRepositoryImpl(
             .document(id)
             .set(newData)
             .await()
+    }
+
+    override suspend fun updatePopularCategoryID(popularCategoryID: String) {
+        dataStore.edit { preferences ->
+            preferences[POPULAR_CATEGORY_ID] = popularCategoryID
+        }
+    }
+
+    override suspend fun getPopularCategory(): Category {
+        val popularCategoryID = dataStore.data
+            .catch { Timber.e("error context.dataStore.data get POPULAR_CATEGORY_ID == ${it.message}") }
+            .first()[POPULAR_CATEGORY_ID]
+        return getCategories().firstOrNull { it.id == popularCategoryID } ?: Category.empty()
     }
 }

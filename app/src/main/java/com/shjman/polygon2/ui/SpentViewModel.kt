@@ -22,17 +22,17 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
     private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
-    private val _allSpending: MutableStateFlow<List<Spending>?> = MutableStateFlow(null)
-    val allSpending: StateFlow<List<Spending>?> = _allSpending
+    private val _spendingsFlow: MutableStateFlow<List<Spending>?> = MutableStateFlow(null)
+    val spendingsFlow: StateFlow<List<Spending>?> = _spendingsFlow
 
-    private val _categories = MutableStateFlow<List<Category>?>(null)
-    val categories = _categories.asStateFlow()
+    private val _categoriesFlow = MutableStateFlow<List<Category>?>(null)
+    val categoriesFlow = _categoriesFlow.asStateFlow()
 
     private val _note: MutableLiveData<String> = MutableLiveData<String>("")
     val note: LiveData<String> = _note
 
-    private val _selectedCategory = MutableStateFlow<Category?>(null)
-    val selectedCategory: StateFlow<Category?> = _selectedCategory.asStateFlow()
+    private val _selectedCategoryFlow = MutableStateFlow<Category?>(null)
+    val selectedCategoryFlow: StateFlow<Category?> = _selectedCategoryFlow.asStateFlow()
 
     fun onAmountSpentChanged(amountSpent: Int) {
         _amountSpent.value = amountSpent
@@ -43,7 +43,7 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
     }
 
     fun onSelectedCategoryChanged(category: Category) {
-        _selectedCategory.value = category
+        _selectedCategoryFlow.value = category
     }
 
     fun onSaveButtonClicked() {
@@ -54,7 +54,7 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
                 spentRepository.saveSpentAmount(
                     spentAmount = _amountSpent.value ?: 0,
                     note = _note.value ?: "",
-                    category = selectedCategory.value ?: Category.empty(),
+                    category = selectedCategoryFlow.value ?: Category.empty(),
                 )
                 delay(1500)
             }
@@ -75,28 +75,52 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
     }
 
     fun startObserveSpendings() {
-        spentRepository.getSpendingsFlow()
-            .map { it.sortedByDescending { spending -> spending.date } }
-            .onEach { _allSpending.value = it }
-            .launchIn(viewModelScope)
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                spentRepository.getSpendingsFlow()
+                    .map { it.sortedByDescending { spending -> spending.date } }
+                    .onEach { _spendingsFlow.value = it }
+                    .collect()
+            }
+        }
     }
 
     fun startObserveCategories() {
-        var isSelectedCategorySet = false
-        spentRepository.getCategoriesFlow()
-            .onEach { categories ->
-                when {
-                    categories.isEmpty() -> {
-                        spentRepository.saveCategory(Category.empty())
-                        return@onEach
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                var isSelectedCategorySet = false
+                spentRepository.getCategoriesFlow()
+                    .onEach { categories ->
+                        when {
+                            categories.isEmpty() -> {
+                                spentRepository.saveCategory(Category.empty())
+                                return@onEach
+                            }
+                            else -> _categoriesFlow.value = categories
+                        }
+                        if (!isSelectedCategorySet) {
+                            _selectedCategoryFlow.value = spentRepository.getPopularCategory()
+                            isSelectedCategorySet = true
+                            updatePopularCategory()
+                        }
                     }
-                    else -> _categories.value = categories
-                }
-                if (!isSelectedCategorySet) {
-                    _selectedCategory.value = categories.first() // todo set the most popular category
-                    isSelectedCategorySet = true
-                }
+                    .collect()
             }
-            .launchIn(viewModelScope)
+        }
+    }
+
+    private suspend fun updatePopularCategory() {
+        var spendings = _spendingsFlow.value
+        if (spendings.isNullOrEmpty()) {
+            spendings = spentRepository.getSpendings()
+        }
+        val last15Spendings = spendings
+            .sortedByDescending { spending -> spending.date }
+            .take(15) // take/follow last fresh spendings
+        val popularCategoryID = last15Spendings
+            .groupBy { it.categoryID }
+            .maxByOrNull { it.value.size }
+            ?.key
+        popularCategoryID?.let { spentRepository.updatePopularCategoryID(it) }
     }
 }

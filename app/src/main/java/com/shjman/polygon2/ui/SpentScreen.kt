@@ -41,10 +41,10 @@ fun SpentScreen(
     LaunchedEffect(Unit) {
         spentViewModel.startObserveCategories()
 
-        spentViewModel.selectedCategory
+        spentViewModel.selectedCategoryFlow
             .onEach { selectedCategory.value = it }
             .launchIn(scope)
-        spentViewModel.categories
+        spentViewModel.categoriesFlow
             .onEach { categoriesState.value = it }
             .launchIn(scope)
         spentViewModel.isLoading
@@ -119,7 +119,7 @@ fun InputCategoryView(
         when {
             categories == null -> {
                 Text(
-                    text = "loading...",
+                    text = " is loading...",
                     modifier = Modifier.padding(4.dp),
                 )
             }
@@ -144,7 +144,7 @@ fun InputCategoryView(
                         .clickable { isDropdownMenuExpanded.value = !isDropdownMenuExpanded.value },
                 ) {
                     Text(
-                        text = selectedCategory?.name ?: "",
+                        text = selectedCategory?.name ?: "is loading...",
                         modifier = Modifier.padding(4.dp)
                     )
                     Icon(

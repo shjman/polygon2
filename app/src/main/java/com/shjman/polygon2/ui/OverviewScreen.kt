@@ -35,7 +35,7 @@ fun OverviewScreen(
 ) {
     LaunchedEffect(Unit) {
         spentViewModel.startObserveSpendings()
-        spentViewModel.allSpending
+        spentViewModel.spendingsFlow
             .onEach { allSpending.value = it }
             .launchIn(scope)
         spentViewModel.isLoading

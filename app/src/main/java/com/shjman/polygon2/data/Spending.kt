@@ -30,7 +30,7 @@ fun SpendingRemote.toSpending(categories: List<Category>): Spending {
     return Spending(
         uuid = uuid ?: (date + UUID.randomUUID()),
         date = convertDateStringToLocalDateTime(date),
-        category = getCategory(category, categoryID, categories),
+        category = getCategory(category, categoryID, categories), // todo remove the duplication category can be misleading where the source of the truth
         categoryID = categoryID,
         spentAmount = spentAmount ?: 0,
         currency = currency,
