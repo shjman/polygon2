@@ -188,7 +188,7 @@ class SpentRepositoryImpl(
 
     override suspend fun getPopularCategory(): Category {
         val popularCategoryID = dataStore.data
-            .catch { Timber.e("error context.dataStore.data get POPULAR_CATEGORY_ID == ${it.message}") }
+            .catch { Timber.e("error dataStore.data get POPULAR_CATEGORY_ID == ${it.message}") }
             .first()[POPULAR_CATEGORY_ID]
         return getCategories().firstOrNull { it.id == popularCategoryID } ?: Category.empty()
     }

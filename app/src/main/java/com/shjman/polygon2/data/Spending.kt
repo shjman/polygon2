@@ -1,5 +1,6 @@
 package com.shjman.polygon2.data
 
+import com.google.firebase.firestore.PropertyName
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -9,7 +10,8 @@ data class SpendingRemote(
     val uuid: String? = null,
     val date: String? = null,
     @Deprecated("Use categoryId")
-    val category: String? = null,
+    @PropertyName("category")
+    val categoryName: String? = null,
     val categoryID: String? = null,
     val spentAmount: Int? = null,
     val currency: String? = null,
@@ -20,7 +22,6 @@ data class Spending(
     val uuid: String,
     val date: LocalDateTime,
     val category: Category,
-    val categoryID: String? = null,
     val spentAmount: Int,
     val currency: String? = null,
     val note: String,
@@ -30,17 +31,16 @@ fun SpendingRemote.toSpending(categories: List<Category>): Spending {
     return Spending(
         uuid = uuid ?: (date + UUID.randomUUID()),
         date = convertDateStringToLocalDateTime(date),
-        category = getCategory(category, categoryID, categories), // todo remove the duplication category can be misleading where the source of the truth
-        categoryID = categoryID,
+        category = getCategory(categoryName, categoryID, categories),
         spentAmount = spentAmount ?: 0,
         currency = currency,
         note = note ?: "",
     )
 }
 
-fun getCategory(category: String?, categoryID: String?, categories: List<Category>): Category {
-    return if (category != null) {
-        categories.firstOrNull { it.name == category } ?: Category.empty() // to support legacy data
+fun getCategory(categoryName: String?, categoryID: String?, categories: List<Category>): Category {
+    return if (categoryName != null) {
+        categories.firstOrNull { it.name == categoryName } ?: Category.empty() // to support legacy data
     } else {
         categories.firstOrNull { it.id == categoryID } ?: Category.empty()
     }

@@ -118,7 +118,7 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
             .sortedByDescending { spending -> spending.date }
             .take(15) // take/follow last fresh spendings
         val popularCategoryID = last15Spendings
-            .groupBy { it.categoryID }
+            .groupBy { it.category.id }
             .maxByOrNull { it.value.size }
             ?.key
         popularCategoryID?.let { spentRepository.updatePopularCategoryID(it) }
