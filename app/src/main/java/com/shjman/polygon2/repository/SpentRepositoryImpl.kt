@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.snapshots
 import com.shjman.polygon2.BuildConfig
@@ -21,7 +22,8 @@ class SpentRepositoryImpl(
     private val dataStore: DataStore<Preferences>,
 ) : SpentRepository {
 
-    private var categoriesCache: List<Category>? = null
+    private var categoriesCache: List<Category> = listOf(Category.empty())
+    private var categoriesSnapshotsCache: MutableList<DocumentSnapshot>? = null
 
     companion object {
         const val mainCollectionPath = BuildConfig.mainCollectionPath
@@ -119,22 +121,20 @@ class SpentRepositoryImpl(
     }
 
     private suspend fun getCategories(): List<Category> {
-        if (categoriesCache != null) { // todo test it upgrade add new category->add new spending->go overview screen -> empty category
-            return categoriesCache as List<Category>
-        }
-        val querySnapshot = fireStore
+        val newCategoriesSnapshots = fireStore
             .collection(mainCollectionPath)
             .document("preferences")
             .collection("categories")
             .get()
             .await()
-
-        val documents = querySnapshot.documents
-
-        categoriesCache = documents
-            .mapNotNull { it.toObject(CategoryRemote::class.java) }
-            .map { it.toCategory() }
-        return categoriesCache as List<Category>
+            .documents
+        if (categoriesSnapshotsCache != newCategoriesSnapshots) {
+            categoriesSnapshotsCache = newCategoriesSnapshots
+            categoriesCache = newCategoriesSnapshots
+                .mapNotNull { it.toObject(CategoryRemote::class.java) }
+                .map { it.toCategory() }
+        }
+        return categoriesCache
     }
 
     @Deprecated("")
