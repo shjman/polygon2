@@ -22,9 +22,6 @@ class SpentRepositoryImpl(
     private val dataStore: DataStore<Preferences>,
 ) : SpentRepository {
 
-    private var categoriesCache: List<Category> = listOf(Category.empty())
-    private var categoriesSnapshotsCache: MutableList<DocumentSnapshot>? = null
-
     companion object {
         const val mainCollectionPath = BuildConfig.mainCollectionPath
         private val POPULAR_CATEGORY_ID = stringPreferencesKey("POPULAR_CATEGORY_ID")
@@ -80,34 +77,29 @@ class SpentRepositoryImpl(
     }
 
     override suspend fun getSpending(localDateTime: LocalDateTime): Spending? {
-        val querySnapshot = fireStore
+        return fireStore
             .collection(mainCollectionPath)
             .document("spending")
             .collection("spending")
             .get()
             .await()
-
-        val documents = querySnapshot.documents
-
-        return documents
+            .documents
             .mapNotNull { it.toObject(SpendingRemote::class.java) }
             .firstOrNull { localDateTime.isEqual(convertDateStringToLocalDateTime(it.date)) }
             ?.toSpending(getCategories())
     }
 
     override suspend fun getSpendings(): List<Spending> {
-        val querySnapshot = fireStore
+        return fireStore
             .collection(mainCollectionPath)
             .document("spending")
             .collection("spending")
             .get()
             .await()
-
-        val documents = querySnapshot.documents
-
-        return documents
+            .documents
             .mapNotNull { it.toObject(SpendingRemote::class.java) }
-            .map { it.toSpending(getCategories()) }
+            .map { it to getCategories() }
+            .map { (spendingRemote, categories) -> spendingRemote.toSpending(categories) }
     }
 
     override fun getSpendingsFlow(): Flow<List<Spending>> {
@@ -117,24 +109,20 @@ class SpentRepositoryImpl(
             .collection("spending")
             .snapshots()
             .map { it.toObjects(SpendingRemote::class.java) }
-            .map { it.map { spendingRemote -> spendingRemote.toSpending(getCategories()) } }
+            .map { it to getCategories() }
+            .map { (spendingRemote, categories) -> spendingRemote.map { it.toSpending(categories) } }
     }
 
     private suspend fun getCategories(): List<Category> {
-        val newCategoriesSnapshots = fireStore
+        return fireStore
             .collection(mainCollectionPath)
             .document("preferences")
             .collection("categories")
             .get()
             .await()
             .documents
-        if (categoriesSnapshotsCache != newCategoriesSnapshots) {
-            categoriesSnapshotsCache = newCategoriesSnapshots
-            categoriesCache = newCategoriesSnapshots
-                .mapNotNull { it.toObject(CategoryRemote::class.java) }
-                .map { it.toCategory() }
-        }
-        return categoriesCache
+            .mapNotNull { it.toObject(CategoryRemote::class.java) }
+            .map { it.toCategory() }
     }
 
     @Deprecated("")

@@ -1,6 +1,5 @@
 package com.shjman.polygon2.data
 
-import com.google.firebase.firestore.PropertyName
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
@@ -10,8 +9,7 @@ data class SpendingRemote(
     val uuid: String? = null,
     val date: String? = null,
     @Deprecated("Use categoryId")
-    @PropertyName("category")
-    val categoryName: String? = null,
+    val category: String? = null,
     val categoryID: String? = null,
     val spentAmount: Int? = null,
     val currency: String? = null,
@@ -31,7 +29,7 @@ fun SpendingRemote.toSpending(categories: List<Category>): Spending {
     return Spending(
         uuid = uuid ?: (date + UUID.randomUUID()),
         date = convertDateStringToLocalDateTime(date),
-        category = getCategory(categoryName, categoryID, categories),
+        category = getCategory(category, categoryID, categories),
         spentAmount = spentAmount ?: 0,
         currency = currency,
         note = note ?: "",
