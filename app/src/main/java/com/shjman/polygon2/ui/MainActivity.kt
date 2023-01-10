@@ -9,12 +9,14 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.sp
@@ -57,8 +59,8 @@ class MainActivity : ComponentActivity() {
                 Scaffold(
                     bottomBar = { AnimatedBottomNavigation(navController, currentRoute, isShowingBottomBar) },
                     scaffoldState = scaffoldState,
-                ) {
-                    Box {
+                ) { paddingValues ->
+                    Box(modifier = Modifier.padding(paddingValues)) {
                         NavigationGraph(
                             navHostController = navController,
                             spentViewModel = spentViewModel,
@@ -83,13 +85,9 @@ class MainActivity : ComponentActivity() {
             Screens.BottomNavItem.Overview.screenRoute -> {
                 isShowingBottomBar.value = true
             }
+            Screens.Categories.screenRoute,
+            Screens.EditCategory.screenRoute,
             Screens.EditSpending.screenRoute -> {
-                isShowingBottomBar.value = false
-            }
-            Screens.Categories.screenRoute -> {
-                isShowingBottomBar.value = false
-            }
-            Screens.EditCategory.screenRoute -> {
                 isShowingBottomBar.value = false
             }
             else -> {
