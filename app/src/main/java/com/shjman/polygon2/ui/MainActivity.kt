@@ -4,11 +4,10 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
@@ -109,12 +108,14 @@ fun AnimatedBottomNavigation(
 ) {
     AnimatedVisibility(
         visible = isShowingBottomBar.value,
-        enter = slideInVertically(
-            initialOffsetY = { it },
+        enter = fadeIn(
+            animationSpec = tween(durationMillis = SHOW_HIDE_BOTTOM_BAR_ANIMATION_SPEED),
+        ) + expandVertically(
             animationSpec = tween(durationMillis = SHOW_HIDE_BOTTOM_BAR_ANIMATION_SPEED),
         ),
-        exit = slideOutVertically(
-            targetOffsetY = { it },
+        exit = fadeOut(
+            animationSpec = tween(durationMillis = SHOW_HIDE_BOTTOM_BAR_ANIMATION_SPEED),
+        ) + shrinkVertically(
             animationSpec = tween(durationMillis = SHOW_HIDE_BOTTOM_BAR_ANIMATION_SPEED),
         ),
         content = { BottomNavigation(navController, currentRoute) },
