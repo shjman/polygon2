@@ -14,3 +14,5 @@ dependencyResolutionManagement {
 }
 rootProject.name = "polygon2"
 include ':app'
+include ':app:benchmark'
+include ':app:microbenchmark'

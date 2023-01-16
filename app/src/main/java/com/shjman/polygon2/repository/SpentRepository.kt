@@ -17,5 +17,6 @@ interface SpentRepository {
     fun getCategoriesFlow(): Flow<List<Category>>
     suspend fun saveCategory(category: Category)
     suspend fun getPopularCategory(): Category
+    suspend fun getPopularCategory2(): Category
     suspend fun updatePopularCategoryID(popularCategoryID: String)
 }

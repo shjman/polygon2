@@ -99,7 +99,7 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
                             else -> _categoriesFlow.value = categories
                         }
                         if (!isSelectedCategorySet) {
-                            _selectedCategoryFlow.value = spentRepository.getPopularCategory()
+                            _selectedCategoryFlow.value = spentRepository.getPopularCategory2()
                             isSelectedCategorySet = true
                             updatePopularCategory()
                         }

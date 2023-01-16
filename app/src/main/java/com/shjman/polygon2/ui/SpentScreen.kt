@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -24,6 +25,7 @@ import com.shjman.polygon2.data.Category
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import timber.log.Timber
 
 @Composable
 fun SpentScreen(
@@ -143,10 +145,25 @@ fun InputCategoryView(
                     modifier = Modifier
                         .clickable { isDropdownMenuExpanded.value = !isDropdownMenuExpanded.value },
                 ) {
-                    Text(
-                        text = selectedCategory?.name ?: "is loading...",
-                        modifier = Modifier.padding(4.dp)
-                    )
+                    Timber.e("aaaa11 ")
+                    if (selectedCategory?.name == null) {
+                        Timber.e("aaaa1 load")
+                        Text(
+                            text = "load1",
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .testTag("isloading1"),
+                        )
+                    } else {
+                        Timber.e("aaaa2 done")
+                        Text(
+                            text = "done1",
+                            modifier = Modifier
+                                .padding(4.dp)
+                                .testTag("isloading2"),
+                        )
+                    }
+
                     Icon(
                         imageVector = Icons.Filled.ArrowDropDown,
                         contentDescription = Icons.Filled.ArrowDropDown.toString(),
