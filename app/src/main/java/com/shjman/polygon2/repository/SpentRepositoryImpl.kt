@@ -177,19 +177,16 @@ class SpentRepositoryImpl(
     }
 
     override suspend fun getPopularCategory(): Category {
-        Timber.e("aaaa getPopularCategory1 start")
         val start = LocalTime.now().toNanoOfDay()
         val popularCategoryID = dataStore.data
             .catch { Timber.e("error dataStore.data get POPULAR_CATEGORY_ID == ${it.message}") }
             .first()[POPULAR_CATEGORY_ID]
-        Timber.e("aaaa getPopularCategory1 end")
         val result = LocalTime.now().toNanoOfDay().minus(start)
-        Timber.e("aaaa getPopularCategory1 result == ${result/1000000}")
+        Timber.e("aaaa getPopularCategory1 result == ${result/1000000}  ")
         return getCategories().firstOrNull { it.id == popularCategoryID } ?: Category.empty()
     }
 
     override suspend fun getPopularCategory2(): Category {
-        Timber.e("aaaa getPopularCategory2 start")
         val start = LocalTime.now().toNanoOfDay()
         val last15Spendings = getSpendings()
             .sortedByDescending { spending -> spending.date }
@@ -198,9 +195,8 @@ class SpentRepositoryImpl(
             .groupBy { it.category.id }
             .maxByOrNull { it.value.size }
             ?.key
-        Timber.e("aaaa getPopularCategory2 end")
         val result = LocalTime.now().toNanoOfDay().minus(start)
-        Timber.e("aaaa getPopularCategory1 result == ${result/1000000}")
+        Timber.e("aaaa getPopularCategory2 result == ${result/1000000}")
         return getCategories().firstOrNull { it.id == popularCategoryID } ?: Category.empty()
     }
 }

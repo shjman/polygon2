@@ -1,5 +1,6 @@
 package com.shjman.polygon2.ui
 
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -14,7 +15,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel() {
+class SpentViewModel(
+    @VisibleForTesting
+    val spentRepository: SpentRepository
+    ) : ViewModel() {
 
     private val _amountSpent: MutableLiveData<Int> = MutableLiveData<Int>(0)
     val amountSpent: LiveData<Int> = _amountSpent

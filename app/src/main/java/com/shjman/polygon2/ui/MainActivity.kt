@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
@@ -40,7 +41,8 @@ import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.time.format.DateTimeFormatter
 
 class MainActivity : ComponentActivity() {
-    private val spentViewModel: SpentViewModel by viewModel()
+    @VisibleForTesting
+    val spentViewModel: SpentViewModel by viewModel()
     private val editSpendingViewModel: EditSpendingViewModel by viewModel()
     private val categoriesViewModel: CategoriesViewModel by viewModel()
     private val editCategoryViewModel: EditCategoryViewModel by viewModel()
