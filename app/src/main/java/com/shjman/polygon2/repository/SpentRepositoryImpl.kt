@@ -92,6 +92,7 @@ class SpentRepositoryImpl(
     }
 
     override suspend fun getSpendings(): List<Spending> {
+        val categories = getCategories()
         return fireStore
             .collection(mainCollectionPath)
             .document("spending")
@@ -100,8 +101,7 @@ class SpentRepositoryImpl(
             .await()
             .documents
             .mapNotNull { it.toObject(SpendingRemote::class.java) }
-            .map { it to getCategories() }
-            .map { (spendingRemote, categories) -> spendingRemote.toSpending(categories) }
+            .map { it.toSpending(categories) }
     }
 
     override fun getSpendingsFlow(): Flow<List<Spending>> {

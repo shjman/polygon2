@@ -30,7 +30,7 @@ class ExampleBenchmark {
     @Test
     fun myTest() {
         activityRule.scenario.onActivity { activity ->
-//            benchmarkRule.measureRepeated {
+            benchmarkRule.measureRepeated {
                 runBlocking {
                     val popularCategory1 = activity.spentViewModel.spentRepository.getPopularCategory()
                     val popularCategory11 = activity.spentViewModel.spentRepository.getPopularCategory()
@@ -41,7 +41,7 @@ class ExampleBenchmark {
                     Timber.e("aaaa3 ${popularCategory2.name}")
                     Timber.e("aaaa4 ${popularCategory22.name}")
                 }
-//            }
+            }
         }
     }
 }
