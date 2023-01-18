@@ -55,7 +55,7 @@ class SpentRepositoryImpl(
         newData["uuid"] = spending.uuid
         newData["date"] = spending.date.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER))
         newData["spentAmount"] = spending.spentAmount
-        newData["category"] = spending.category.toString()
+        newData["categoryID"] = spending.category.id
         newData["note"] = spending.note
 
         fireStore
@@ -113,7 +113,7 @@ class SpentRepositoryImpl(
             .map { (spendingRemote, categories) -> spendingRemote.map { it.toSpending(categories) } }
     }
 
-    private suspend fun getCategories(): List<Category> {
+    override suspend fun getCategories(): List<Category> {
         return fireStore
             .collection(mainCollectionPath)
             .document("preferences")
@@ -123,24 +123,6 @@ class SpentRepositoryImpl(
             .documents
             .mapNotNull { it.toObject(CategoryRemote::class.java) }
             .map { it.toCategory() }
-    }
-
-    @Deprecated("")
-    override suspend fun getAllCategories(): List<Category> {
-        val documentSnapshot = fireStore
-            .collection(mainCollectionPath)
-            .document("preferences")
-            .collection("categories")
-            .document("categories")
-            .get()
-            .await()
-
-        val remoteCategories: Map<String, Any> = documentSnapshot.data ?: mapOf()
-        return remoteCategories.map {
-            val categoryRemote = CategoryRemote(it.key, it.value as String?)
-            Timber.d("categoryRemote == $categoryRemote")
-            categoryRemote.toCategory()
-        }
     }
 
     override fun getCategoriesFlow(): Flow<List<Category>> {

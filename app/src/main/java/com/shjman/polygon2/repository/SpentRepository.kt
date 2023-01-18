@@ -13,7 +13,7 @@ interface SpentRepository {
     fun getSpendingsFlow(): Flow<List<Spending>>
     suspend fun getSpendings(): List<Spending>
     suspend fun getSpending(localDateTime: LocalDateTime): Spending?
-    suspend fun getAllCategories(): List<Category>
+    suspend fun getCategories(): List<Category>
     fun getCategoriesFlow(): Flow<List<Category>>
     suspend fun saveCategory(category: Category)
     suspend fun getPopularCategory(): Category

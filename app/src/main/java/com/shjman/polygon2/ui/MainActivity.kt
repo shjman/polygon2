@@ -7,7 +7,6 @@ import androidx.activity.compose.setContent
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
@@ -224,7 +223,7 @@ fun NavigationGraph(
             val localDateTimeString = backStackEntry.arguments?.getString("localDateTimeString")
             localDateTimeString?.let {
                 EditSpendingScreen(
-                    localDateTime = convertDateStringToLocalDateTime(it),
+                    localDateTimeSpending = convertDateStringToLocalDateTime(it),
                     editSpendingViewModel = editSpendingViewModel,
                     context = context,
                     scaffoldState = scaffoldState,

@@ -21,6 +21,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.shjman.polygon2.data.Category
 import com.shjman.polygon2.data.LOCALE_DATE_TIME_FORMATTER
+import com.shjman.polygon2.data.Spending
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -30,14 +31,11 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun EditSpendingScreen(
-    localDateTime: LocalDateTime,
+    localDateTimeSpending: LocalDateTime,
     editSpendingViewModel: EditSpendingViewModel,
     isLoading: MutableState<Boolean> = remember { mutableStateOf(true) },
-    amountSpent: MutableState<Int?> = remember { mutableStateOf(null) },
-    date: MutableState<LocalDateTime?> = remember { mutableStateOf(null) },
-    note: MutableState<String?> = remember { mutableStateOf(null) },
+    spendingState: MutableState<Spending?> = remember { mutableStateOf(null) },
     categories: MutableState<List<Category>?> = remember { mutableStateOf(null) },
-    selectedCategory: MutableState<Category?> = remember { mutableStateOf(null) },
     isDropdownMenuExpanded: MutableState<Boolean> = remember { mutableStateOf(false) },
     scope: CoroutineScope = rememberCoroutineScope(),
     context: Context,
@@ -46,24 +44,15 @@ fun EditSpendingScreen(
     focusManager: FocusManager = LocalFocusManager.current,
 ) {
     LaunchedEffect(Unit) {
-        editSpendingViewModel.loadData(localDateTime)
+        editSpendingViewModel.loadSpending(localDateTimeSpending)
         editSpendingViewModel.isLoading
             .onEach { isLoading.value = it }
             .launchIn(scope)
-        editSpendingViewModel.date
-            .onEach { date.value = it }
-            .launchIn(scope)
-        editSpendingViewModel.amountSpent
-            .onEach { amountSpent.value = it }
-            .launchIn(scope)
-        editSpendingViewModel.note
-            .onEach { note.value = it }
+        editSpendingViewModel.spending
+            .onEach { spendingState.value = it }
             .launchIn(scope)
         editSpendingViewModel.categories
             .onEach { categories.value = it }
-            .launchIn(scope)
-        editSpendingViewModel.selectedCategory
-            .onEach { selectedCategory.value = it }
             .launchIn(scope)
         editSpendingViewModel.showSpendingUpdated
             .onEach {
@@ -84,29 +73,31 @@ fun EditSpendingScreen(
         modifier = Modifier
             .fillMaxWidth()
             .fillMaxHeight()
-            .padding(4.dp),
+            .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        val spending = spendingState.value
         when {
             isLoading.value -> CircularProgressIndicator(color = Color.Green)
+            spending == null -> Text(text = "error loading data")
             else -> {
                 DateRowView(
                     context = context,
-                    date = date.value,
+                    date = spending.date,
                     editSpendingViewModel = editSpendingViewModel,
                 )
                 AmountRowView(
-                    amountSpent = amountSpent,
+                    amountSpent = spending.spentAmount,
                     editSpendingViewModel = editSpendingViewModel,
                 )
                 NoteRowView(
-                    note = note,
+                    note = spending.note,
                     editSpendingViewModel = editSpendingViewModel,
                 )
-                InputCategoryView2(
+                InputCategoryView(
                     categories = categories.value,
-                    selectedCategory = selectedCategory.value,
+                    selectedCategory = spending.category,
                     isDropdownMenuExpanded = isDropdownMenuExpanded,
                     onDropdownMenuItemClicked = {
                         editSpendingViewModel.onSelectedCategoryChanged(it)
@@ -150,7 +141,7 @@ fun EditSpendingScreen(
 
 @Composable
 fun NoteRowView(
-    note: MutableState<String?>,
+    note: String?,
     editSpendingViewModel: EditSpendingViewModel,
 ) {
     Row(
@@ -164,7 +155,7 @@ fun NoteRowView(
         )
         TextField(
             modifier = Modifier.weight(0.7f),
-            value = note.value ?: "",
+            value = note ?: "",
             onValueChange = { editSpendingViewModel.onNoteChanged(it) },
             placeholder = { Text("enter note") },
         )
@@ -173,7 +164,7 @@ fun NoteRowView(
 
 @Composable
 fun AmountRowView(
-    amountSpent: MutableState<Int?>,
+    amountSpent: Int?,
     editSpendingViewModel: EditSpendingViewModel,
 ) {
     Row(
@@ -187,8 +178,8 @@ fun AmountRowView(
         )
         TextField(
             modifier = Modifier.weight(0.7f),
-            value = if (amountSpent.value == null) "" else amountSpent.value.toString(),
-            onValueChange = { editSpendingViewModel.onAmountSpentChanged(calculateLimitAmount(it) ?: 0) },
+            value = amountSpent?.toString() ?: "",
+            onValueChange = { editSpendingViewModel.onSpentAmountChanged(calculateLimitAmount(it) ?: 0) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             placeholder = { Text("enter the amount spent") }
         )
@@ -224,10 +215,9 @@ fun DateRowView(
 
 
 @Composable
-fun InputCategoryView2(
-    // todo
+fun InputCategoryView(
     categories: List<Category>?,
-    selectedCategory: Category?,
+    selectedCategory: Category,
     isDropdownMenuExpanded: MutableState<Boolean>,
     onDropdownMenuItemClicked: (Category) -> Unit,
 ) {
@@ -244,21 +234,15 @@ fun InputCategoryView2(
             modifier = Modifier.padding(4.dp),
         )
         when {
-            categories == null -> {
+            categories.isNullOrEmpty() -> {
                 Text(
-                    text = "loading...",
-                    modifier = Modifier.padding(4.dp),
-                )
-            }
-            categories.isEmpty() -> {
-                Text(
-                    text = "list is empty",
+                    text = "error loading data",
                     modifier = Modifier.padding(4.dp),
                 )
             }
             else -> {
                 Text(
-                    text = selectedCategory?.name ?: "",  // todo fix it
+                    text = selectedCategory.name,
                     modifier = Modifier.padding(4.dp),
                 )
                 Icon(
