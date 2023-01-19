@@ -11,6 +11,8 @@ import androidx.compose.ui.graphics.Color
 
 @Composable
 fun HomeScreen(
+    login: () -> Unit,
+    logout: () -> Unit,
     onClickGoNext: () -> Unit,
 ) {
     Column(
@@ -34,6 +36,18 @@ fun HomeScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Button(
+                onClick = login,
+                colors = ButtonDefaults.buttonColors(backgroundColor = Color.White)
+            ) {
+                Text(text = "login", color = Color.Black)
+            }
+            Button(
+                onClick = logout,
+                colors = ButtonDefaults.buttonColors(backgroundColor = Color.White)
+            ) {
+                Text(text = "logout", color = Color.Black)
+            }
             Button(
                 onClick = onClickGoNext,
                 colors = ButtonDefaults.buttonColors(backgroundColor = Color.White)
