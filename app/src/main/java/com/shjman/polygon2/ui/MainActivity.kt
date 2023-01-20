@@ -1,15 +1,20 @@
 package com.shjman.polygon2.ui
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,7 +28,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
 import com.shjman.polygon2.R
 import com.shjman.polygon2.data.LOCALE_DATE_TIME_FORMATTER
@@ -34,22 +38,19 @@ import com.shjman.polygon2.ui.categories.CategoriesViewModel
 import com.shjman.polygon2.ui.categories.EditCategoryScreen
 import com.shjman.polygon2.ui.categories.EditCategoryViewModel
 import com.shjman.polygon2.ui.theme.Polygon2Theme
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.time.format.DateTimeFormatter
 
 class MainActivity : ComponentActivity() {
-    private val mainViewModel: MainViewModel by viewModel()
+    private val homeViewModel: HomeViewModel by viewModel()
     private val spentViewModel: SpentViewModel by viewModel()
     private val editSpendingViewModel: EditSpendingViewModel by viewModel()
     private val categoriesViewModel: CategoriesViewModel by viewModel()
     private val editCategoryViewModel: EditCategoryViewModel by viewModel()
 
     private val loginLauncher = registerForActivityResult(FirebaseAuthUIActivityResultContract()) {
-        mainViewModel.showSnackBar(if (it.resultCode == RESULT_OK) "login success" else "login error")
+        homeViewModel.showSnackBar(if (it.resultCode == RESULT_OK) "login success" else "login error")
+        homeViewModel.checkIsUserLoggedIn()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,10 +61,6 @@ class MainActivity : ComponentActivity() {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
             val isShowingBottomBar = rememberSaveable { (mutableStateOf(true)) }
-            val scope = rememberCoroutineScope()
-            mainViewModel.showShackBar
-                .onEach { showSnackBar(it, scope, scaffoldState) }
-                .launchIn(scope)
             Polygon2Theme {
                 setupBottomBarVisibility(currentRoute, isShowingBottomBar)
                 Scaffold(
@@ -72,24 +69,20 @@ class MainActivity : ComponentActivity() {
                 ) { paddingValues ->
                     Box(modifier = Modifier.padding(paddingValues)) {
                         NavigationGraph(
-                            login = { requestToLogin() },
-                            logout = { requestToLogout(scaffoldState, scope) },
-                            navHostController = navController,
-                            spentViewModel = spentViewModel,
-                            editSpendingViewModel = editSpendingViewModel,
                             categoriesViewModel = categoriesViewModel,
-                            editCategoryViewModel = editCategoryViewModel,
                             context = this@MainActivity,
+                            editCategoryViewModel = editCategoryViewModel,
+                            editSpendingViewModel = editSpendingViewModel,
+                            homeViewModel = homeViewModel,
+                            loginLauncher = loginLauncher,
+                            navHostController = navController,
                             scaffoldState = scaffoldState,
+                            spentViewModel = spentViewModel,
                         )
                     }
                 }
             }
         }
-    }
-
-    private fun showSnackBar(message: String?, scope: CoroutineScope, scaffoldState: ScaffoldState) {
-        message?.let { scope.launch { scaffoldState.snackbarHostState.showSnackbar(it) } }
     }
 
     @Composable
@@ -111,20 +104,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
-    private fun requestToLogin() {
-        loginLauncher.launch(
-            AuthUI.getInstance()
-                .createSignInIntentBuilder()
-                .setAvailableProviders(listOf(AuthUI.IdpConfig.GoogleBuilder().build()))
-                .build()
-        )
-    }
-
-    private fun requestToLogout(scaffoldState: ScaffoldState, scope: CoroutineScope) = AuthUI.getInstance()
-        .signOut(this@MainActivity)
-        .addOnCompleteListener { showSnackBar("logout success", scope, scaffoldState) }
-        .addOnFailureListener { showSnackBar("logout error", scope, scaffoldState) }
 
     companion object {
         const val SHOW_HIDE_BOTTOM_BAR_ANIMATION_SPEED = 350
@@ -199,15 +178,15 @@ fun BottomNavigation(
 
 @Composable
 fun NavigationGraph(
-    navHostController: NavHostController,
-    spentViewModel: SpentViewModel,
-    editSpendingViewModel: EditSpendingViewModel,
     categoriesViewModel: CategoriesViewModel,
-    editCategoryViewModel: EditCategoryViewModel,
     context: Context,
+    editCategoryViewModel: EditCategoryViewModel,
+    editSpendingViewModel: EditSpendingViewModel,
+    homeViewModel: HomeViewModel,
+    loginLauncher: ActivityResultLauncher<Intent>,
+    navHostController: NavHostController,
     scaffoldState: ScaffoldState,
-    login: () -> Unit,
-    logout: () -> Unit,
+    spentViewModel: SpentViewModel,
 ) {
     NavHost(
         navController = navHostController,
@@ -215,8 +194,10 @@ fun NavigationGraph(
     ) {
         composable(Screens.BottomNavItem.Home.screenRoute) {
             HomeScreen(
-                login = login,
-                logout = logout,
+                context = context,
+                homeViewModel = homeViewModel,
+                loginLauncher = loginLauncher,
+                scaffoldState = scaffoldState,
                 onClickGoNext = {
                     navHostController.navigate(Screens.BottomNavItem.Spent.screenRoute) {
                         navHostController.graph.startDestinationRoute?.let { screenRoute ->
