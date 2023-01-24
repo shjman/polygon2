@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.shjman.polygon2.repository.SpentRepository
@@ -21,21 +22,24 @@ val appModule = module {
 
     single<SpentRepository> {
         SpentRepositoryImpl(
-            fireStore = get(),
             dataStore = get(),
+            firebaseAuth = get(),
+            fireStore = get(),
         )
     }
 
+    single { provideFirebaseAuth() }
     single { provideFireStore() }
     single { provideDataStore(get()) }
 
-    viewModel { HomeViewModel() }
+    viewModel { HomeViewModel(get()) }
     viewModel { SpentViewModel(get()) }
     viewModel { EditSpendingViewModel(get()) }
     viewModel { CategoriesViewModel(get()) }
     viewModel { EditCategoryViewModel(get()) }
 }
 
+private fun provideFirebaseAuth() = FirebaseAuth.getInstance()
 private fun provideFireStore() = Firebase.firestore
 
 private fun provideDataStore(context: Context): DataStore<Preferences> {

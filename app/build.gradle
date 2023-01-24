@@ -24,7 +24,7 @@ android {
     productFlavors {
         for_all {
             dimension "environment"
-            buildConfigField "String", "mainCollectionPath", "\"family2\""
+            buildConfigField "String", "mainCollectionPath", "\"testing_family\""
             buildConfigField "long", "testDelayDuration", "2000"
         }
         my_custom {

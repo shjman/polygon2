@@ -2,14 +2,16 @@ package com.shjman.polygon2.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
+import com.shjman.polygon2.repository.SpentRepository
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class HomeViewModel : ViewModel() {
+class HomeViewModel(
+    private val spentRepository: SpentRepository,
+) : ViewModel() {
     private val _showSnackbar = MutableSharedFlow<String>()
     val showSnackbar = _showSnackbar.asSharedFlow()
 
@@ -26,7 +28,7 @@ class HomeViewModel : ViewModel() {
         _isUserLoggedIn.value = it
     }
 
-    fun checkIsUserLoggedIn(){
-        _isUserLoggedIn.value = FirebaseAuth.getInstance().currentUser != null
+    fun checkIsUserLoggedIn() {
+        _isUserLoggedIn.value = spentRepository.checkIsUserLoggedIn()
     }
 }

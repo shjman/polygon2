@@ -4,7 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.snapshots
 import com.shjman.polygon2.BuildConfig
@@ -16,14 +16,16 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.*
 
-
 class SpentRepositoryImpl(
-    private val fireStore: FirebaseFirestore,
     private val dataStore: DataStore<Preferences>,
+    private val firebaseAuth: FirebaseAuth,
+    private val fireStore: FirebaseFirestore,
 ) : SpentRepository {
 
     companion object {
-        const val mainCollectionPath = BuildConfig.mainCollectionPath
+        private const val COLLECTION_ENTRY_POINT = "entry_point"
+        private const val COLLECTION_CATEGORIES = "categories"
+        private const val COLLECTION_SPENDINGS = "spendings"
         private val POPULAR_CATEGORY_ID = stringPreferencesKey("POPULAR_CATEGORY_ID")
     }
 
@@ -42,9 +44,9 @@ class SpentRepositoryImpl(
         Timber.d("newData == $newData")
 
         fireStore
-            .collection(mainCollectionPath)
-            .document("spending")
-            .collection("spending")
+            .collection(COLLECTION_ENTRY_POINT)
+            .document(getUserEmail())
+            .collection(COLLECTION_SPENDINGS)
             .document(uuid)
             .set(newData)
             .await()
@@ -59,9 +61,9 @@ class SpentRepositoryImpl(
         newData["note"] = spending.note
 
         fireStore
-            .collection(mainCollectionPath)
-            .document("spending")
-            .collection("spending")
+            .collection(COLLECTION_ENTRY_POINT)
+            .document(getUserEmail())
+            .collection(COLLECTION_SPENDINGS)
             .document(spending.uuid)
             .set(newData)
         showSpendingUpdated.emit(Unit)
@@ -69,18 +71,18 @@ class SpentRepositoryImpl(
 
     override suspend fun removeSpending(uuid: String) {
         fireStore
-            .collection(mainCollectionPath)
-            .document("spending")
-            .collection("spending")
+            .collection(COLLECTION_ENTRY_POINT)
+            .document(getUserEmail())
+            .collection(COLLECTION_SPENDINGS)
             .document(uuid)
             .delete()
     }
 
     override suspend fun getSpending(localDateTime: LocalDateTime): Spending? {
         return fireStore
-            .collection(mainCollectionPath)
-            .document("spending")
-            .collection("spending")
+            .collection(COLLECTION_ENTRY_POINT)
+            .document(getUserEmail())
+            .collection(COLLECTION_SPENDINGS)
             .get()
             .await()
             .documents
@@ -92,9 +94,9 @@ class SpentRepositoryImpl(
     override suspend fun getSpendings(): List<Spending> {
         val categories = getCategories()
         return fireStore
-            .collection(mainCollectionPath)
-            .document("spending")
-            .collection("spending")
+            .collection(COLLECTION_ENTRY_POINT)
+            .document(getUserEmail())
+            .collection(COLLECTION_SPENDINGS)
             .get()
             .await()
             .documents
@@ -104,9 +106,9 @@ class SpentRepositoryImpl(
 
     override fun getSpendingsFlow(): Flow<List<Spending>> {
         return fireStore
-            .collection(mainCollectionPath)
-            .document("spending")
-            .collection("spending")
+            .collection(COLLECTION_ENTRY_POINT)
+            .document(getUserEmail())
+            .collection(COLLECTION_SPENDINGS)
             .snapshots()
             .map { it.toObjects(SpendingRemote::class.java) }
             .map { it to getCategories() }
@@ -115,9 +117,9 @@ class SpentRepositoryImpl(
 
     override suspend fun getCategories(): List<Category> {
         return fireStore
-            .collection(mainCollectionPath)
-            .document("preferences")
-            .collection("categories")
+            .collection(COLLECTION_ENTRY_POINT)
+            .document(getUserEmail())
+            .collection(COLLECTION_CATEGORIES)
             .get()
             .await()
             .documents
@@ -127,9 +129,9 @@ class SpentRepositoryImpl(
 
     override fun getCategoriesFlow(): Flow<List<Category>> {
         return fireStore
-            .collection(mainCollectionPath)
-            .document("preferences")
-            .collection("categories")
+            .collection(COLLECTION_ENTRY_POINT)
+            .document(getUserEmail())
+            .collection(COLLECTION_CATEGORIES)
             .snapshots()
             .map { it.toObjects(CategoryRemote::class.java) }
             .map { it.map { categoryRemote -> categoryRemote.toCategory() } }
@@ -142,9 +144,9 @@ class SpentRepositoryImpl(
         newData["name"] = category.name
 
         fireStore
-            .collection(mainCollectionPath)
-            .document("preferences")
-            .collection("categories")
+            .collection(COLLECTION_ENTRY_POINT)
+            .document(getUserEmail())
+            .collection(COLLECTION_CATEGORIES)
             .document(id)
             .set(newData)
             .await()
@@ -161,5 +163,17 @@ class SpentRepositoryImpl(
             .catch { Timber.e("error dataStore.data get POPULAR_CATEGORY_ID == ${it.message}") }
             .first()[POPULAR_CATEGORY_ID]
         return getCategories().firstOrNull { it.id == popularCategoryID } ?: Category.empty()
+    }
+
+    override fun checkIsUserLoggedIn() = firebaseAuth.currentUser != null
+
+    private fun getUserEmail(): String {
+        return if (BuildConfig.mainCollectionPath == "testing_family") {
+//            firebaseAuth.currentUser.uid    todo check this option . change it in the release
+            val path = firebaseAuth.currentUser?.email   // todo change it if it's a shared collection
+            path ?: throw Exception("wtf?? firebaseAuth.currentUser == null")
+        } else {
+            BuildConfig.mainCollectionPath
+        }
     }
 }
