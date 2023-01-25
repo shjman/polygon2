@@ -26,6 +26,7 @@ class SpentRepositoryImpl(
         private const val COLLECTION_ENTRY_POINT = "entry_point"
         private const val COLLECTION_CATEGORIES = "categories"
         private const val COLLECTION_SPENDINGS = "spendings"
+        private const val COLLECTION_TRUSTED_EMAILS = "trusted_emails"
         private val POPULAR_CATEGORY_ID = stringPreferencesKey("POPULAR_CATEGORY_ID")
     }
 
@@ -166,6 +167,17 @@ class SpentRepositoryImpl(
     }
 
     override fun checkIsUserLoggedIn() = firebaseAuth.currentUser != null
+
+    override fun getUserData() = firebaseAuth.currentUser
+
+    override suspend fun getTrustedUsers(): Flow<List<TrustedUser>?> {
+        return fireStore
+            .collection(COLLECTION_ENTRY_POINT)
+            .document(getUserEmail())
+            .collection(COLLECTION_TRUSTED_EMAILS)
+            .snapshots()
+            .map { it.toObjects(TrustedUser::class.java) }
+    }
 
     private fun getUserEmail(): String {
         return if (BuildConfig.mainCollectionPath == "testing_family") {

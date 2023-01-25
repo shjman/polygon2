@@ -37,6 +37,10 @@ import com.shjman.polygon2.ui.categories.CategoriesScreen
 import com.shjman.polygon2.ui.categories.CategoriesViewModel
 import com.shjman.polygon2.ui.categories.EditCategoryScreen
 import com.shjman.polygon2.ui.categories.EditCategoryViewModel
+import com.shjman.polygon2.ui.settings.SettingScreen
+import com.shjman.polygon2.ui.settings.SettingViewModel
+import com.shjman.polygon2.ui.settings.SharingSettingViewModel
+import com.shjman.polygon2.ui.settings.SharingSettingsScreen
 import com.shjman.polygon2.ui.theme.Polygon2Theme
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.time.format.DateTimeFormatter
@@ -47,6 +51,8 @@ class MainActivity : ComponentActivity() {
     private val editSpendingViewModel: EditSpendingViewModel by viewModel()
     private val categoriesViewModel: CategoriesViewModel by viewModel()
     private val editCategoryViewModel: EditCategoryViewModel by viewModel()
+    private val settingViewModel: SettingViewModel by viewModel()
+    private val sharingSettingViewModel: SharingSettingViewModel by viewModel()
 
     private val loginLauncher = registerForActivityResult(FirebaseAuthUIActivityResultContract()) {
         homeViewModel.showSnackBar(if (it.resultCode == RESULT_OK) "login success" else "login error")
@@ -77,6 +83,8 @@ class MainActivity : ComponentActivity() {
                             loginLauncher = loginLauncher,
                             navHostController = navController,
                             scaffoldState = scaffoldState,
+                            settingViewModel = settingViewModel,
+                            sharingSettingViewModel = sharingSettingViewModel,
                             spentViewModel = spentViewModel,
                         )
                     }
@@ -186,6 +194,8 @@ fun NavigationGraph(
     loginLauncher: ActivityResultLauncher<Intent>,
     navHostController: NavHostController,
     scaffoldState: ScaffoldState,
+    settingViewModel: SettingViewModel,
+    sharingSettingViewModel: SharingSettingViewModel,
     spentViewModel: SpentViewModel,
 ) {
     NavHost(
@@ -230,7 +240,11 @@ fun NavigationGraph(
             )
         }
         composable(Screens.BottomNavItem.Setting.screenRoute) {
-            SettingScreen()
+            SettingScreen(
+                settingViewModel = settingViewModel,
+                navHostController = navHostController,
+                onSharingSpendingsClicked = {},
+            )
         }
         composable(
             route = Screens.EditSpending.screenRoute + "/{localDateTimeString}",
@@ -262,6 +276,13 @@ fun NavigationGraph(
             CategoriesScreen(
                 categoriesViewModel = categoriesViewModel,
                 navigateToEditCategory = { navHostController.navigate(Screens.EditCategory.screenRoute) },
+            )
+        }
+        composable(
+            route = Screens.SharingSettings.screenRoute
+        ) {
+            SharingSettingsScreen(
+                sharingSettingViewModel = sharingSettingViewModel,
             )
         }
     }

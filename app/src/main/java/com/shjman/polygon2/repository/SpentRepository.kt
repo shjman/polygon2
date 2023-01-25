@@ -1,7 +1,9 @@
 package com.shjman.polygon2.repository
 
+import com.google.firebase.auth.FirebaseUser
 import com.shjman.polygon2.data.Category
 import com.shjman.polygon2.data.Spending
+import com.shjman.polygon2.data.TrustedUser
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import java.time.LocalDateTime
@@ -14,6 +16,8 @@ interface SpentRepository {
     suspend fun getSpending(localDateTime: LocalDateTime): Spending?
     suspend fun getSpendings(): List<Spending>
     fun getSpendingsFlow(): Flow<List<Spending>>
+    suspend fun getTrustedUsers(): Flow<List<TrustedUser>?>
+    fun getUserData(): FirebaseUser?
     suspend fun removeSpending(uuid: String)
     suspend fun saveCategory(category: Category)
     suspend fun saveSpentAmount(spentAmount: Int, note: String, category: Category)
