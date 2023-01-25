@@ -1,5 +1,6 @@
 package com.shjman.polygon2.ui
 
+import android.os.Trace
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -99,7 +100,9 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
                             else -> _categoriesFlow.value = categories
                         }
                         if (!isSelectedCategorySet) {
+                            Trace.beginSection("getPopularCategory2")
                             _selectedCategoryFlow.value = spentRepository.getPopularCategory2()
+                            Trace.endSection()
                             isSelectedCategorySet = true
                             updatePopularCategory()
                         }

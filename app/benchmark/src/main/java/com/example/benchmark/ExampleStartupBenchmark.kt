@@ -1,9 +1,7 @@
 package com.example.benchmark
 
 import android.util.Log
-import androidx.benchmark.macro.MacrobenchmarkScope
-import androidx.benchmark.macro.StartupMode
-import androidx.benchmark.macro.StartupTimingMetric
+import androidx.benchmark.macro.*
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.uiautomator.By
@@ -33,12 +31,21 @@ class ExampleStartupBenchmark {
     @get:Rule
     val benchmarkRule = MacrobenchmarkRule()
 
+    @OptIn(ExperimentalMetricApi::class)
     @Test
     fun startup() = benchmarkRule.measureRepeated(
+        compilationMode = CompilationMode.None(), // JIT - dalvik , AOT -ART
+
         packageName = "com.shjman.polygon2",
-        metrics = listOf(StartupTimingMetric()),
-        iterations = 5,
-        startupMode = StartupMode.COLD
+
+        metrics = listOf(
+            StartupTimingMetric(),
+            FrameTimingMetric(),
+            TraceSectionMetric("Polygon2Theme"),
+            TraceSectionMetric("getPopularCategory2"),
+        ),
+        iterations = 11,
+        startupMode = StartupMode.WARM
     ) {
         pressHome()
         startActivityAndWait()
@@ -46,11 +53,11 @@ class ExampleStartupBenchmark {
     }
 
     private fun MacrobenchmarkScope.clickOnButton() {
-        Log.e("dddd1","ddd")
+        Log.e("dddd1", "ddd")
         device.findObject(By.res("go spent screen button")).click()
 
-      check(device.wait(Until.hasObject(By.textContains("done1")), TimeUnit.SECONDS.toMillis(10)))
+        check(device.wait(Until.hasObject(By.textContains("done1")), TimeUnit.SECONDS.toMillis(10)))
         device.waitForIdle()
-        Log.e("dddd2","ddd")
+        Log.e("dddd2", "ddd")
     }
 }

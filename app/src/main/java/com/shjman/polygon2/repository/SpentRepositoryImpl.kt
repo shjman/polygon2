@@ -189,6 +189,7 @@ class SpentRepositoryImpl(
     }
 
     override suspend fun getPopularCategory2(): Category {
+        delay(500)
         Timber.e("aaaa getPopularCategory2 start")
         val start = LocalTime.now().toNanoOfDay()
         val last15Spendings = getSpendings()

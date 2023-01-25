@@ -2,6 +2,7 @@ package com.shjman.polygon2.ui
 
 import android.content.Context
 import android.os.Bundle
+import android.os.Trace
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.*
@@ -53,6 +54,7 @@ class MainActivity : ComponentActivity() {
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
             val isShowingBottomBar = rememberSaveable { (mutableStateOf(true)) }
+            Trace.beginSection("Polygon2Theme")
             Polygon2Theme {
                 setupBottomBarVisibility(currentRoute, isShowingBottomBar)
                 Scaffold(
@@ -72,6 +74,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
+            Trace.endSection()
         }
     }
 
