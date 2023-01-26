@@ -29,7 +29,7 @@ android {
         }
         my_custom {
             dimension "environment"
-            applicationIdSuffix ".custom"
+            applicationIdSuffix ".customnew"
             buildConfigField "String", "mainCollectionPath", "\"family\""
             buildConfigField "long", "testDelayDuration", "0"
         }
