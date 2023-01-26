@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import java.time.LocalDateTime
 
 interface SpentRepository {
+    suspend fun addTrustedUser(trustedUserEmail: String)
     fun checkIsUserLoggedIn(): Boolean
     suspend fun getCategories(): List<Category>
     fun getCategoriesFlow(): Flow<List<Category>>

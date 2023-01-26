@@ -9,6 +9,7 @@ sealed class Screens(var screenRoute: String) {
     object Categories : Screens("Categories")
     object EditCategory : Screens("EditCategory")
     object SharingSettings : Screens("SharingSettings")
+    object AddTrustedUserScreen : Screens("AddTrustedUser")
 
     open class BottomNavItem(var title: String, var icon: ImageVector, screenRoute: String) : Screens(screenRoute) {
         object Home : BottomNavItem("Home", Icons.Default.Home, "home")

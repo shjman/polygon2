@@ -9,6 +9,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.snapshots
 import com.shjman.polygon2.BuildConfig
 import com.shjman.polygon2.data.*
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
@@ -153,6 +154,18 @@ class SpentRepositoryImpl(
             .await()
     }
 
+    override suspend fun addTrustedUser(trustedUserEmail: String) {
+        val newData = mutableMapOf<String, String>()
+        newData["email"] = trustedUserEmail
+        fireStore
+            .collection(COLLECTION_ENTRY_POINT)
+            .document(getUserEmail())
+            .collection(COLLECTION_TRUSTED_EMAILS)
+            .document(trustedUserEmail)
+            .set(newData)
+            .await()
+    }
+
     override suspend fun updatePopularCategoryID(popularCategoryID: String) {
         dataStore.edit { preferences ->
             preferences[POPULAR_CATEGORY_ID] = popularCategoryID
@@ -171,6 +184,7 @@ class SpentRepositoryImpl(
     override fun getUserData() = firebaseAuth.currentUser
 
     override suspend fun getTrustedUsers(): Flow<List<TrustedUser>?> {
+        delay(BuildConfig.testDelayDuration)
         return fireStore
             .collection(COLLECTION_ENTRY_POINT)
             .document(getUserEmail())

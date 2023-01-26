@@ -37,22 +37,20 @@ import com.shjman.polygon2.ui.categories.CategoriesScreen
 import com.shjman.polygon2.ui.categories.CategoriesViewModel
 import com.shjman.polygon2.ui.categories.EditCategoryScreen
 import com.shjman.polygon2.ui.categories.EditCategoryViewModel
-import com.shjman.polygon2.ui.settings.SettingScreen
-import com.shjman.polygon2.ui.settings.SettingViewModel
-import com.shjman.polygon2.ui.settings.SharingSettingViewModel
-import com.shjman.polygon2.ui.settings.SharingSettingsScreen
+import com.shjman.polygon2.ui.settings.*
 import com.shjman.polygon2.ui.theme.Polygon2Theme
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.time.format.DateTimeFormatter
 
 class MainActivity : ComponentActivity() {
-    private val homeViewModel: HomeViewModel by viewModel()
-    private val spentViewModel: SpentViewModel by viewModel()
-    private val editSpendingViewModel: EditSpendingViewModel by viewModel()
+    private val addTrustedUserViewModel: AddTrustedUserViewModel by viewModel()
     private val categoriesViewModel: CategoriesViewModel by viewModel()
     private val editCategoryViewModel: EditCategoryViewModel by viewModel()
+    private val editSpendingViewModel: EditSpendingViewModel by viewModel()
+    private val homeViewModel: HomeViewModel by viewModel()
     private val settingViewModel: SettingViewModel by viewModel()
     private val sharingSettingViewModel: SharingSettingViewModel by viewModel()
+    private val spentViewModel: SpentViewModel by viewModel()
 
     private val loginLauncher = registerForActivityResult(FirebaseAuthUIActivityResultContract()) {
         homeViewModel.showSnackBar(if (it.resultCode == RESULT_OK) "login success" else "login error")
@@ -75,6 +73,7 @@ class MainActivity : ComponentActivity() {
                 ) { paddingValues ->
                     Box(modifier = Modifier.padding(paddingValues)) {
                         NavigationGraph(
+                            addTrustedUserViewModel = addTrustedUserViewModel,
                             categoriesViewModel = categoriesViewModel,
                             context = this@MainActivity,
                             editCategoryViewModel = editCategoryViewModel,
@@ -186,6 +185,7 @@ fun BottomNavigation(
 
 @Composable
 fun NavigationGraph(
+    addTrustedUserViewModel: AddTrustedUserViewModel,
     categoriesViewModel: CategoriesViewModel,
     context: Context,
     editCategoryViewModel: EditCategoryViewModel,
@@ -283,6 +283,15 @@ fun NavigationGraph(
         ) {
             SharingSettingsScreen(
                 sharingSettingViewModel = sharingSettingViewModel,
+                navigateToAddTrustedUser = { navHostController.navigate(Screens.AddTrustedUserScreen.screenRoute) },
+            )
+        }
+        composable(
+            route = Screens.AddTrustedUserScreen.screenRoute
+        ) {
+            AddTrustedUserScreen(
+                addTrustedUserViewModel = addTrustedUserViewModel,
+                popBackStack = { navHostController.popBackStack() },
             )
         }
     }

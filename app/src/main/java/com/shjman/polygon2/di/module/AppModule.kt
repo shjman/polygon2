@@ -13,6 +13,7 @@ import com.shjman.polygon2.repository.SpentRepositoryImpl
 import com.shjman.polygon2.ui.*
 import com.shjman.polygon2.ui.categories.CategoriesViewModel
 import com.shjman.polygon2.ui.categories.EditCategoryViewModel
+import com.shjman.polygon2.ui.settings.AddTrustedUserViewModel
 import com.shjman.polygon2.ui.settings.SettingViewModel
 import com.shjman.polygon2.ui.settings.SharingSettingViewModel
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -35,6 +36,7 @@ val appModule = module {
     viewModel { CategoriesViewModel(get()) }
     viewModel { EditCategoryViewModel(get()) }
     viewModel { EditSpendingViewModel(get()) }
+    viewModel { AddTrustedUserViewModel(get()) }
     viewModel { HomeViewModel(get()) }
     viewModel { SettingViewModel(get()) }
     viewModel { SharingSettingViewModel(get()) }

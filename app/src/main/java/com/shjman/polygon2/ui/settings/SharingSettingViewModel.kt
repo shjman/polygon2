@@ -19,6 +19,9 @@ class SharingSettingViewModel(
     private val _trustedUsers = MutableStateFlow<List<TrustedUser>?>(null)
     val trustedUsers = _trustedUsers.asStateFlow()
 
+    private val _onAddTrustedUserClicked = MutableSharedFlow<Unit>()
+    val onAddTrustedUserClicked = _onAddTrustedUserClicked.asSharedFlow()
+
     fun startObserveTrustedEmails() {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
@@ -26,6 +29,12 @@ class SharingSettingViewModel(
                     .onEach { _trustedUsers.value = it }
                     .collect()
             }
+        }
+    }
+
+    fun addTrustedUserClicked() {
+        viewModelScope.launch {
+            _onAddTrustedUserClicked.emit(Unit)
         }
     }
 }
