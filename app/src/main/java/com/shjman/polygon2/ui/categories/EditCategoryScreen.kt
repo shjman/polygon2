@@ -50,7 +50,11 @@ fun EditCategoryScreen(
             value = category.value,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(
-                onDone = { editCategoryViewModel.onDoneClicked() },
+                onDone = {
+                    if (isProceedButtonEnabled.value) {
+                        editCategoryViewModel.onDoneClicked()
+                    }
+                },
             ),
             shape = RoundedCornerShape(12.dp),
             onValueChange = { editCategoryViewModel.categoryValueChanged(it) },

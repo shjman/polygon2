@@ -50,7 +50,11 @@ fun AddTrustedUserScreen(
             value = trustedUserEmail.value,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(
-                onDone = { addTrustedUserViewModel.onDoneClicked() },
+                onDone = {
+                    if (isProceedButtonEnabled.value) {
+                        addTrustedUserViewModel.onDoneClicked()
+                    }
+                },
             ),
             shape = RoundedCornerShape(12.dp),
             onValueChange = { addTrustedUserViewModel.trustedUserEmailChanged(it) },
