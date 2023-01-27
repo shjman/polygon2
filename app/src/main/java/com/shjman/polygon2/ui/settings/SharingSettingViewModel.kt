@@ -13,14 +13,14 @@ class SharingSettingViewModel(
     private val spentRepository: SpentRepository,
 ) : ViewModel() {
 
-    private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
     private val _trustedUsers = MutableStateFlow<List<TrustedUser>?>(null)
     val trustedUsers = _trustedUsers.asStateFlow()
 
     private val _onAddTrustedUserClicked = MutableSharedFlow<Unit>()
     val onAddTrustedUserClicked = _onAddTrustedUserClicked.asSharedFlow()
+
+    private val _onSendInviteLinkButtonClicked = MutableSharedFlow<Unit>()
+    val onSendInviteLinkButtonClicked = _onSendInviteLinkButtonClicked.asSharedFlow()
 
     fun startObserveTrustedEmails() {
         viewModelScope.launch {
@@ -35,6 +35,12 @@ class SharingSettingViewModel(
     fun addTrustedUserClicked() {
         viewModelScope.launch {
             _onAddTrustedUserClicked.emit(Unit)
+        }
+    }
+
+    fun onSendInviteLinkButtonClicked() {
+        viewModelScope.launch {
+            _onSendInviteLinkButtonClicked.emit(Unit)
         }
     }
 }

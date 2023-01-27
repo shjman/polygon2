@@ -20,6 +20,8 @@ fun SharingSettingsScreen(
     scope: CoroutineScope = rememberCoroutineScope(),
     trustedUsersState: MutableState<List<TrustedUser>?> = remember { mutableStateOf(null) },
     navigateToAddTrustedUser: () -> Unit,
+    sendInviteLink: () -> Unit,
+    onSendInviteLinkButtonClicked: () -> Unit = { sharingSettingViewModel.onSendInviteLinkButtonClicked() },
     onAddTrustedUserClicked: () -> Unit = { sharingSettingViewModel.addTrustedUserClicked() },
 ) {
     LaunchedEffect(Unit) {
@@ -29,6 +31,9 @@ fun SharingSettingsScreen(
             .launchIn(scope)
         sharingSettingViewModel.onAddTrustedUserClicked
             .onEach { navigateToAddTrustedUser() }
+            .launchIn(scope)
+        sharingSettingViewModel.onSendInviteLinkButtonClicked
+            .onEach { sendInviteLink() }
             .launchIn(scope)
     }
     Column(
@@ -74,8 +79,27 @@ fun SharingSettingsScreen(
                 }
             }
         }
+        SendInviteLinkButton(
+            onSendInviteLinkButtonClicked = onSendInviteLinkButtonClicked,
+        )
         AddTrustedUserButton(
             onAddTrustedUserClicked = onAddTrustedUserClicked,
+        )
+    }
+}
+
+@Composable
+fun SendInviteLinkButton(
+    onSendInviteLinkButtonClicked: () -> Unit,
+) {
+    Button(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        onClick = onSendInviteLinkButtonClicked,
+    ) {
+        Text(
+            text = "send invite link",
         )
     }
 }

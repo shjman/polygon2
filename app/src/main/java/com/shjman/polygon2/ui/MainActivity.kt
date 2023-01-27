@@ -18,6 +18,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -281,9 +282,15 @@ fun NavigationGraph(
         composable(
             route = Screens.SharingSettings.screenRoute
         ) {
+            val sendIntent: Intent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_TEXT, "This is my text to send some deeplink.") // todo here should be deeplink
+                type = "text/plain"
+            }
             SharingSettingsScreen(
                 sharingSettingViewModel = sharingSettingViewModel,
                 navigateToAddTrustedUser = { navHostController.navigate(Screens.AddTrustedUserScreen.screenRoute) },
+                sendInviteLink = { context.startActivity(Intent.createChooser(sendIntent, "send somebody it")) },
             )
         }
         composable(
