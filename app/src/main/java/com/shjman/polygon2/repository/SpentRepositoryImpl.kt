@@ -36,7 +36,7 @@ class SpentRepositoryImpl(
         newData["email"] = trustedUserEmail
         fireStore
             .collection(COLLECTION_ENTRY_POINT)
-            .document(getUserEmail())
+            .document(getDocumentPath())
             .collection(COLLECTION_TRUSTED_EMAILS)
             .document(trustedUserEmail)
             .set(newData)
@@ -48,7 +48,7 @@ class SpentRepositoryImpl(
     override suspend fun getCategories(): List<Category> {
         return fireStore
             .collection(COLLECTION_ENTRY_POINT)
-            .document(getUserEmail())
+            .document(getDocumentPath())
             .collection(COLLECTION_CATEGORIES)
             .get()
             .await()
@@ -60,7 +60,7 @@ class SpentRepositoryImpl(
     override fun getCategoriesFlow(): Flow<List<Category>> {
         return fireStore
             .collection(COLLECTION_ENTRY_POINT)
-            .document(getUserEmail())
+            .document(getDocumentPath())
             .collection(COLLECTION_CATEGORIES)
             .snapshots()
             .map { it.toObjects(CategoryRemote::class.java) }
@@ -77,7 +77,7 @@ class SpentRepositoryImpl(
     override suspend fun getSpending(localDateTime: LocalDateTime): Spending? {
         return fireStore
             .collection(COLLECTION_ENTRY_POINT)
-            .document(getUserEmail())
+            .document(getDocumentPath())
             .collection(COLLECTION_SPENDINGS)
             .get()
             .await()
@@ -91,7 +91,7 @@ class SpentRepositoryImpl(
         val categories = getCategories()
         return fireStore
             .collection(COLLECTION_ENTRY_POINT)
-            .document(getUserEmail())
+            .document(getDocumentPath())
             .collection(COLLECTION_SPENDINGS)
             .get()
             .await()
@@ -103,7 +103,7 @@ class SpentRepositoryImpl(
     override fun getSpendingsFlow(): Flow<List<Spending>> {
         return fireStore
             .collection(COLLECTION_ENTRY_POINT)
-            .document(getUserEmail())
+            .document(getDocumentPath())
             .collection(COLLECTION_SPENDINGS)
             .snapshots()
             .map { it.toObjects(SpendingRemote::class.java) }
@@ -115,7 +115,7 @@ class SpentRepositoryImpl(
         delay(BuildConfig.testDelayDuration)
         return fireStore
             .collection(COLLECTION_ENTRY_POINT)
-            .document(getUserEmail())
+            .document(getDocumentPath())
             .collection(COLLECTION_TRUSTED_EMAILS)
             .snapshots()
             .map { it.toObjects(TrustedUser::class.java) }
@@ -130,7 +130,7 @@ class SpentRepositoryImpl(
     override suspend fun removeSpending(uuid: String) {
         fireStore
             .collection(COLLECTION_ENTRY_POINT)
-            .document(getUserEmail())
+            .document(getDocumentPath())
             .collection(COLLECTION_SPENDINGS)
             .document(uuid)
             .delete()
@@ -144,7 +144,7 @@ class SpentRepositoryImpl(
 
         fireStore
             .collection(COLLECTION_ENTRY_POINT)
-            .document(getUserEmail())
+            .document(getDocumentPath())
             .collection(COLLECTION_CATEGORIES)
             .document(id)
             .set(newData)
@@ -168,7 +168,7 @@ class SpentRepositoryImpl(
 
         fireStore
             .collection(COLLECTION_ENTRY_POINT)
-            .document(getUserEmail())
+            .document(getDocumentPath())
             .collection(COLLECTION_SPENDINGS)
             .document(uuid)
             .set(newData)
@@ -191,14 +191,14 @@ class SpentRepositoryImpl(
 
         fireStore
             .collection(COLLECTION_ENTRY_POINT)
-            .document(getUserEmail())
+            .document(getDocumentPath())
             .collection(COLLECTION_SPENDINGS)
             .document(spending.uuid)
             .set(newData)
         showSpendingUpdated.emit(Unit)
     }
 
-    private fun getUserEmail(): String {
+    private fun getDocumentPath(): String {
         return if (BuildConfig.mainCollectionPath == "testing_family") {
 //            firebaseAuth.currentUser.uid    todo check this option . change it in the release
             val path = firebaseAuth.currentUser?.email   // todo change it if it's a shared collection

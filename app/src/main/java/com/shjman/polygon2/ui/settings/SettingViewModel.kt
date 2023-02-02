@@ -20,8 +20,8 @@ class SettingViewModel(
     val userData = _userData.asStateFlow()
 
     suspend fun startObserveSettingData() {
-        _userData.value = spentRepository.getUserData()
         delay(BuildConfig.testDelayDuration)
+        _userData.value = spentRepository.getUserData()
         _isLoading.value = false
     }
 

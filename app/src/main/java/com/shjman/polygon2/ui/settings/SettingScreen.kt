@@ -24,6 +24,7 @@ fun SettingScreen(
     scope: CoroutineScope = rememberCoroutineScope(),
     settingViewModel: SettingViewModel,
     userDataState: MutableState<FirebaseUser?> = remember { mutableStateOf(null) },
+    isUserOwner: MutableState<Boolean> = remember { mutableStateOf(false) },
 ) {
     val onSignOutClicked = {
         settingViewModel.onSignOutClicked()
@@ -67,7 +68,9 @@ fun SettingScreen(
                     )
                 }
             }
-            SharingSettingsButton(navigateToSharingSettingsScreen = navigateToSharingSettingsScreen) // todo show only for dataBase owner - add check
+            if (isUserOwner.value) {
+                SharingSettingsButton(navigateToSharingSettingsScreen = navigateToSharingSettingsScreen) // todo show only for dataBase owner - add check
+            }
             CategoriesScreenButton(navigateToCategoriesScreen = navigateToCategoriesScreen)
         }
     }
