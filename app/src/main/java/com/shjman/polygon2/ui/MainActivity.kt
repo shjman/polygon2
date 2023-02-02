@@ -34,6 +34,8 @@ import com.shjman.polygon2.ui.categories.CategoriesScreen
 import com.shjman.polygon2.ui.categories.CategoriesViewModel
 import com.shjman.polygon2.ui.categories.EditCategoryScreen
 import com.shjman.polygon2.ui.categories.EditCategoryViewModel
+import com.shjman.polygon2.ui.edit_spending.EditSpendingScreen
+import com.shjman.polygon2.ui.edit_spending.EditSpendingViewModel
 import com.shjman.polygon2.ui.settings.*
 import com.shjman.polygon2.ui.theme.Polygon2Theme
 import com.shjman.polygon2.ui.unauthorized.UnauthorizedScreen
@@ -180,7 +182,6 @@ fun BottomNavigation(
                             saveState = true
                         }
                         launchSingleTop = true
-                        restoreState = true
                     }
                 }
             )
@@ -217,7 +218,6 @@ fun NavigationGraph(
         composable(Screens.BottomNavItem.Spent.screenRoute) {
             SpentScreen(
                 spentViewModel = spentViewModel,
-                onNavigateToCategoriesScreenClicked = { navHostController.navigate(Screens.Categories.screenRoute) },
             )
         }
         composable(Screens.BottomNavItem.Overview.screenRoute) {
@@ -234,8 +234,12 @@ fun NavigationGraph(
         }
         composable(Screens.BottomNavItem.Setting.screenRoute) {
             SettingScreen(
-                settingViewModel = settingViewModel,
-                navHostController = navHostController,
+                navigateToCategoriesScreen = {
+                    navHostController.navigate(Screens.Categories.screenRoute)
+                },
+                navigateToSharingSettingsScreen = {
+                    navHostController.navigate(Screens.SharingSettings.screenRoute)
+                },
                 navigateToUnauthorizedScreen = {
                     navHostController.navigate(Screens.Unauthorized.screenRoute) {
                         popUpTo(Screens.BottomNavItem.Home.screenRoute) {
@@ -243,6 +247,7 @@ fun NavigationGraph(
                         }
                     }
                 },
+                settingViewModel = settingViewModel,
             )
         }
         composable(

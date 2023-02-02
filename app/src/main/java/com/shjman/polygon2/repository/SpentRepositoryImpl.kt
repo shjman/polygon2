@@ -152,6 +152,7 @@ class SpentRepositoryImpl(
     }
 
     override suspend fun saveSpentAmount(spentAmount: Int, note: String, category: Category) {
+        delay(BuildConfig.testDelayDuration)
         val newData = mutableMapOf<String, Any>()
         val formatter = DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER)
         val currentLocalDateTime = LocalDateTime.now()

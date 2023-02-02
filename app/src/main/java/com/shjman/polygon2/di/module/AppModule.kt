@@ -13,6 +13,7 @@ import com.shjman.polygon2.repository.SpentRepositoryImpl
 import com.shjman.polygon2.ui.*
 import com.shjman.polygon2.ui.categories.CategoriesViewModel
 import com.shjman.polygon2.ui.categories.EditCategoryViewModel
+import com.shjman.polygon2.ui.edit_spending.EditSpendingViewModel
 import com.shjman.polygon2.ui.settings.AddTrustedUserViewModel
 import com.shjman.polygon2.ui.settings.SettingViewModel
 import com.shjman.polygon2.ui.settings.SharingSettingViewModel

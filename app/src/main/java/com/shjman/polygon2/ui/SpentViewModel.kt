@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.shjman.polygon2.BuildConfig
 import com.shjman.polygon2.data.Category
 import com.shjman.polygon2.data.Spending
 import com.shjman.polygon2.repository.SpentRepository
@@ -56,7 +57,6 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
                     note = _note.value ?: "",
                     category = selectedCategoryFlow.value ?: Category.empty(),
                 )
-                delay(1500)
             }
             _amountSpent.value = 0
             _note.value = ""
@@ -88,6 +88,7 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
     fun startObserveCategories() {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
+                delay(BuildConfig.testDelayDuration)
                 var isSelectedCategorySet = false
                 spentRepository.getCategoriesFlow()
                     .onEach { categories ->

@@ -1,4 +1,4 @@
-package com.shjman.polygon2.ui
+package com.shjman.polygon2.ui.edit_spending
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
