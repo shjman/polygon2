@@ -22,21 +22,23 @@ fun SettingScreen(
     isLoadingUIState: MutableState<Boolean> = remember { mutableStateOf(true) },
     userDataState: MutableState<FirebaseUser?> = remember { mutableStateOf(null) },
     scope: CoroutineScope = rememberCoroutineScope(),
-    onSharingSpendingsClicked: () -> Unit,
     navHostController: NavHostController,
+    navigateToUnauthorizedScreen: () -> Unit,
 ) {
+    val onSignOutClicked = {
+        settingViewModel.onSignOutClicked()
+        navigateToUnauthorizedScreen()
+    }
     LaunchedEffect(Unit) {
         settingViewModel.startObserveSettingData()
         settingViewModel.isLoading
             .onEach { isLoadingUIState.value = it }
             .launchIn(scope)
-
         settingViewModel.userData
             .onEach {
                 userDataState.value = it
             }
             .launchIn(scope)
-
     }
 
     if (isLoadingUIState.value) {
@@ -48,10 +50,23 @@ fun SettingScreen(
                 .fillMaxHeight()
                 .padding(8.dp),
         ) {
-            Text(
-                modifier = Modifier.padding(12.dp),
-                text = userDataState.value?.email ?: "wtf is your email??",
-            )
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .weight(1f),
+                    text = userDataState.value?.email ?: "wtf who are you?!?",
+                )
+                Button(
+                    onClick = onSignOutClicked,
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.White),
+                ) {
+                    Text(
+                        text = "sign out",
+                        color = Color.Black,
+                    )
+                }
+            }
             Button(
                 // todo show only for dataBase owner - add check
                 onClick = { navHostController.navigate(Screens.SharingSettings.screenRoute) },

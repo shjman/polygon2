@@ -11,14 +11,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -40,6 +36,10 @@ import com.shjman.polygon2.ui.categories.EditCategoryScreen
 import com.shjman.polygon2.ui.categories.EditCategoryViewModel
 import com.shjman.polygon2.ui.settings.*
 import com.shjman.polygon2.ui.theme.Polygon2Theme
+import com.shjman.polygon2.ui.unauthorized.UnauthorizedScreen
+import com.shjman.polygon2.ui.unauthorized.UnauthorizedViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.time.format.DateTimeFormatter
 
@@ -52,15 +52,20 @@ class MainActivity : ComponentActivity() {
     private val settingViewModel: SettingViewModel by viewModel()
     private val sharingSettingViewModel: SharingSettingViewModel by viewModel()
     private val spentViewModel: SpentViewModel by viewModel()
+    private val unauthorizedViewModel: UnauthorizedViewModel by viewModel()
+
+    private var scope: CoroutineScope? = null
 
     private val loginLauncher = registerForActivityResult(FirebaseAuthUIActivityResultContract()) {
-        homeViewModel.showSnackBar(if (it.resultCode == RESULT_OK) "login success" else "login error")
-        homeViewModel.checkIsUserLoggedIn()
+        scope?.launch {
+            unauthorizedViewModel.checkIsUserSignIn()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            scope = rememberCoroutineScope()
             val navController = rememberNavController()
             val scaffoldState = rememberScaffoldState()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -86,6 +91,7 @@ class MainActivity : ComponentActivity() {
                             settingViewModel = settingViewModel,
                             sharingSettingViewModel = sharingSettingViewModel,
                             spentViewModel = spentViewModel,
+                            unauthorizedViewModel = unauthorizedViewModel,
                         )
                     }
                 }
@@ -170,10 +176,8 @@ fun BottomNavigation(
                 selected = currentRoute == item.screenRoute,
                 onClick = {
                     navController.navigate(item.screenRoute) {
-                        navController.graph.startDestinationRoute?.let { screenRoute ->
-                            popUpTo(screenRoute) {
-                                saveState = true
-                            }
+                        popUpTo(Screens.BottomNavItem.Home.screenRoute) {
+                            saveState = true
                         }
                         launchSingleTop = true
                         restoreState = true
@@ -198,28 +202,16 @@ fun NavigationGraph(
     settingViewModel: SettingViewModel,
     sharingSettingViewModel: SharingSettingViewModel,
     spentViewModel: SpentViewModel,
+    unauthorizedViewModel: UnauthorizedViewModel,
 ) {
     NavHost(
         navController = navHostController,
-        startDestination = Screens.BottomNavItem.Home.screenRoute,
+        startDestination = Screens.Unauthorized.screenRoute,
     ) {
         composable(Screens.BottomNavItem.Home.screenRoute) {
             HomeScreen(
-                context = context,
                 homeViewModel = homeViewModel,
-                loginLauncher = loginLauncher,
-                scaffoldState = scaffoldState,
-                onClickGoNext = {
-                    navHostController.navigate(Screens.BottomNavItem.Spent.screenRoute) {
-                        navHostController.graph.startDestinationRoute?.let { screenRoute ->
-                            popUpTo(screenRoute) {
-                                saveState = true
-                            }
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
+                onClickGoNext = { navHostController.navigate(Screens.BottomNavItem.Spent.screenRoute) },
             )
         }
         composable(Screens.BottomNavItem.Spent.screenRoute) {
@@ -231,7 +223,7 @@ fun NavigationGraph(
         composable(Screens.BottomNavItem.Overview.screenRoute) {
             OverviewScreen(
                 spentViewModel = spentViewModel,
-                onEditSpendingClicked = { localDateTime ->
+                onEditSpendingClicked = { localDateTime -> // todo rework to use id of spending
                     val localDateTimeString = localDateTime.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER))
                     navHostController.navigate(Screens.EditSpending.screenRoute + "/$localDateTimeString") {
                         launchSingleTop = true
@@ -244,7 +236,37 @@ fun NavigationGraph(
             SettingScreen(
                 settingViewModel = settingViewModel,
                 navHostController = navHostController,
-                onSharingSpendingsClicked = {},
+                navigateToUnauthorizedScreen = {
+                    navHostController.navigate(Screens.Unauthorized.screenRoute) {
+                        popUpTo(Screens.BottomNavItem.Home.screenRoute) {
+                            inclusive = true
+                        }
+                    }
+                },
+            )
+        }
+        composable(
+            route = Screens.AddTrustedUserScreen.screenRoute
+        ) {
+            AddTrustedUserScreen(
+                addTrustedUserViewModel = addTrustedUserViewModel,
+                popBackStack = { navHostController.popBackStack() },
+            )
+        }
+        composable(
+            route = Screens.Categories.screenRoute
+        ) {
+            CategoriesScreen(
+                categoriesViewModel = categoriesViewModel,
+                navigateToEditCategory = { navHostController.navigate(Screens.EditCategory.screenRoute) },
+            )
+        }
+        composable(
+            route = Screens.EditCategory.screenRoute
+        ) {
+            EditCategoryScreen(
+                editCategoryViewModel = editCategoryViewModel,
+                popBackStack = { navHostController.popBackStack() },
             )
         }
         composable(
@@ -264,22 +286,6 @@ fun NavigationGraph(
             }
         }
         composable(
-            route = Screens.EditCategory.screenRoute
-        ) {
-            EditCategoryScreen(
-                editCategoryViewModel = editCategoryViewModel,
-                popBackStack = { navHostController.popBackStack() },
-            )
-        }
-        composable(
-            route = Screens.Categories.screenRoute
-        ) {
-            CategoriesScreen(
-                categoriesViewModel = categoriesViewModel,
-                navigateToEditCategory = { navHostController.navigate(Screens.EditCategory.screenRoute) },
-            )
-        }
-        composable(
             route = Screens.SharingSettings.screenRoute
         ) {
             val sendIntent: Intent = Intent().apply {
@@ -294,11 +300,20 @@ fun NavigationGraph(
             )
         }
         composable(
-            route = Screens.AddTrustedUserScreen.screenRoute
+            route = Screens.Unauthorized.screenRoute
         ) {
-            AddTrustedUserScreen(
-                addTrustedUserViewModel = addTrustedUserViewModel,
-                popBackStack = { navHostController.popBackStack() },
+            UnauthorizedScreen(
+                loginLauncher = loginLauncher,
+                unauthorizedViewModel = unauthorizedViewModel,
+                navigateToHomeScreen = {
+                    navHostController.navigate(Screens.BottomNavItem.Home.screenRoute) {
+                        navHostController.graph.startDestinationRoute?.let { startDestinationRoute ->
+                            popUpTo(startDestinationRoute) {
+                                inclusive = true
+                            }
+                        }
+                    }
+                },
             )
         }
     }

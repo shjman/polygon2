@@ -10,7 +10,7 @@ import java.time.LocalDateTime
 
 interface SpentRepository {
     suspend fun addTrustedUser(trustedUserEmail: String)
-    fun checkIsUserLoggedIn(): Boolean
+    fun checkIsUserSignIn(): Boolean
     suspend fun getCategories(): List<Category>
     fun getCategoriesFlow(): Flow<List<Category>>
     suspend fun getPopularCategory(): Category
@@ -19,6 +19,7 @@ interface SpentRepository {
     fun getSpendingsFlow(): Flow<List<Spending>>
     suspend fun getTrustedUsers(): Flow<List<TrustedUser>?>
     fun getUserData(): FirebaseUser?
+    fun signOut()
     suspend fun removeSpending(uuid: String)
     suspend fun saveCategory(category: Category)
     suspend fun saveSpentAmount(spentAmount: Int, note: String, category: Category)

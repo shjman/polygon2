@@ -24,4 +24,8 @@ class SettingViewModel(
         delay(BuildConfig.testDelayDuration)
         _isLoading.value = false
     }
+
+    fun onSignOutClicked() {
+        spentRepository.signOut()
+    }
 }

@@ -31,53 +31,47 @@ class SpentRepositoryImpl(
         private val POPULAR_CATEGORY_ID = stringPreferencesKey("POPULAR_CATEGORY_ID")
     }
 
-    override suspend fun saveSpentAmount(spentAmount: Int, note: String, category: Category) {
-        val newData = mutableMapOf<String, Any>()
-        val formatter = DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER)
-        val currentLocalDateTime = LocalDateTime.now()
-        val currentDateTimeString = currentLocalDateTime.format(formatter)
-        val uuid = currentDateTimeString + UUID.randomUUID()
-        newData["uuid"] = uuid
-        newData["date"] = currentDateTimeString
-        newData["spentAmount"] = spentAmount
-        newData["categoryID"] = category.id
-//        newData["currency"] = "zl"
-        newData["note"] = note
-        Timber.d("newData == $newData")
-
+    override suspend fun addTrustedUser(trustedUserEmail: String) {
+        val newData = mutableMapOf<String, String>()
+        newData["email"] = trustedUserEmail
         fireStore
             .collection(COLLECTION_ENTRY_POINT)
             .document(getUserEmail())
-            .collection(COLLECTION_SPENDINGS)
-            .document(uuid)
+            .collection(COLLECTION_TRUSTED_EMAILS)
+            .document(trustedUserEmail)
             .set(newData)
             .await()
     }
 
-    override suspend fun updateSpending(spending: Spending, showSpendingUpdated: MutableSharedFlow<Unit>) {
-        val newData = mutableMapOf<String, Any>()
-        newData["uuid"] = spending.uuid
-        newData["date"] = spending.date.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER))
-        newData["spentAmount"] = spending.spentAmount
-        newData["categoryID"] = spending.category.id
-        newData["note"] = spending.note
+    override fun checkIsUserSignIn() = firebaseAuth.currentUser != null
 
-        fireStore
+    override suspend fun getCategories(): List<Category> {
+        return fireStore
             .collection(COLLECTION_ENTRY_POINT)
             .document(getUserEmail())
-            .collection(COLLECTION_SPENDINGS)
-            .document(spending.uuid)
-            .set(newData)
-        showSpendingUpdated.emit(Unit)
+            .collection(COLLECTION_CATEGORIES)
+            .get()
+            .await()
+            .documents
+            .mapNotNull { it.toObject(CategoryRemote::class.java) }
+            .map { it.toCategory() }
     }
 
-    override suspend fun removeSpending(uuid: String) {
-        fireStore
+    override fun getCategoriesFlow(): Flow<List<Category>> {
+        return fireStore
             .collection(COLLECTION_ENTRY_POINT)
             .document(getUserEmail())
-            .collection(COLLECTION_SPENDINGS)
-            .document(uuid)
-            .delete()
+            .collection(COLLECTION_CATEGORIES)
+            .snapshots()
+            .map { it.toObjects(CategoryRemote::class.java) }
+            .map { it.map { categoryRemote -> categoryRemote.toCategory() } }
+    }
+
+    override suspend fun getPopularCategory(): Category {
+        val popularCategoryID = dataStore.data
+            .catch { Timber.e("error dataStore.data get POPULAR_CATEGORY_ID == ${it.message}") }
+            .first()[POPULAR_CATEGORY_ID]
+        return getCategories().firstOrNull { it.id == popularCategoryID } ?: Category.empty()
     }
 
     override suspend fun getSpending(localDateTime: LocalDateTime): Spending? {
@@ -117,26 +111,29 @@ class SpentRepositoryImpl(
             .map { (spendingRemote, categories) -> spendingRemote.map { it.toSpending(categories) } }
     }
 
-    override suspend fun getCategories(): List<Category> {
+    override suspend fun getTrustedUsers(): Flow<List<TrustedUser>?> {
+        delay(BuildConfig.testDelayDuration)
         return fireStore
             .collection(COLLECTION_ENTRY_POINT)
             .document(getUserEmail())
-            .collection(COLLECTION_CATEGORIES)
-            .get()
-            .await()
-            .documents
-            .mapNotNull { it.toObject(CategoryRemote::class.java) }
-            .map { it.toCategory() }
+            .collection(COLLECTION_TRUSTED_EMAILS)
+            .snapshots()
+            .map { it.toObjects(TrustedUser::class.java) }
     }
 
-    override fun getCategoriesFlow(): Flow<List<Category>> {
-        return fireStore
+    override fun getUserData() = firebaseAuth.currentUser
+
+    override fun signOut() {
+        firebaseAuth.signOut()
+    }
+
+    override suspend fun removeSpending(uuid: String) {
+        fireStore
             .collection(COLLECTION_ENTRY_POINT)
             .document(getUserEmail())
-            .collection(COLLECTION_CATEGORIES)
-            .snapshots()
-            .map { it.toObjects(CategoryRemote::class.java) }
-            .map { it.map { categoryRemote -> categoryRemote.toCategory() } }
+            .collection(COLLECTION_SPENDINGS)
+            .document(uuid)
+            .delete()
     }
 
     override suspend fun saveCategory(category: Category) {
@@ -154,14 +151,25 @@ class SpentRepositoryImpl(
             .await()
     }
 
-    override suspend fun addTrustedUser(trustedUserEmail: String) {
-        val newData = mutableMapOf<String, String>()
-        newData["email"] = trustedUserEmail
+    override suspend fun saveSpentAmount(spentAmount: Int, note: String, category: Category) {
+        val newData = mutableMapOf<String, Any>()
+        val formatter = DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER)
+        val currentLocalDateTime = LocalDateTime.now()
+        val currentDateTimeString = currentLocalDateTime.format(formatter)
+        val uuid = currentDateTimeString + UUID.randomUUID()
+        newData["uuid"] = uuid
+        newData["date"] = currentDateTimeString
+        newData["spentAmount"] = spentAmount
+        newData["categoryID"] = category.id
+//        newData["currency"] = "zl"
+        newData["note"] = note
+        Timber.d("newData == $newData")
+
         fireStore
             .collection(COLLECTION_ENTRY_POINT)
             .document(getUserEmail())
-            .collection(COLLECTION_TRUSTED_EMAILS)
-            .document(trustedUserEmail)
+            .collection(COLLECTION_SPENDINGS)
+            .document(uuid)
             .set(newData)
             .await()
     }
@@ -172,25 +180,21 @@ class SpentRepositoryImpl(
         }
     }
 
-    override suspend fun getPopularCategory(): Category {
-        val popularCategoryID = dataStore.data
-            .catch { Timber.e("error dataStore.data get POPULAR_CATEGORY_ID == ${it.message}") }
-            .first()[POPULAR_CATEGORY_ID]
-        return getCategories().firstOrNull { it.id == popularCategoryID } ?: Category.empty()
-    }
+    override suspend fun updateSpending(spending: Spending, showSpendingUpdated: MutableSharedFlow<Unit>) {
+        val newData = mutableMapOf<String, Any>()
+        newData["uuid"] = spending.uuid
+        newData["date"] = spending.date.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER))
+        newData["spentAmount"] = spending.spentAmount
+        newData["categoryID"] = spending.category.id
+        newData["note"] = spending.note
 
-    override fun checkIsUserLoggedIn() = firebaseAuth.currentUser != null
-
-    override fun getUserData() = firebaseAuth.currentUser
-
-    override suspend fun getTrustedUsers(): Flow<List<TrustedUser>?> {
-        delay(BuildConfig.testDelayDuration)
-        return fireStore
+        fireStore
             .collection(COLLECTION_ENTRY_POINT)
             .document(getUserEmail())
-            .collection(COLLECTION_TRUSTED_EMAILS)
-            .snapshots()
-            .map { it.toObjects(TrustedUser::class.java) }
+            .collection(COLLECTION_SPENDINGS)
+            .document(spending.uuid)
+            .set(newData)
+        showSpendingUpdated.emit(Unit)
     }
 
     private fun getUserEmail(): String {
