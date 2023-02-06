@@ -1,4 +1,4 @@
-package com.shjman.polygon2.ui
+package com.shjman.polygon2.ui.home
 
 import androidx.lifecycle.ViewModel
 import com.shjman.polygon2.repository.SpentRepository

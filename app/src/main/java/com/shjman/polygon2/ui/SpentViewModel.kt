@@ -77,6 +77,7 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
     fun startObserveSpendings() {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
+                delay(BuildConfig.testDelayDuration)
                 spentRepository.getSpendingsFlow()
                     .map { it.sortedByDescending { spending -> spending.date } }
                     .onEach { _spendingsFlow.value = it }

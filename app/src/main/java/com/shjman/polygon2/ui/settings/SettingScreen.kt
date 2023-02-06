@@ -3,8 +3,9 @@ package com.shjman.polygon2.ui.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.outlined.Category
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -14,31 +15,34 @@ import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import timber.log.Timber
 
 @Composable
 fun SettingScreen(
     isLoading: MutableState<Boolean> = remember { mutableStateOf(true) },
+    isUserOwner: MutableState<Boolean?> = remember { mutableStateOf(null) },
     navigateToCategoriesScreen: () -> Unit,
     navigateToSharingSettingsScreen: () -> Unit,
     navigateToUnauthorizedScreen: () -> Unit,
-    scope: CoroutineScope = rememberCoroutineScope(),
     settingViewModel: SettingViewModel,
     userDataState: MutableState<FirebaseUser?> = remember { mutableStateOf(null) },
-    isUserOwner: MutableState<Boolean> = remember { mutableStateOf(false) },
 ) {
+    val onStopObserveSharedDatabaseClicked: () -> Unit = { settingViewModel.onStopObserveSharedDatabaseClicked() }
     val onSignOutClicked = {
         settingViewModel.onSignOutClicked()
         navigateToUnauthorizedScreen()
     }
+    val scope: CoroutineScope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
         settingViewModel.startObserveSettingData()
         settingViewModel.isLoading
             .onEach { isLoading.value = it }
             .launchIn(scope)
+        settingViewModel.isUserOwner
+            .onEach { isUserOwner.value = it }
+            .launchIn(scope)
         settingViewModel.userData
-            .onEach {
-                userDataState.value = it
-            }
+            .onEach { userDataState.value = it }
             .launchIn(scope)
     }
 
@@ -56,7 +60,7 @@ fun SettingScreen(
                     modifier = Modifier
                         .padding(12.dp)
                         .weight(1f),
-                    text = userDataState.value?.email ?: "wtf who are you?!?",
+                    text = userDataState.value?.email ?: "loading... or wtf who are you?!?", // todo something like loadings?
                 )
                 Button(
                     onClick = onSignOutClicked,
@@ -68,10 +72,42 @@ fun SettingScreen(
                     )
                 }
             }
-            if (isUserOwner.value) {
-                SharingSettingsButton(navigateToSharingSettingsScreen = navigateToSharingSettingsScreen) // todo show only for dataBase owner - add check
+            when (isUserOwner.value) {
+                true -> {
+                    SharingSettingsButton(navigateToSharingSettingsScreen = navigateToSharingSettingsScreen)
+                }
+                false -> {
+                    StopObserveSharedDatabaseButton(onStopObserveSharedDatabaseClicked = onStopObserveSharedDatabaseClicked)
+                }
+                else -> {
+                    Timber.d("isUserOwner.value == null ") // todo xz what the logic should be there  something like loadings?
+                }
             }
             CategoriesScreenButton(navigateToCategoriesScreen = navigateToCategoriesScreen)
+        }
+    }
+}
+
+@Composable
+fun StopObserveSharedDatabaseButton(
+    onStopObserveSharedDatabaseClicked: () -> Unit,
+) {
+    Button(
+        onClick = { onStopObserveSharedDatabaseClicked() },
+        colors = ButtonDefaults.buttonColors(backgroundColor = Color.White),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                modifier = Modifier.padding(end = 12.dp),
+                imageVector = Icons.Outlined.Close,
+                contentDescription = Icons.Outlined.Close.name
+            )
+            Text(
+                text = "stop observe shared database",
+                color = Color.Black,
+            )
         }
     }
 }
@@ -87,8 +123,8 @@ fun CategoriesScreenButton(navigateToCategoriesScreen: () -> Unit) {
         ) {
             Icon(
                 modifier = Modifier.padding(end = 12.dp),
-                imageVector = Icons.Default.Category,
-                contentDescription = Icons.Default.Category.name
+                imageVector = Icons.Outlined.Category,
+                contentDescription = Icons.Outlined.Category.name
             )
             Text(
                 text = "categories",
@@ -111,8 +147,8 @@ fun SharingSettingsButton(
         ) {
             Icon(
                 modifier = Modifier.padding(end = 12.dp),
-                imageVector = Icons.Default.Share,
-                contentDescription = Icons.Default.Share.toString(),
+                imageVector = Icons.Outlined.Share,
+                contentDescription = Icons.Outlined.Share.toString(),
             )
             Text(
                 text = "sharing settings",

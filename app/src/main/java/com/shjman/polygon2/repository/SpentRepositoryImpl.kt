@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.snapshots
 import com.shjman.polygon2.BuildConfig
@@ -29,6 +30,7 @@ class SpentRepositoryImpl(
         private const val COLLECTION_SPENDINGS = "spendings"
         private const val COLLECTION_TRUSTED_EMAILS = "trusted_emails"
         private val POPULAR_CATEGORY_ID = stringPreferencesKey("POPULAR_CATEGORY_ID")
+        private val SHARED_DOCUMENT_PATH = stringPreferencesKey("DOCUMENT_PATH")
     }
 
     override suspend fun addTrustedUser(trustedUserEmail: String) {
@@ -57,7 +59,7 @@ class SpentRepositoryImpl(
             .map { it.toCategory() }
     }
 
-    override fun getCategoriesFlow(): Flow<List<Category>> {
+    override suspend fun getCategoriesFlow(): Flow<List<Category>> {
         return fireStore
             .collection(COLLECTION_ENTRY_POINT)
             .document(getDocumentPath())
@@ -65,6 +67,23 @@ class SpentRepositoryImpl(
             .snapshots()
             .map { it.toObjects(CategoryRemote::class.java) }
             .map { it.map { categoryRemote -> categoryRemote.toCategory() } }
+    }
+
+    override fun getCurrentUserData(): FirebaseUser {
+        return firebaseAuth.currentUser ?: throw Exception("wtf?? firebaseAuth.currentUser == null !") // todo error handling
+    }
+
+    override suspend fun getDocumentPath(): String {
+        val documentPath = if (BuildConfig.mainCollectionPath == "testing_family") { // todo its a place to fix
+            val sharedDocumentPath = dataStore.data
+                .catch { Timber.e("error dataStore.data get SHARED_DOCUMENT_PATH == ${it.message}") }
+                .first()[SHARED_DOCUMENT_PATH]
+            sharedDocumentPath ?: this.getCurrentUserData().uid
+        } else {
+            BuildConfig.mainCollectionPath
+        }
+        Timber.d("documentPath == $documentPath")
+        return documentPath
     }
 
     override suspend fun getPopularCategory(): Category {
@@ -100,7 +119,7 @@ class SpentRepositoryImpl(
             .map { it.toSpending(categories) }
     }
 
-    override fun getSpendingsFlow(): Flow<List<Spending>> {
+    override suspend fun getSpendingsFlow(): Flow<List<Spending>> {
         return fireStore
             .collection(COLLECTION_ENTRY_POINT)
             .document(getDocumentPath())
@@ -111,7 +130,7 @@ class SpentRepositoryImpl(
             .map { (spendingRemote, categories) -> spendingRemote.map { it.toSpending(categories) } }
     }
 
-    override suspend fun getTrustedUsers(): Flow<List<TrustedUser>?> {
+    override suspend fun getTrustedUsers(): Flow<List<TrustedUser>> {
         delay(BuildConfig.testDelayDuration)
         return fireStore
             .collection(COLLECTION_ENTRY_POINT)
@@ -121,10 +140,17 @@ class SpentRepositoryImpl(
             .map { it.toObjects(TrustedUser::class.java) }
     }
 
-    override fun getUserData() = firebaseAuth.currentUser
+    override suspend fun isUserOwner(): Flow<Boolean> {
+        return dataStore.data
+            .catch { Timber.e("wtf error dataStore.data get $SHARED_DOCUMENT_PATH == ${it.message}") }
+            .map { it[SHARED_DOCUMENT_PATH] }
+            .map { it == null }
+    }
 
-    override fun signOut() {
-        firebaseAuth.signOut()
+    override suspend fun removeSharedDocumentPath() {
+        dataStore.edit { preferences ->
+            preferences.remove(SHARED_DOCUMENT_PATH)
+        }
     }
 
     override suspend fun removeSpending(uuid: String) {
@@ -151,6 +177,12 @@ class SpentRepositoryImpl(
             .await()
     }
 
+    override suspend fun updateSharedDocumentPath(documentPath: String) {
+        dataStore.edit { preferences ->
+            preferences[SHARED_DOCUMENT_PATH] = documentPath
+        }
+    }
+
     override suspend fun saveSpentAmount(spentAmount: Int, note: String, category: Category) {
         delay(BuildConfig.testDelayDuration)
         val newData = mutableMapOf<String, Any>()
@@ -175,6 +207,23 @@ class SpentRepositoryImpl(
             .await()
     }
 
+    override suspend fun signOut() {
+        dataStore.edit {
+            it.clear()
+        }
+        firebaseAuth.signOut()
+    }
+
+    override suspend fun updateDataAfterSuccessSignIn() {
+        val emailOwner = getCurrentUserData().email ?: throw Exception("currentUser.email == null") // todo error handling
+        val newData = mutableMapOf<String, String>()
+        newData["email_owner"] = emailOwner
+        fireStore
+            .collection(COLLECTION_ENTRY_POINT)
+            .document(getDocumentPath())
+            .set(newData)
+    }
+
     override suspend fun updatePopularCategoryID(popularCategoryID: String) {
         dataStore.edit { preferences ->
             preferences[POPULAR_CATEGORY_ID] = popularCategoryID
@@ -196,15 +245,5 @@ class SpentRepositoryImpl(
             .document(spending.uuid)
             .set(newData)
         showSpendingUpdated.emit(Unit)
-    }
-
-    private fun getDocumentPath(): String {
-        return if (BuildConfig.mainCollectionPath == "testing_family") {
-//            firebaseAuth.currentUser.uid    todo check this option . change it in the release
-            val path = firebaseAuth.currentUser?.email   // todo change it if it's a shared collection
-            path ?: throw Exception("wtf?? firebaseAuth.currentUser == null")
-        } else {
-            BuildConfig.mainCollectionPath
-        }
     }
 }

@@ -20,7 +20,7 @@ fun SharingSettingsScreen(
     scope: CoroutineScope = rememberCoroutineScope(),
     trustedUsersState: MutableState<List<TrustedUser>?> = remember { mutableStateOf(null) },
     navigateToAddTrustedUser: () -> Unit,
-    sendInviteLink: () -> Unit,
+    sendInviteLink: (String) -> Unit,
     onSendInviteLinkButtonClicked: () -> Unit = { sharingSettingViewModel.onSendInviteLinkButtonClicked() },
     onAddTrustedUserClicked: () -> Unit = { sharingSettingViewModel.addTrustedUserClicked() },
 ) {
@@ -33,7 +33,7 @@ fun SharingSettingsScreen(
             .onEach { navigateToAddTrustedUser() }
             .launchIn(scope)
         sharingSettingViewModel.onSendInviteLinkButtonClicked
-            .onEach { sendInviteLink() }
+            .onEach { sendInviteLink(it) }
             .launchIn(scope)
     }
     Column(

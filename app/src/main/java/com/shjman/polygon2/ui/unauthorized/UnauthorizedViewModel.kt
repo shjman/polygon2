@@ -1,6 +1,7 @@
 package com.shjman.polygon2.ui.unauthorized
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.shjman.polygon2.BuildConfig
 import com.shjman.polygon2.repository.SpentRepository
 import kotlinx.coroutines.delay
@@ -8,6 +9,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 class UnauthorizedViewModel(
     private val spentRepository: SpentRepository,
@@ -32,5 +34,11 @@ class UnauthorizedViewModel(
     suspend fun onSignInClicked() {
         _isLoading.value = true
         _requestToSignIn.emit(Unit)
+    }
+
+    fun updateDataAfterSuccessSignIn() {
+        viewModelScope.launch {
+            spentRepository.updateDataAfterSuccessSignIn()
+        }
     }
 }

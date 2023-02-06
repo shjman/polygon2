@@ -12,17 +12,22 @@ interface SpentRepository {
     suspend fun addTrustedUser(trustedUserEmail: String)
     fun checkIsUserSignIn(): Boolean
     suspend fun getCategories(): List<Category>
-    fun getCategoriesFlow(): Flow<List<Category>>
+    suspend fun getCategoriesFlow(): Flow<List<Category>>
+    fun getCurrentUserData(): FirebaseUser
+    suspend fun getDocumentPath(): String
     suspend fun getPopularCategory(): Category
     suspend fun getSpending(localDateTime: LocalDateTime): Spending?
     suspend fun getSpendings(): List<Spending>
-    fun getSpendingsFlow(): Flow<List<Spending>>
-    suspend fun getTrustedUsers(): Flow<List<TrustedUser>?>
-    fun getUserData(): FirebaseUser?
-    fun signOut()
+    suspend fun getSpendingsFlow(): Flow<List<Spending>>
+    suspend fun getTrustedUsers(): Flow<List<TrustedUser>>
+    suspend fun isUserOwner(): Flow<Boolean>
+    suspend fun removeSharedDocumentPath()
     suspend fun removeSpending(uuid: String)
     suspend fun saveCategory(category: Category)
     suspend fun saveSpentAmount(spentAmount: Int, note: String, category: Category)
+    suspend fun signOut()
+    suspend fun updateDataAfterSuccessSignIn()
     suspend fun updatePopularCategoryID(popularCategoryID: String)
+    suspend fun updateSharedDocumentPath(documentPath: String)
     suspend fun updateSpending(spending: Spending, showSpendingUpdated: MutableSharedFlow<Unit>)
 }

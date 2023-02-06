@@ -2,6 +2,7 @@ package com.shjman.polygon2.ui.categories
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.shjman.polygon2.BuildConfig
 import com.shjman.polygon2.data.Category
 import com.shjman.polygon2.repository.SpentRepository
 import kotlinx.coroutines.delay
@@ -19,9 +20,12 @@ class CategoriesViewModel(
     val onAddNewCategoryClicked = _onAddNewCategoryClicked.asSharedFlow()
 
     fun loadCategories() {
-        spentRepository.getCategoriesFlow()
-            .onEach { _categories.value = it.minus(Category.empty()) }
-            .launchIn(viewModelScope)
+        viewModelScope.launch {
+            delay(BuildConfig.testDelayDuration)
+            spentRepository.getCategoriesFlow()
+                .onEach { _categories.value = it.minus(Category.empty()) }
+                .launchIn(viewModelScope)
+        }
     }
 
     fun addNewCategoryClicked() {

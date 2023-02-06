@@ -22,7 +22,7 @@ fun CategoriesScreen(
     scope: CoroutineScope = rememberCoroutineScope(),
     categoriesState: MutableState<List<Category>?> = remember { mutableStateOf(null) },
     navigateToEditCategory: () -> Unit,
-    addNewCategoryClicked: () -> Unit = { categoriesViewModel.addNewCategoryClicked() }
+    addNewCategoryClicked: () -> Unit = { categoriesViewModel.addNewCategoryClicked() },
 ) {
     LaunchedEffect(Unit) {
         categoriesViewModel.loadCategories()

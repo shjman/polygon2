@@ -29,6 +29,7 @@ import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
 import com.shjman.polygon2.R
 import com.shjman.polygon2.data.LOCALE_DATE_TIME_FORMATTER
 import com.shjman.polygon2.data.convertDateStringToLocalDateTime
+import com.shjman.polygon2.ui.MainActivity.Companion.KEY_SHARED_DOCUMENT_PATH
 import com.shjman.polygon2.ui.MainActivity.Companion.SHOW_HIDE_BOTTOM_BAR_ANIMATION_SPEED
 import com.shjman.polygon2.ui.categories.CategoriesScreen
 import com.shjman.polygon2.ui.categories.CategoriesViewModel
@@ -36,6 +37,8 @@ import com.shjman.polygon2.ui.categories.EditCategoryScreen
 import com.shjman.polygon2.ui.categories.EditCategoryViewModel
 import com.shjman.polygon2.ui.edit_spending.EditSpendingScreen
 import com.shjman.polygon2.ui.edit_spending.EditSpendingViewModel
+import com.shjman.polygon2.ui.home.HomeScreen
+import com.shjman.polygon2.ui.home.HomeViewModel
 import com.shjman.polygon2.ui.settings.*
 import com.shjman.polygon2.ui.theme.Polygon2Theme
 import com.shjman.polygon2.ui.unauthorized.UnauthorizedScreen
@@ -43,6 +46,7 @@ import com.shjman.polygon2.ui.unauthorized.UnauthorizedViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import timber.log.Timber
 import java.time.format.DateTimeFormatter
 
 class MainActivity : ComponentActivity() {
@@ -51,6 +55,7 @@ class MainActivity : ComponentActivity() {
     private val editCategoryViewModel: EditCategoryViewModel by viewModel()
     private val editSpendingViewModel: EditSpendingViewModel by viewModel()
     private val homeViewModel: HomeViewModel by viewModel()
+    private val mainViewModel: MainViewModel by viewModel()
     private val settingViewModel: SettingViewModel by viewModel()
     private val sharingSettingViewModel: SharingSettingViewModel by viewModel()
     private val spentViewModel: SpentViewModel by viewModel()
@@ -60,12 +65,21 @@ class MainActivity : ComponentActivity() {
 
     private val loginLauncher = registerForActivityResult(FirebaseAuthUIActivityResultContract()) {
         scope?.launch {
+            if (it.resultCode == RESULT_OK) {
+                unauthorizedViewModel.updateDataAfterSuccessSignIn()
+                Timber.d("FirebaseAuthUIAuthenticationResult == RESULT_OK")
+            } else {
+                Timber.d("FirebaseAuthUIAuthenticationResult == idpResponse?.error == ${it.idpResponse?.error}")
+            }
             unauthorizedViewModel.checkIsUserSignIn()
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        intent.data?.getQueryParameter(KEY_SHARED_DOCUMENT_PATH)?.let {
+            mainViewModel.saveSharedDocumentPath(it)
+        }
         setContent {
             scope = rememberCoroutineScope()
             val navController = rememberNavController()
@@ -123,6 +137,7 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val SHOW_HIDE_BOTTOM_BAR_ANIMATION_SPEED = 350
+        const val KEY_SHARED_DOCUMENT_PATH = "dp"
     }
 }
 
@@ -293,15 +308,17 @@ fun NavigationGraph(
         composable(
             route = Screens.SharingSettings.screenRoute
         ) {
-            val sendIntent: Intent = Intent().apply {
-                action = Intent.ACTION_SEND
-                putExtra(Intent.EXTRA_TEXT, "This is my text to send some deeplink.") // todo here should be deeplink
-                type = "text/plain"
-            }
             SharingSettingsScreen(
                 sharingSettingViewModel = sharingSettingViewModel,
                 navigateToAddTrustedUser = { navHostController.navigate(Screens.AddTrustedUserScreen.screenRoute) },
-                sendInviteLink = { context.startActivity(Intent.createChooser(sendIntent, "send somebody it")) },
+                sendInviteLink = { documentPath ->
+                    val sendIntent: Intent = Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(Intent.EXTRA_TEXT, "https://shjman/spendings?$KEY_SHARED_DOCUMENT_PATH=$documentPath")
+                        type = "text/plain"
+                    }
+                    context.startActivity(Intent.createChooser(sendIntent, "send invite link to your database"))
+                },
             )
         }
         composable(

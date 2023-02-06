@@ -19,7 +19,7 @@ class SharingSettingViewModel(
     private val _onAddTrustedUserClicked = MutableSharedFlow<Unit>()
     val onAddTrustedUserClicked = _onAddTrustedUserClicked.asSharedFlow()
 
-    private val _onSendInviteLinkButtonClicked = MutableSharedFlow<Unit>()
+    private val _onSendInviteLinkButtonClicked = MutableSharedFlow<String>()
     val onSendInviteLinkButtonClicked = _onSendInviteLinkButtonClicked.asSharedFlow()
 
     fun startObserveTrustedEmails() {
@@ -40,7 +40,8 @@ class SharingSettingViewModel(
 
     fun onSendInviteLinkButtonClicked() {
         viewModelScope.launch {
-            _onSendInviteLinkButtonClicked.emit(Unit)
+            val documentPath = spentRepository.getDocumentPath()
+            _onSendInviteLinkButtonClicked.emit(documentPath)
         }
     }
 }
