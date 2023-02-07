@@ -33,16 +33,21 @@ class SpentRepositoryImpl(
         private val SHARED_DOCUMENT_PATH = stringPreferencesKey("DOCUMENT_PATH")
     }
 
-    override suspend fun addTrustedUser(trustedUserEmail: String) {
-        val newData = mutableMapOf<String, String>()
-        newData["email"] = trustedUserEmail
-        fireStore
-            .collection(COLLECTION_ENTRY_POINT)
-            .document(getDocumentPath())
-            .collection(COLLECTION_TRUSTED_EMAILS)
-            .document(trustedUserEmail)
-            .set(newData)
-            .await()
+    override suspend fun addTrustedUser(trustedUserEmail: String, onError: (errorText: String) -> Unit) {
+        try {
+            val newData = mutableMapOf<String, String>()
+            newData["email"] = trustedUserEmail
+            fireStore
+                .collection(COLLECTION_ENTRY_POINT)
+                .document(getDocumentPath())
+                .collection(COLLECTION_TRUSTED_EMAILS)
+                .document(trustedUserEmail)
+                .set(newData)
+                .await()
+        } catch (exception: Exception) {
+            Timber.e("addTrustedUser ${exception.stackTraceToString()}")
+            onError(exception.toString())
+        }
     }
 
     override fun checkIsUserSignIn() = firebaseAuth.currentUser != null

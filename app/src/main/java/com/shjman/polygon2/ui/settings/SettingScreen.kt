@@ -77,6 +77,7 @@ fun SettingScreen(
                     SharingSettingsButton(navigateToSharingSettingsScreen = navigateToSharingSettingsScreen)
                 }
                 false -> {
+                    SharingSettingsButton(navigateToSharingSettingsScreen = navigateToSharingSettingsScreen)
                     StopObserveSharedDatabaseButton(onStopObserveSharedDatabaseClicked = onStopObserveSharedDatabaseClicked)
                 }
                 else -> {

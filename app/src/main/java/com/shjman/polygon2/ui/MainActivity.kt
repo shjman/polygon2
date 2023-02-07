@@ -44,6 +44,9 @@ import com.shjman.polygon2.ui.theme.Polygon2Theme
 import com.shjman.polygon2.ui.unauthorized.UnauthorizedScreen
 import com.shjman.polygon2.ui.unauthorized.UnauthorizedViewModel
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import timber.log.Timber
@@ -62,6 +65,7 @@ class MainActivity : ComponentActivity() {
     private val unauthorizedViewModel: UnauthorizedViewModel by viewModel()
 
     private var scope: CoroutineScope? = null
+    private val showSnackbarSharedFlow = MutableSharedFlow<String>()
 
     private val loginLauncher = registerForActivityResult(FirebaseAuthUIActivityResultContract()) {
         scope?.launch {
@@ -81,9 +85,20 @@ class MainActivity : ComponentActivity() {
             mainViewModel.saveSharedDocumentPath(it)
         }
         setContent {
-            scope = rememberCoroutineScope()
-            val navController = rememberNavController()
             val scaffoldState = rememberScaffoldState()
+            scope = rememberCoroutineScope()
+            LaunchedEffect(Unit) {
+                scope?.let {
+                    showSnackbarSharedFlow.onEach { message ->
+                        showSnackbar(
+                            message = message,
+                            scaffoldState = scaffoldState,
+                            scope = it,
+                        )
+                    }.launchIn(it)
+                }
+            }
+            val navController = rememberNavController()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
             val isShowingBottomBar = rememberSaveable { (mutableStateOf(true)) }
@@ -106,6 +121,7 @@ class MainActivity : ComponentActivity() {
                             scaffoldState = scaffoldState,
                             settingViewModel = settingViewModel,
                             sharingSettingViewModel = sharingSettingViewModel,
+                            showSnackbarMutableSharedFlow = showSnackbarSharedFlow,
                             spentViewModel = spentViewModel,
                             unauthorizedViewModel = unauthorizedViewModel,
                         )
@@ -217,6 +233,7 @@ fun NavigationGraph(
     scaffoldState: ScaffoldState,
     settingViewModel: SettingViewModel,
     sharingSettingViewModel: SharingSettingViewModel,
+    showSnackbarMutableSharedFlow: MutableSharedFlow<String>,
     spentViewModel: SpentViewModel,
     unauthorizedViewModel: UnauthorizedViewModel,
 ) {
@@ -271,6 +288,7 @@ fun NavigationGraph(
             AddTrustedUserScreen(
                 addTrustedUserViewModel = addTrustedUserViewModel,
                 popBackStack = { navHostController.popBackStack() },
+                showSnackbarMutableSharedFlow = showSnackbarMutableSharedFlow,
             )
         }
         composable(
@@ -337,6 +355,25 @@ fun NavigationGraph(
                     }
                 },
             )
+        }
+    }
+
+}
+
+fun showSnackbar(
+    message: String,
+    scaffoldState: ScaffoldState,
+    scope: CoroutineScope,
+) {
+    scope.launch {
+        val snackbarHostState = scaffoldState.snackbarHostState
+        val snackbarResult = snackbarHostState.showSnackbar(
+            message = message,
+            duration = SnackbarDuration.Long,
+            actionLabel = "got it"
+        )
+        if (snackbarResult == SnackbarResult.ActionPerformed) {
+            snackbarHostState.currentSnackbarData?.dismiss()
         }
     }
 }

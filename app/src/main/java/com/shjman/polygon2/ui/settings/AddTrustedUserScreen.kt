@@ -13,25 +13,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 @Composable
 fun AddTrustedUserScreen(
     addTrustedUserViewModel: AddTrustedUserViewModel,
-    trustedUserEmail: MutableState<String> = remember { mutableStateOf("") },
-    isProceedButtonEnabled: MutableState<Boolean> = remember { mutableStateOf(false) },
-    scope: CoroutineScope = rememberCoroutineScope(),
     popBackStack: () -> Unit,
+    showSnackbarMutableSharedFlow: MutableSharedFlow<String>,
 ) {
+    val isProceedButtonEnabled by addTrustedUserViewModel.isProceedButtonEnabled.collectAsState()
+    val scope: CoroutineScope = rememberCoroutineScope()
+    val trustedUserEmail by addTrustedUserViewModel.trustedUserEmail.collectAsState()
+
     BackHandler { addTrustedUserViewModel.onBackClicked() }
 
     LaunchedEffect(Unit) {
-        addTrustedUserViewModel.trustedUserEmail
-            .onEach { trustedUserEmail.value = it }
-            .launchIn(scope)
-        addTrustedUserViewModel.isProceedButtonEnabled
-            .onEach { isProceedButtonEnabled.value = it }
+        addTrustedUserViewModel.onError
+            .onEach { showSnackbarMutableSharedFlow.emit(it) }
             .launchIn(scope)
         addTrustedUserViewModel.popBackStack
             .onEach { popBackStack() }
@@ -47,11 +47,11 @@ fun AddTrustedUserScreen(
                 .fillMaxWidth()
                 .padding(8.dp),
             label = { Text(text = "write a trusted user email") },
-            value = trustedUserEmail.value,
+            value = trustedUserEmail,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(
                 onDone = {
-                    if (isProceedButtonEnabled.value) {
+                    if (isProceedButtonEnabled) {
                         addTrustedUserViewModel.onDoneClicked()
                     }
                 },
@@ -65,7 +65,7 @@ fun AddTrustedUserScreen(
                 .fillMaxWidth()
                 .padding(8.dp),
             onClick = { addTrustedUserViewModel.onDoneClicked() },
-            enabled = isProceedButtonEnabled.value,
+            enabled = isProceedButtonEnabled,
         ) {
             Text(
                 text = "done",
