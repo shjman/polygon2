@@ -13,20 +13,24 @@ class SharingSettingViewModel(
     private val spentRepository: SpentRepository,
 ) : ViewModel() {
 
-    private val _trustedUsers = MutableStateFlow<List<TrustedUser>?>(null)
-    val trustedUsers = _trustedUsers.asStateFlow()
-
     private val _onAddTrustedUserClicked = MutableSharedFlow<Unit>()
     val onAddTrustedUserClicked = _onAddTrustedUserClicked.asSharedFlow()
+
+    private val _onError = MutableSharedFlow<String>()
+    val onError = _onError.asSharedFlow()
 
     private val _onSendInviteLinkButtonClicked = MutableSharedFlow<String>()
     val onSendInviteLinkButtonClicked = _onSendInviteLinkButtonClicked.asSharedFlow()
 
+    val trustedUsers = MutableStateFlow<List<TrustedUser>?>(null)
+
     fun startObserveTrustedEmails() {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                spentRepository.getTrustedUsers()
-                    .onEach { _trustedUsers.value = it }
+                spentRepository.getTrustedUsers(
+                    onError = { launch { _onError.emit(it) } },
+                )
+                    .onEach { trustedUsers.value = it }
                     .collect()
             }
         }
@@ -40,7 +44,9 @@ class SharingSettingViewModel(
 
     fun onSendInviteLinkButtonClicked() {
         viewModelScope.launch {
-            val documentPath = spentRepository.getDocumentPath()
+            val documentPath = spentRepository.getDocumentPath(
+                onError = { launch { _onError.emit(it) } },
+            )
             _onSendInviteLinkButtonClicked.emit(documentPath)
         }
     }

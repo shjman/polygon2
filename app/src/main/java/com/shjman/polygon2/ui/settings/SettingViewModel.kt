@@ -15,26 +15,27 @@ class SettingViewModel(
     private val spentRepository: SpentRepository,
 ) : ViewModel() {
 
-    private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
-
-    private val _isUserOwner: MutableStateFlow<Boolean?> = MutableStateFlow(null)
-    val isUserOwner = _isUserOwner.asStateFlow()
-
-    private val _userData = MutableStateFlow<FirebaseUser?>(null)
-    val userData = _userData.asStateFlow()
+    val isLoading: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    val isUserOwner: MutableStateFlow<Boolean?> = MutableStateFlow(null)
+    private val _onError = MutableSharedFlow<String>()
+    val onError = _onError.asSharedFlow()
+    val userData = MutableStateFlow<FirebaseUser?>(null)
 
     suspend fun startObserveSettingData() {
         delay(BuildConfig.testDelayDuration)
-        _userData.value = spentRepository.getCurrentUserData()
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                spentRepository.isUserOwner().onEach {
-                    _isUserOwner.value = it
+                userData.value = spentRepository.getCurrentUserData(
+                    onError = { launch { _onError.emit(it) } },
+                )
+                spentRepository.isUserOwner(
+                    onError = { launch { _onError.emit(it) } },
+                ).onEach {
+                    isUserOwner.value = it
                 }.collect()
             }
         }
-        _isLoading.value = false // todo could be updated because isUserOwner ignores
+        isLoading.value = false // todo could be updated because isUserOwner ignores
     }
 
     fun onSignOutClicked() {
@@ -45,7 +46,9 @@ class SettingViewModel(
 
     fun onStopObserveSharedDatabaseClicked() {
         viewModelScope.launch {
-            spentRepository.removeSharedDocumentPath()
+            spentRepository.removeSharedDocumentPath(
+                onError = { launch { _onError.emit(it) } },
+            )
         }
     }
 }

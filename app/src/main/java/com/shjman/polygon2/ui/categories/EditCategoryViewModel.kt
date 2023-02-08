@@ -12,34 +12,37 @@ class EditCategoryViewModel(
     private val spentRepository: SpentRepository
 ) : ViewModel() {
 
-    private val _isProceedButtonEnabled = MutableStateFlow(false)
-    val isProceedButtonEnabled = _isProceedButtonEnabled.asStateFlow()
+    val categoryName = MutableStateFlow("")
+    val isProceedButtonEnabled = MutableStateFlow(false)
 
-    private val _categoryName = MutableStateFlow("")
-    val categoryName = _categoryName.asStateFlow()
+    private val _onError = MutableSharedFlow<String>()
+    val onError = _onError.asSharedFlow()
 
     private val _popBackStack = MutableSharedFlow<Unit>()
     val popBackStack = _popBackStack.asSharedFlow()
 
     fun categoryValueChanged(newValue: String) {
-        _categoryName.value = newValue
-        _isProceedButtonEnabled.value = newValue.trim().isNotBlank()
+        categoryName.value = newValue
+        isProceedButtonEnabled.value = newValue.trim().isNotBlank()
     }
 
     fun onDoneClicked() {
-        _isProceedButtonEnabled.value = false
-        val category = Category(UUID.randomUUID().toString(), _categoryName.value.trim())
+        isProceedButtonEnabled.value = false
+        val category = Category(UUID.randomUUID().toString(), categoryName.value.trim())
 
         viewModelScope.launch {
-            spentRepository.saveCategory(category)
-            _categoryName.value = ""
+            spentRepository.saveCategory(
+                category = category,
+                onError = { viewModelScope.launch { _onError.emit(it) } },
+            )
+            categoryName.value = ""
             _popBackStack.emit(Unit)
         }
     }
 
     fun onBackClicked() {
-        _categoryName.value = ""
-        _isProceedButtonEnabled.value = false
+        categoryName.value = ""
+        isProceedButtonEnabled.value = false
         viewModelScope.launch {
             _popBackStack.emit(Unit)
         }

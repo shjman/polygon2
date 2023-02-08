@@ -19,10 +19,15 @@ class CategoriesViewModel(
     private val _onAddNewCategoryClicked = MutableSharedFlow<Unit>()
     val onAddNewCategoryClicked = _onAddNewCategoryClicked.asSharedFlow()
 
+    private val _onError = MutableSharedFlow<String>()
+    val onError = _onError.asSharedFlow()
+
     fun loadCategories() {
         viewModelScope.launch {
             delay(BuildConfig.testDelayDuration)
-            spentRepository.getCategoriesFlow()
+            spentRepository.getCategoriesFlow(
+                onError = { launch { _onError.emit(it) } }
+            )
                 .onEach { _categories.value = it.minus(Category.empty()) }
                 .launchIn(viewModelScope)
         }

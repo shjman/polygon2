@@ -11,23 +11,26 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.shjman.polygon2.data.TrustedUser
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 @Composable
 fun SharingSettingsScreen(
     sharingSettingViewModel: SharingSettingViewModel,
-    scope: CoroutineScope = rememberCoroutineScope(),
-    trustedUsersState: MutableState<List<TrustedUser>?> = remember { mutableStateOf(null) },
     navigateToAddTrustedUser: () -> Unit,
     sendInviteLink: (String) -> Unit,
     onSendInviteLinkButtonClicked: () -> Unit = { sharingSettingViewModel.onSendInviteLinkButtonClicked() },
     onAddTrustedUserClicked: () -> Unit = { sharingSettingViewModel.addTrustedUserClicked() },
+    showSnackbarMutableSharedFlow: MutableSharedFlow<String>,
 ) {
+    val scope: CoroutineScope = rememberCoroutineScope()
+    val trustedUsers by sharingSettingViewModel.trustedUsers.collectAsState()
+
     LaunchedEffect(Unit) {
         sharingSettingViewModel.startObserveTrustedEmails()
-        sharingSettingViewModel.trustedUsers
-            .onEach { trustedUsersState.value = it }
+        sharingSettingViewModel.onError
+            .onEach { showSnackbarMutableSharedFlow.emit(it) }
             .launchIn(scope)
         sharingSettingViewModel.onAddTrustedUserClicked
             .onEach { navigateToAddTrustedUser() }
@@ -47,9 +50,9 @@ fun SharingSettingsScreen(
         LazyColumn(
             modifier = Modifier.weight(1f)
         ) {
-            val trustedUsers = trustedUsersState.value
+            val trustedUsersList = trustedUsers
             when {
-                trustedUsers == null -> {
+                trustedUsersList == null -> {
                     item {
                         Text(
                             modifier = Modifier
@@ -59,7 +62,7 @@ fun SharingSettingsScreen(
                         )
                     }
                 }
-                trustedUsers.isEmpty() -> {
+                trustedUsersList.isEmpty() -> {
                     item {
                         Text(
                             modifier = Modifier.fillMaxWidth(),
@@ -69,7 +72,7 @@ fun SharingSettingsScreen(
                     }
                 }
                 else -> {
-                    trustedUsers.onEach {
+                    trustedUsersList.onEach {
                         item(key = it.email) {
                             TrustedUserView(
                                 trustedUser = it,

@@ -19,6 +19,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.shjman.polygon2.data.Category
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -32,10 +33,15 @@ fun SpentScreen(
     note: String = spentViewModel.note.observeAsState("").value,
     isDropdownMenuExpanded: MutableState<Boolean> = remember { mutableStateOf(false) },
     focusManager: FocusManager = LocalFocusManager.current,
-    scope: CoroutineScope = rememberCoroutineScope(),
+    showSnackbarMutableSharedFlow: MutableSharedFlow<String>,
 ) {
+    val scope: CoroutineScope = rememberCoroutineScope()
+
     LaunchedEffect(Unit) {
         spentViewModel.startObserveCategories()
+        spentViewModel.onError
+            .onEach { showSnackbarMutableSharedFlow.emit(it) }
+            .launchIn(scope)
         spentViewModel.selectedCategoryFlow
             .onEach { selectedCategory.value = it }
             .launchIn(scope)

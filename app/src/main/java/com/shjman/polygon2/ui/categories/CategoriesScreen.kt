@@ -13,6 +13,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.shjman.polygon2.data.Category
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -23,6 +24,7 @@ fun CategoriesScreen(
     categoriesState: MutableState<List<Category>?> = remember { mutableStateOf(null) },
     navigateToEditCategory: () -> Unit,
     addNewCategoryClicked: () -> Unit = { categoriesViewModel.addNewCategoryClicked() },
+    showSnackbarMutableSharedFlow: MutableSharedFlow<String>,
 ) {
     LaunchedEffect(Unit) {
         categoriesViewModel.loadCategories()
@@ -31,6 +33,9 @@ fun CategoriesScreen(
             .launchIn(scope)
         categoriesViewModel.onAddNewCategoryClicked
             .onEach { navigateToEditCategory() }
+            .launchIn(scope)
+        categoriesViewModel.onError
+            .onEach { showSnackbarMutableSharedFlow.emit(it) }
             .launchIn(scope)
     }
     Column(

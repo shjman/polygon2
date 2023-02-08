@@ -20,20 +20,23 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
     private val _amountSpent: MutableLiveData<Int> = MutableLiveData<Int>(0)
     val amountSpent: LiveData<Int> = _amountSpent
 
-    private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> = _isLoading
-
-    private val _spendingsFlow: MutableStateFlow<List<Spending>?> = MutableStateFlow(null)
-    val spendingsFlow: StateFlow<List<Spending>?> = _spendingsFlow
-
     private val _categoriesFlow = MutableStateFlow<List<Category>?>(null)
     val categoriesFlow = _categoriesFlow.asStateFlow()
+
+    private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
 
     private val _note: MutableLiveData<String> = MutableLiveData<String>("")
     val note: LiveData<String> = _note
 
+    private val _onError = MutableSharedFlow<String>()
+    val onError = _onError.asSharedFlow()
+
     private val _selectedCategoryFlow = MutableStateFlow<Category?>(null)
     val selectedCategoryFlow: StateFlow<Category?> = _selectedCategoryFlow.asStateFlow()
+
+    private val _spendingsFlow: MutableStateFlow<List<Spending>?> = MutableStateFlow(null)
+    val spendingsFlow: StateFlow<List<Spending>?> = _spendingsFlow
 
     fun onAmountSpentChanged(amountSpent: Int) {
         _amountSpent.value = amountSpent
@@ -52,10 +55,11 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
         viewModelScope.launch {
             _isLoading.value = true
             withContext(Dispatchers.IO) {
-                spentRepository.saveSpentAmount(
-                    spentAmount = _amountSpent.value ?: 0,
-                    note = _note.value ?: "",
+                spentRepository.saveSpending(
                     category = selectedCategoryFlow.value ?: Category.empty(),
+                    note = _note.value ?: "",
+                    onError = { launch { _onError.emit(it) } },
+                    spentAmount = _amountSpent.value ?: 0,
                 )
             }
             _amountSpent.value = 0
@@ -68,7 +72,10 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
         viewModelScope.launch {
             _isLoading.value = true
             withContext(Dispatchers.IO) {
-                spentRepository.removeSpending(uuid)
+                spentRepository.removeSpending(
+                    onError = { launch { _onError.emit(it) } },
+                    uuid = uuid,
+                )
             }
             _isLoading.value = false
         }
@@ -78,7 +85,9 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 delay(BuildConfig.testDelayDuration)
-                spentRepository.getSpendingsFlow()
+                spentRepository.getSpendingsFlow(
+                    onError = { launch { _onError.emit(it) } },
+                )
                     .map { it.sortedByDescending { spending -> spending.date } }
                     .onEach { _spendingsFlow.value = it }
                     .collect()
@@ -91,17 +100,24 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
             withContext(Dispatchers.IO) {
                 delay(BuildConfig.testDelayDuration)
                 var isSelectedCategorySet = false
-                spentRepository.getCategoriesFlow()
+                spentRepository.getCategoriesFlow(
+                    onError = { launch { _onError.emit(it) } },
+                )
                     .onEach { categories ->
                         when {
                             categories.isEmpty() -> {
-                                spentRepository.saveCategory(Category.empty())
+                                spentRepository.saveCategory(
+                                    Category.empty(),
+                                    onError = { launch { _onError.emit(it) } },
+                                )
                                 return@onEach
                             }
                             else -> _categoriesFlow.value = categories
                         }
                         if (!isSelectedCategorySet) {
-                            _selectedCategoryFlow.value = spentRepository.getPopularCategory()
+                            _selectedCategoryFlow.value = spentRepository.getPopularCategory(
+                                onError = { launch { _onError.emit(it) } },
+                            )
                             isSelectedCategorySet = true
                             updatePopularCategory()
                         }
@@ -114,7 +130,9 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
     private suspend fun updatePopularCategory() {
         var spendings = _spendingsFlow.value
         if (spendings.isNullOrEmpty()) {
-            spendings = spentRepository.getSpendings()
+            spendings = spentRepository.getSpendings(
+                onError = { viewModelScope.launch { _onError.emit(it) } },
+            )
         }
         val last15Spendings = spendings
             .sortedByDescending { spending -> spending.date }
@@ -123,6 +141,11 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
             .groupBy { it.category.id }
             .maxByOrNull { it.value.size }
             ?.key
-        popularCategoryID?.let { spentRepository.updatePopularCategoryID(it) }
+        popularCategoryID?.let {
+            spentRepository.updatePopularCategoryID(
+                onError = { viewModelScope.launch { _onError.emit(it) } },
+                popularCategoryID = it,
+            )
+        }
     }
 }

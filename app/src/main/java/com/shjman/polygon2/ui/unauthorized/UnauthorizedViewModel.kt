@@ -21,6 +21,9 @@ class UnauthorizedViewModel(
     private val _isUserLoggedIn = MutableStateFlow<Boolean?>(null)
     val isUserLoggedIn = _isUserLoggedIn.asStateFlow()
 
+    private val _onError = MutableSharedFlow<String>()
+    val onError = _onError.asSharedFlow()
+
     private val _requestToSignIn = MutableSharedFlow<Unit>()
     val requestToSignIn = _requestToSignIn.asSharedFlow()
 
@@ -38,7 +41,9 @@ class UnauthorizedViewModel(
 
     fun updateDataAfterSuccessSignIn() {
         viewModelScope.launch {
-            spentRepository.updateDataAfterSuccessSignIn()
+            spentRepository.updateDataAfterSuccessSignIn(
+                onError = { launch { _onError.emit(it) } },
+            )
         }
     }
 }

@@ -45,6 +45,7 @@ import com.shjman.polygon2.ui.unauthorized.UnauthorizedScreen
 import com.shjman.polygon2.ui.unauthorized.UnauthorizedViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -89,13 +90,15 @@ class MainActivity : ComponentActivity() {
             scope = rememberCoroutineScope()
             LaunchedEffect(Unit) {
                 scope?.let {
-                    showSnackbarSharedFlow.onEach { message ->
-                        showSnackbar(
-                            message = message,
-                            scaffoldState = scaffoldState,
-                            scope = it,
-                        )
-                    }.launchIn(it)
+                    showSnackbarSharedFlow
+                        .distinctUntilChanged()
+                        .onEach { message ->
+                            showSnackbar(
+                                message = message,
+                                scaffoldState = scaffoldState,
+                                scope = it,
+                            )
+                        }.launchIn(it)
                 }
             }
             val navController = rememberNavController()
@@ -249,6 +252,7 @@ fun NavigationGraph(
         }
         composable(Screens.BottomNavItem.Spent.screenRoute) {
             SpentScreen(
+                showSnackbarMutableSharedFlow = showSnackbarMutableSharedFlow,
                 spentViewModel = spentViewModel,
             )
         }
@@ -280,6 +284,7 @@ fun NavigationGraph(
                     }
                 },
                 settingViewModel = settingViewModel,
+                showSnackbarMutableSharedFlow = showSnackbarMutableSharedFlow,
             )
         }
         composable(
@@ -297,6 +302,7 @@ fun NavigationGraph(
             CategoriesScreen(
                 categoriesViewModel = categoriesViewModel,
                 navigateToEditCategory = { navHostController.navigate(Screens.EditCategory.screenRoute) },
+                showSnackbarMutableSharedFlow = showSnackbarMutableSharedFlow,
             )
         }
         composable(
@@ -305,6 +311,7 @@ fun NavigationGraph(
             EditCategoryScreen(
                 editCategoryViewModel = editCategoryViewModel,
                 popBackStack = { navHostController.popBackStack() },
+                showSnackbarMutableSharedFlow = showSnackbarMutableSharedFlow,
             )
         }
         composable(
@@ -315,11 +322,12 @@ fun NavigationGraph(
             val localDateTimeString = backStackEntry.arguments?.getString("localDateTimeString")
             localDateTimeString?.let {
                 EditSpendingScreen(
-                    localDateTimeSpending = convertDateStringToLocalDateTime(it),
-                    editSpendingViewModel = editSpendingViewModel,
                     context = context,
-                    scaffoldState = scaffoldState,
+                    editSpendingViewModel = editSpendingViewModel,
+                    localDateTimeSpending = convertDateStringToLocalDateTime(it),
                     navigatePopBackClicked = { navHostController.popBackStack() },
+                    scaffoldState = scaffoldState,
+                    showSnackbarMutableSharedFlow = showSnackbarMutableSharedFlow,
                 )
             }
         }
@@ -327,7 +335,6 @@ fun NavigationGraph(
             route = Screens.SharingSettings.screenRoute
         ) {
             SharingSettingsScreen(
-                sharingSettingViewModel = sharingSettingViewModel,
                 navigateToAddTrustedUser = { navHostController.navigate(Screens.AddTrustedUserScreen.screenRoute) },
                 sendInviteLink = { documentPath ->
                     val sendIntent: Intent = Intent().apply {
@@ -337,6 +344,8 @@ fun NavigationGraph(
                     }
                     context.startActivity(Intent.createChooser(sendIntent, "send invite link to your database"))
                 },
+                sharingSettingViewModel = sharingSettingViewModel,
+                showSnackbarMutableSharedFlow = showSnackbarMutableSharedFlow,
             )
         }
         composable(

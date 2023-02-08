@@ -11,23 +11,49 @@ import java.time.LocalDateTime
 interface SpentRepository {
     suspend fun addTrustedUser(trustedUserEmail: String, onError: (errorText: String) -> Unit)
     fun checkIsUserSignIn(): Boolean
-    suspend fun getCategories(): List<Category>
-    suspend fun getCategoriesFlow(): Flow<List<Category>>
-    fun getCurrentUserData(): FirebaseUser
-    suspend fun getDocumentPath(): String
-    suspend fun getPopularCategory(): Category
-    suspend fun getSpending(localDateTime: LocalDateTime): Spending?
-    suspend fun getSpendings(): List<Spending>
-    suspend fun getSpendingsFlow(): Flow<List<Spending>>
-    suspend fun getTrustedUsers(): Flow<List<TrustedUser>>
-    suspend fun isUserOwner(): Flow<Boolean>
-    suspend fun removeSharedDocumentPath()
-    suspend fun removeSpending(uuid: String)
-    suspend fun saveCategory(category: Category)
-    suspend fun saveSpentAmount(spentAmount: Int, note: String, category: Category)
+    suspend fun getCategories(onError: (errorText: String) -> Unit): List<Category>
+    suspend fun getCategoriesFlow(onError: (errorText: String) -> Unit): Flow<List<Category>>
+    fun getCurrentUserData(onError: (errorText: String) -> Unit): FirebaseUser?
+    suspend fun getDocumentPath(onError: (errorText: String) -> Unit): String
+    suspend fun getPopularCategory(onError: (errorText: String) -> Unit): Category
+    suspend fun getSpending(
+        localDateTime: LocalDateTime,
+        onError: (errorText: String) -> Unit,
+    ): Spending?
+
+    suspend fun getSpendings(onError: (errorText: String) -> Unit): List<Spending>
+    suspend fun getSpendingsFlow(onError: (errorText: String) -> Unit): Flow<List<Spending>>
+    suspend fun getTrustedUsers(onError: (errorText: String) -> Unit): Flow<List<TrustedUser>>
+    suspend fun isUserOwner(onError: (errorText: String) -> Unit): Flow<Boolean>
+    suspend fun removeSharedDocumentPath(onError: (errorText: String) -> Unit)
+    suspend fun removeSpending(
+        onError: (errorText: String) -> Unit,
+        uuid: String,
+    )
+
+    suspend fun saveCategory(
+        category: Category,
+        onError: (errorText: String) -> Unit,
+    )
+
+    suspend fun saveSpending(
+        category: Category,
+        note: String,
+        onError: (errorText: String) -> Unit,
+        spentAmount: Int,
+    )
+
     suspend fun signOut()
-    suspend fun updateDataAfterSuccessSignIn()
-    suspend fun updatePopularCategoryID(popularCategoryID: String)
+    suspend fun updateDataAfterSuccessSignIn(onError: (errorText: String) -> Unit)
+    suspend fun updatePopularCategoryID(
+        onError: (errorText: String) -> Unit,
+        popularCategoryID: String,
+    )
+
     suspend fun updateSharedDocumentPath(documentPath: String)
-    suspend fun updateSpending(spending: Spending, showSpendingUpdated: MutableSharedFlow<Unit>)
+    suspend fun updateSpending(
+        onError: (errorText: String) -> Unit,
+        spending: Spending,
+        showSpendingUpdated: MutableSharedFlow<Unit>,
+    )
 }

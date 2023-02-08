@@ -23,6 +23,7 @@ import com.shjman.polygon2.data.Category
 import com.shjman.polygon2.data.LOCALE_DATE_TIME_FORMATTER
 import com.shjman.polygon2.data.Spending
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -31,22 +32,27 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun EditSpendingScreen(
-    localDateTimeSpending: LocalDateTime,
+    context: Context,
     editSpendingViewModel: EditSpendingViewModel,
+    isDropdownMenuExpanded: MutableState<Boolean> = remember { mutableStateOf(false) },
     isLoading: MutableState<Boolean> = remember { mutableStateOf(true) },
+    localDateTimeSpending: LocalDateTime,
     spendingState: MutableState<Spending?> = remember { mutableStateOf(null) },
     categories: MutableState<List<Category>?> = remember { mutableStateOf(null) },
-    isDropdownMenuExpanded: MutableState<Boolean> = remember { mutableStateOf(false) },
-    scope: CoroutineScope = rememberCoroutineScope(),
-    context: Context,
     scaffoldState: ScaffoldState,
+    showSnackbarMutableSharedFlow: MutableSharedFlow<String>,
     navigatePopBackClicked: () -> Unit,
-    focusManager: FocusManager = LocalFocusManager.current,
 ) {
+    val scope: CoroutineScope = rememberCoroutineScope()
+    val focusManager: FocusManager = LocalFocusManager.current
+
     LaunchedEffect(Unit) {
         editSpendingViewModel.loadSpending(localDateTimeSpending)
         editSpendingViewModel.isLoading
             .onEach { isLoading.value = it }
+            .launchIn(scope)
+        editSpendingViewModel.onError
+            .onEach { showSnackbarMutableSharedFlow.emit(it) }
             .launchIn(scope)
         editSpendingViewModel.spending
             .onEach { spendingState.value = it }

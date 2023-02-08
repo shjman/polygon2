@@ -11,42 +11,38 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.google.firebase.auth.FirebaseUser
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import timber.log.Timber
 
 @Composable
 fun SettingScreen(
-    isLoading: MutableState<Boolean> = remember { mutableStateOf(true) },
-    isUserOwner: MutableState<Boolean?> = remember { mutableStateOf(null) },
     navigateToCategoriesScreen: () -> Unit,
     navigateToSharingSettingsScreen: () -> Unit,
     navigateToUnauthorizedScreen: () -> Unit,
     settingViewModel: SettingViewModel,
-    userDataState: MutableState<FirebaseUser?> = remember { mutableStateOf(null) },
+    showSnackbarMutableSharedFlow: MutableSharedFlow<String>,
 ) {
-    val onStopObserveSharedDatabaseClicked: () -> Unit = { settingViewModel.onStopObserveSharedDatabaseClicked() }
+    val isLoading by settingViewModel.isLoading.collectAsState()
+    val isUserOwner by settingViewModel.isUserOwner.collectAsState()
     val onSignOutClicked = {
         settingViewModel.onSignOutClicked()
         navigateToUnauthorizedScreen()
     }
+    val onStopObserveSharedDatabaseClicked: () -> Unit = { settingViewModel.onStopObserveSharedDatabaseClicked() }
     val scope: CoroutineScope = rememberCoroutineScope()
+    val userData by settingViewModel.userData.collectAsState()
+
     LaunchedEffect(Unit) {
         settingViewModel.startObserveSettingData()
-        settingViewModel.isLoading
-            .onEach { isLoading.value = it }
-            .launchIn(scope)
-        settingViewModel.isUserOwner
-            .onEach { isUserOwner.value = it }
-            .launchIn(scope)
-        settingViewModel.userData
-            .onEach { userDataState.value = it }
+        settingViewModel.onError
+            .onEach { showSnackbarMutableSharedFlow.emit(it) }
             .launchIn(scope)
     }
 
-    if (isLoading.value) {
+    if (isLoading) {
         showProgress()
     } else {
         Column(
@@ -60,7 +56,7 @@ fun SettingScreen(
                     modifier = Modifier
                         .padding(12.dp)
                         .weight(1f),
-                    text = userDataState.value?.email ?: "loading... or wtf who are you?!?", // todo something like loadings?
+                    text = userData?.email ?: "loading... or wtf who are you?!?", // todo something like loadings?
                 )
                 Button(
                     onClick = onSignOutClicked,
@@ -72,12 +68,11 @@ fun SettingScreen(
                     )
                 }
             }
-            when (isUserOwner.value) {
+            when (isUserOwner) {
                 true -> {
                     SharingSettingsButton(navigateToSharingSettingsScreen = navigateToSharingSettingsScreen)
                 }
                 false -> {
-                    SharingSettingsButton(navigateToSharingSettingsScreen = navigateToSharingSettingsScreen)
                     StopObserveSharedDatabaseButton(onStopObserveSharedDatabaseClicked = onStopObserveSharedDatabaseClicked)
                 }
                 else -> {

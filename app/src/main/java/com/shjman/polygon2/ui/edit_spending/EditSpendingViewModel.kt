@@ -18,17 +18,20 @@ class EditSpendingViewModel(
         private const val DELAY_DURATION = BuildConfig.testDelayDuration
     }
 
+    private val _categories = MutableStateFlow<List<Category>?>(null)
+    val categories = _categories.asStateFlow()
+
     private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
 
-    private val _spending = MutableStateFlow<Spending?>(null)
-    val spending = _spending.asStateFlow()
+    private val _onError = MutableSharedFlow<String>()
+    val onError = _onError.asSharedFlow()
 
     private val _showSpendingUpdated = MutableSharedFlow<Unit>()
     val showSpendingUpdated = _showSpendingUpdated.asSharedFlow()
 
-    private val _categories = MutableStateFlow<List<Category>?>(null)
-    val categories = _categories.asStateFlow()
+    private val _spending = MutableStateFlow<Spending?>(null)
+    val spending = _spending.asStateFlow()
 
     fun onSpentAmountChanged(spentAmount: Int) {
         _spending.value = _spending.value?.copy(spentAmount = spentAmount)
@@ -48,7 +51,11 @@ class EditSpendingViewModel(
             delay(DELAY_DURATION)
             withContext(Dispatchers.IO) {
                 _spending.value?.let {
-                    spentRepository.updateSpending(it, _showSpendingUpdated)
+                    spentRepository.updateSpending(
+                        onError = { launch { _onError.emit(it) } },
+                        spending = it,
+                        showSpendingUpdated = _showSpendingUpdated,
+                    )
                 }
             }
             _isLoading.value = false
@@ -61,11 +68,16 @@ class EditSpendingViewModel(
             awaitAll(
                 async {
                     delay(DELAY_DURATION)
-                    _spending.value = spentRepository.getSpending(localDateTime)
+                    _spending.value = spentRepository.getSpending(
+                        localDateTime,
+                        onError = { launch { _onError.emit(it) } },
+                    )
                 },
                 async {
                     delay(DELAY_DURATION)
-                    _categories.value = spentRepository.getCategories()
+                    _categories.value = spentRepository.getCategories(
+                        onError = { launch { _onError.emit(it) } },
+                    )
                 }
             )
             _isLoading.value = false
