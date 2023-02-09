@@ -14,28 +14,29 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SharingSettingsScreen(
-    sharingSettingViewModel: SharingSettingViewModel,
     navigateToAddTrustedUser: () -> Unit,
     sendInviteLink: (String) -> Unit,
-    onSendInviteLinkButtonClicked: () -> Unit = { sharingSettingViewModel.onSendInviteLinkButtonClicked() },
-    onAddTrustedUserClicked: () -> Unit = { sharingSettingViewModel.addTrustedUserClicked() },
     showSnackbarMutableSharedFlow: MutableSharedFlow<String>,
 ) {
     val scope: CoroutineScope = rememberCoroutineScope()
-    val trustedUsers by sharingSettingViewModel.trustedUsers.collectAsState()
+    val viewModel = koinViewModel<SharingSettingViewModel>()
+    val trustedUsers by viewModel.trustedUsers.collectAsState()
+    val onSendInviteLinkButtonClicked: () -> Unit = remember { { viewModel.onSendInviteLinkButtonClicked() } }
+    val onAddTrustedUserClicked: () -> Unit = remember { { viewModel.addTrustedUserClicked() } }
 
     LaunchedEffect(Unit) {
-        sharingSettingViewModel.startObserveTrustedEmails()
-        sharingSettingViewModel.onError
+        viewModel.startObserveTrustedEmails()
+        viewModel.onError
             .onEach { showSnackbarMutableSharedFlow.emit(it) }
             .launchIn(scope)
-        sharingSettingViewModel.onAddTrustedUserClicked
+        viewModel.onAddTrustedUserClicked
             .onEach { navigateToAddTrustedUser() }
             .launchIn(scope)
-        sharingSettingViewModel.onSendInviteLinkButtonClicked
+        viewModel.onSendInviteLinkButtonClicked
             .onEach { sendInviteLink(it) }
             .launchIn(scope)
     }

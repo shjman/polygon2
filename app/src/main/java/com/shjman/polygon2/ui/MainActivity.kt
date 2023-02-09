@@ -60,8 +60,6 @@ class MainActivity : ComponentActivity() {
     private val editSpendingViewModel: EditSpendingViewModel by viewModel()
     private val homeViewModel: HomeViewModel by viewModel()
     private val mainViewModel: MainViewModel by viewModel()
-    private val settingViewModel: SettingViewModel by viewModel()
-    private val sharingSettingViewModel: SharingSettingViewModel by viewModel()
     private val spentViewModel: SpentViewModel by viewModel()
     private val unauthorizedViewModel: UnauthorizedViewModel by viewModel()
 
@@ -122,8 +120,6 @@ class MainActivity : ComponentActivity() {
                             loginLauncher = loginLauncher,
                             navHostController = navController,
                             scaffoldState = scaffoldState,
-                            settingViewModel = settingViewModel,
-                            sharingSettingViewModel = sharingSettingViewModel,
                             showSnackbarMutableSharedFlow = showSnackbarSharedFlow,
                             spentViewModel = spentViewModel,
                             unauthorizedViewModel = unauthorizedViewModel,
@@ -234,8 +230,6 @@ fun NavigationGraph(
     loginLauncher: ActivityResultLauncher<Intent>,
     navHostController: NavHostController,
     scaffoldState: ScaffoldState,
-    settingViewModel: SettingViewModel,
-    sharingSettingViewModel: SharingSettingViewModel,
     showSnackbarMutableSharedFlow: MutableSharedFlow<String>,
     spentViewModel: SpentViewModel,
     unauthorizedViewModel: UnauthorizedViewModel,
@@ -283,7 +277,6 @@ fun NavigationGraph(
                         }
                     }
                 },
-                settingViewModel = settingViewModel,
                 showSnackbarMutableSharedFlow = showSnackbarMutableSharedFlow,
             )
         }
@@ -342,9 +335,8 @@ fun NavigationGraph(
                         putExtra(Intent.EXTRA_TEXT, "https://shjman/spendings?$KEY_SHARED_DOCUMENT_PATH=$documentPath")
                         type = "text/plain"
                     }
-                    context.startActivity(Intent.createChooser(sendIntent, "send invite link to your database"))
+                    context.startActivity(Intent.createChooser(sendIntent, "send invite link of your database"))
                 },
-                sharingSettingViewModel = sharingSettingViewModel,
                 showSnackbarMutableSharedFlow = showSnackbarMutableSharedFlow,
             )
         }

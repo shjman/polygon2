@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
 
 @Composable
@@ -22,22 +23,24 @@ fun SettingScreen(
     navigateToCategoriesScreen: () -> Unit,
     navigateToSharingSettingsScreen: () -> Unit,
     navigateToUnauthorizedScreen: () -> Unit,
-    settingViewModel: SettingViewModel,
     showSnackbarMutableSharedFlow: MutableSharedFlow<String>,
 ) {
-    val isLoading by settingViewModel.isLoading.collectAsState()
-    val isUserOwner by settingViewModel.isUserOwner.collectAsState()
-    val onSignOutClicked = {
-        settingViewModel.onSignOutClicked()
-        navigateToUnauthorizedScreen()
+    val viewModel = koinViewModel<SettingViewModel>()
+    val isLoading by viewModel.isLoading.collectAsState()
+    val isUserOwner by viewModel.isUserOwner.collectAsState()
+    val onSignOutClicked = remember {
+        {
+            viewModel.onSignOutClicked()
+            navigateToUnauthorizedScreen()
+        }
     }
-    val onStopObserveSharedDatabaseClicked: () -> Unit = { settingViewModel.onStopObserveSharedDatabaseClicked() }
+    val onStopObserveSharedDatabaseClicked: () -> Unit = remember { { viewModel.onStopObserveSharedDatabaseClicked() } }
     val scope: CoroutineScope = rememberCoroutineScope()
-    val userData by settingViewModel.userData.collectAsState()
+    val userData by viewModel.userData.collectAsState()
 
     LaunchedEffect(Unit) {
-        settingViewModel.startObserveSettingData()
-        settingViewModel.onError
+        viewModel.startObserveSettingData()
+        viewModel.onError
             .onEach { showSnackbarMutableSharedFlow.emit(it) }
             .launchIn(scope)
     }
