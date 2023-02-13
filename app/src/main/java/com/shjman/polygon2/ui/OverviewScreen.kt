@@ -21,24 +21,26 @@ import com.shjman.polygon2.data.Spending
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
 fun OverviewScreen(
-    spentViewModel: SpentViewModel,
     isLoadingUIState: MutableState<Boolean> = remember { mutableStateOf(false) },
     allSpending: MutableState<List<Spending>?> = remember { mutableStateOf(null) },
     onEditSpendingClicked: (LocalDateTime) -> Unit,
     scope: CoroutineScope = rememberCoroutineScope(),
 ) {
+    val viewModel: OverviewViewModel = koinViewModel()
+
     LaunchedEffect(Unit) {
-        spentViewModel.startObserveSpendings()
-        spentViewModel.spendingsFlow
+        viewModel.startObserveSpendings()
+        viewModel.spendingsFlow
             .onEach { allSpending.value = it }
             .launchIn(scope)
-        spentViewModel.isLoading
+        viewModel.isLoading
             .onEach { isLoadingUIState.value = it }
             .launchIn(scope)
     }
@@ -48,7 +50,7 @@ fun OverviewScreen(
         isDropdownMenuExpanded.value = !isDropdownMenuExpanded.value
     }
     val onRemoveSpendingClicked = { uuid: String ->
-        spentViewModel.onRemoveSpendingClicked(uuid)
+        viewModel.onRemoveSpendingClicked(uuid)
     }
     var overviewType by remember { mutableStateOf(OverviewType.STANDARD) } // isMonthlyComparison: Boolean -> can be simplified
     Scaffold(
@@ -178,7 +180,7 @@ fun SpendingItem(
     isExpandedDropdownMenu: MutableState<Boolean> = remember { mutableStateOf(false) },
     onEditSpendingClicked: (LocalDateTime) -> Unit,
     onRemoveSpendingClicked: (String) -> Unit,
-) {
+) {//
     Card(
         modifier = Modifier
             .padding(4.dp)

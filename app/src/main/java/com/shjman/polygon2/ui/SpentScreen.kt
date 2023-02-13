@@ -22,33 +22,34 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SpentScreen(
-    spentViewModel: SpentViewModel,
     categoriesState: MutableState<List<Category>?> = remember { mutableStateOf(null) },
     isLoadingUIState: MutableState<Boolean> = remember { mutableStateOf(false) },
     selectedCategory: MutableState<Category?> = remember { mutableStateOf(null) },
-    amountSpent: Int = spentViewModel.amountSpent.observeAsState(0).value,
-    note: String = spentViewModel.note.observeAsState("").value,
     isDropdownMenuExpanded: MutableState<Boolean> = remember { mutableStateOf(false) },
     focusManager: FocusManager = LocalFocusManager.current,
     showSnackbarMutableSharedFlow: MutableSharedFlow<String>,
 ) {
     val scope: CoroutineScope = rememberCoroutineScope()
+    val viewModel: SpentViewModel = koinViewModel()
+    val amountSpent: Int = viewModel.amountSpent.observeAsState(0).value
+    val note: String = viewModel.note.observeAsState("").value
 
     LaunchedEffect(Unit) {
-        spentViewModel.startObserveCategories()
-        spentViewModel.onError
+        viewModel.startObserveCategories()
+        viewModel.onError
             .onEach { showSnackbarMutableSharedFlow.emit(it) }
             .launchIn(scope)
-        spentViewModel.selectedCategoryFlow
+        viewModel.selectedCategoryFlow
             .onEach { selectedCategory.value = it }
             .launchIn(scope)
-        spentViewModel.categoriesFlow
+        viewModel.categoriesFlow
             .onEach { categoriesState.value = it }
             .launchIn(scope)
-        spentViewModel.isLoading
+        viewModel.isLoading
             .onEach { isLoadingUIState.value = it }
             .launchIn(scope)
     }
@@ -69,7 +70,7 @@ fun SpentScreen(
             categories = categoriesState.value,
             isDropdownMenuExpanded = isDropdownMenuExpanded,
             onDropdownMenuItemClicked = {
-                spentViewModel.onSelectedCategoryChanged(it)
+                viewModel.onSelectedCategoryChanged(it)
                 isDropdownMenuExpanded.value = false
             },
             selectedCategory = selectedCategory.value,
@@ -77,17 +78,17 @@ fun SpentScreen(
         InputAmountSpendView(
             isLoadingUI = isLoadingUIState,
             amountSpent = amountSpent,
-            onSpentValueChanged = { spentViewModel.onAmountSpentChanged(it.toIntOrNull() ?: 0) },
+            onSpentValueChanged = { viewModel.onAmountSpentChanged(it.toIntOrNull() ?: 0) },
         )
         InputNoteView(
             isLoadingUI = isLoadingUIState,
             note = note,
-            onNoteChanged = { spentViewModel.onNoteChanged(it) },
+            onNoteChanged = { viewModel.onNoteChanged(it) },
         )
         SaveButton(
             isLoading = isLoadingUIState,
             onSaveAmountClicked = {
-                spentViewModel.onSaveButtonClicked()
+                viewModel.onSaveButtonClicked()
                 focusManager.clearFocus()
             },
         )

@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -32,7 +33,6 @@ import java.time.format.DateTimeFormatter
 
 @Composable
 fun EditSpendingScreen(
-    context: Context,
     editSpendingViewModel: EditSpendingViewModel,
     isDropdownMenuExpanded: MutableState<Boolean> = remember { mutableStateOf(false) },
     isLoading: MutableState<Boolean> = remember { mutableStateOf(true) },
@@ -89,7 +89,6 @@ fun EditSpendingScreen(
             spending == null -> Text(text = "error loading data")
             else -> {
                 DateRowView(
-                    context = context,
                     date = spending.date,
                     editSpendingViewModel = editSpendingViewModel,
                 )
@@ -194,7 +193,6 @@ fun AmountRowView(
 
 @Composable
 fun DateRowView(
-    context: Context,
     date: LocalDateTime?,
     editSpendingViewModel: EditSpendingViewModel,
 ) {
@@ -207,6 +205,7 @@ fun DateRowView(
                 .align(alignment = Alignment.CenterVertically)
                 .weight(0.3f),
         )
+        val context = LocalContext.current
         Button(
             modifier = Modifier.weight(0.7f),
             onClick = {

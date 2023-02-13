@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shjman.polygon2.BuildConfig
 import com.shjman.polygon2.data.Category
-import com.shjman.polygon2.data.Spending
 import com.shjman.polygon2.repository.SpentRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -34,9 +33,6 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
 
     private val _selectedCategoryFlow = MutableStateFlow<Category?>(null)
     val selectedCategoryFlow: StateFlow<Category?> = _selectedCategoryFlow.asStateFlow()
-
-    private val _spendingsFlow: MutableStateFlow<List<Spending>?> = MutableStateFlow(null)
-    val spendingsFlow: StateFlow<List<Spending>?> = _spendingsFlow
 
     fun onAmountSpentChanged(amountSpent: Int) {
         _amountSpent.value = amountSpent
@@ -68,33 +64,6 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
         }
     }
 
-    fun onRemoveSpendingClicked(uuid: String) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            withContext(Dispatchers.IO) {
-                spentRepository.removeSpending(
-                    onError = { launch { _onError.emit(it) } },
-                    uuid = uuid,
-                )
-            }
-            _isLoading.value = false
-        }
-    }
-
-    fun startObserveSpendings() {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                delay(BuildConfig.testDelayDuration)
-                spentRepository.getSpendingsFlow(
-                    onError = { launch { _onError.emit(it) } },
-                )
-                    .map { it.sortedByDescending { spending -> spending.date } }
-                    .onEach { _spendingsFlow.value = it }
-                    .collect()
-            }
-        }
-    }
-
     fun startObserveCategories() {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
@@ -119,7 +88,7 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
                                 onError = { launch { _onError.emit(it) } },
                             )
                             isSelectedCategorySet = true
-                            updatePopularCategory()
+                            updatePopularCategoryInStorage()
                         }
                     }
                     .collect()
@@ -127,13 +96,10 @@ class SpentViewModel(private val spentRepository: SpentRepository) : ViewModel()
         }
     }
 
-    private suspend fun updatePopularCategory() {
-        var spendings = _spendingsFlow.value
-        if (spendings.isNullOrEmpty()) {
-            spendings = spentRepository.getSpendings(
-                onError = { viewModelScope.launch { _onError.emit(it) } },
-            )
-        }
+    private suspend fun updatePopularCategoryInStorage() {
+        val spendings = spentRepository.getSpendings(
+            onError = { viewModelScope.launch { _onError.emit(it) } },
+        )
         val last15Spendings = spendings
             .sortedByDescending { spending -> spending.date }
             .take(15) // take/follow last fresh spendings

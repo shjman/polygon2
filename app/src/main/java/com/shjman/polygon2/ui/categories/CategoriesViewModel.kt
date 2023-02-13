@@ -12,12 +12,13 @@ import kotlinx.coroutines.launch
 class CategoriesViewModel(
     private val spentRepository: SpentRepository,
 ) : ViewModel() {
-
     private val _categories = MutableStateFlow<List<Category>?>(null)
-    val categories: StateFlow<List<Category>?> = _categories.asStateFlow()
+    val categories: StateFlow<List<Category>?>
+        get() = _categories.asStateFlow()
 
     private val _onAddNewCategoryClicked = MutableSharedFlow<Unit>()
-    val onAddNewCategoryClicked = _onAddNewCategoryClicked.asSharedFlow()
+    val onAddNewCategoryClicked
+        get() = _onAddNewCategoryClicked.asSharedFlow()
 
     private val _onError = MutableSharedFlow<String>()
     val onError = _onError.asSharedFlow()
