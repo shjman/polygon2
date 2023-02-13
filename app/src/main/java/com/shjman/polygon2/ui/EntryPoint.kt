@@ -36,10 +36,12 @@ import com.shjman.polygon2.ui.edit_spending.EditSpendingScreen
 import com.shjman.polygon2.ui.edit_spending.EditSpendingViewModel
 import com.shjman.polygon2.ui.home.HomeScreen
 import com.shjman.polygon2.ui.home.HomeViewModel
+import com.shjman.polygon2.ui.overview.OverviewScreen
 import com.shjman.polygon2.ui.settings.AddTrustedUserScreen
 import com.shjman.polygon2.ui.settings.AddTrustedUserViewModel
 import com.shjman.polygon2.ui.settings.SettingScreen
 import com.shjman.polygon2.ui.settings.SharingSettingsScreen
+import com.shjman.polygon2.ui.spent.SpentScreen
 import com.shjman.polygon2.ui.theme.Polygon2Theme
 import com.shjman.polygon2.ui.unauthorized.UnauthorizedScreen
 import com.shjman.polygon2.ui.unauthorized.UnauthorizedViewModel
@@ -57,18 +59,17 @@ import java.time.format.DateTimeFormatter
 fun EntryPoint(
     intent: Intent,
 ) {
-
     val addTrustedUserViewModel: AddTrustedUserViewModel = koinViewModel()
     val categoriesViewModel: CategoriesViewModel = koinViewModel()
     val editCategoryViewModel: EditCategoryViewModel = koinViewModel()
     val editSpendingViewModel: EditSpendingViewModel = koinViewModel()
+    val entryPointViewModel: EntryPointViewModel = koinViewModel()
     val homeViewModel: HomeViewModel = koinViewModel()
-    val mainViewModel: MainViewModel = koinViewModel()
     val unauthorizedViewModel: UnauthorizedViewModel = koinViewModel()
 
     val showSnackbarSharedFlow = remember { MutableSharedFlow<String>() }
     intent.data?.getQueryParameter(KEY_SHARED_DOCUMENT_PATH)?.let {
-        mainViewModel.saveSharedDocumentPath(it)
+        entryPointViewModel.saveSharedDocumentPath(it)
     }
 
     val scaffoldState = rememberScaffoldState()

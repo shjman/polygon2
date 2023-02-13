@@ -1,4 +1,4 @@
-package com.shjman.polygon2.ui
+package com.shjman.polygon2.ui.spent
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData

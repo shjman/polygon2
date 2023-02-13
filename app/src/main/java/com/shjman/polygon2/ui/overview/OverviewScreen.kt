@@ -1,4 +1,4 @@
-package com.shjman.polygon2.ui
+package com.shjman.polygon2.ui.overview
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background

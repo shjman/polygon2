@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.shjman.polygon2.repository.SpentRepository
 import kotlinx.coroutines.launch
 
-class MainViewModel(
+class EntryPointViewModel(
     private val spentRepository: SpentRepository
 ) : ViewModel() {
 

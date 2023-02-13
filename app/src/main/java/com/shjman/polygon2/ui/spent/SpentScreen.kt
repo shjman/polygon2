@@ -1,4 +1,4 @@
-package com.shjman.polygon2.ui
+package com.shjman.polygon2.ui.spent
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*

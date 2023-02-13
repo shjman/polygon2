@@ -10,9 +10,9 @@ import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 import com.shjman.polygon2.repository.SpentRepository
 import com.shjman.polygon2.repository.SpentRepositoryImpl
-import com.shjman.polygon2.ui.MainViewModel
-import com.shjman.polygon2.ui.OverviewViewModel
-import com.shjman.polygon2.ui.SpentViewModel
+import com.shjman.polygon2.ui.EntryPointViewModel
+import com.shjman.polygon2.ui.overview.OverviewViewModel
+import com.shjman.polygon2.ui.spent.SpentViewModel
 import com.shjman.polygon2.ui.categories.CategoriesViewModel
 import com.shjman.polygon2.ui.categories.EditCategoryViewModel
 import com.shjman.polygon2.ui.edit_spending.EditSpendingViewModel
@@ -42,8 +42,8 @@ val appModule = module {
     viewModel { CategoriesViewModel(get()) }
     viewModel { EditCategoryViewModel(get()) }
     viewModel { EditSpendingViewModel(get()) }
+    viewModel { EntryPointViewModel(get()) }
     viewModel { HomeViewModel(get()) }
-    viewModel { MainViewModel(get()) }
     viewModel { OverviewViewModel(get()) }
     viewModel { SettingViewModel(get()) }
     viewModel { SharingSettingViewModel(get()) }
