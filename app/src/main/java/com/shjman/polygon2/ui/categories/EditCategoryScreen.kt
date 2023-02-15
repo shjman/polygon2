@@ -15,14 +15,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 @Composable
 fun EditCategoryScreen(
     editCategoryViewModel: EditCategoryViewModel,
-    showSnackbarMutableSharedFlow: MutableSharedFlow<String>,
     popBackStack: () -> Unit,
 ) {
     val categoryName by editCategoryViewModel.categoryName.collectAsState()
@@ -32,9 +30,6 @@ fun EditCategoryScreen(
     BackHandler { editCategoryViewModel.onBackClicked() }
 
     LaunchedEffect(Unit) {
-        editCategoryViewModel.onError
-            .onEach { showSnackbarMutableSharedFlow.emit(it) }
-            .launchIn(scope)
         editCategoryViewModel.popBackStack
             .onEach { popBackStack() }
             .launchIn(scope)

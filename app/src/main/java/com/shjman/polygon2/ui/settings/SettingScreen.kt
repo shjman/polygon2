@@ -11,8 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.compose.koinViewModel
@@ -23,25 +21,19 @@ fun SettingScreen(
     navigateToCategoriesScreen: () -> Unit,
     navigateToSharingSettingsScreen: () -> Unit,
     navigateToUnauthorizedScreen: () -> Unit,
-    showSnackbarMutableSharedFlow: MutableSharedFlow<String>,
 ) {
+    val scope = rememberCoroutineScope()
     val viewModel = koinViewModel<SettingViewModel>()
     val isLoading by viewModel.isLoading.collectAsState()
     val isUserOwner by viewModel.isUserOwner.collectAsState()
-    val onSignOutClicked = remember {
-        {
-            viewModel.onSignOutClicked()
-            navigateToUnauthorizedScreen()
-        }
-    }
+    val onSignOutClicked = remember { { viewModel.onSignOutClicked() } }
     val onStopObserveSharedDatabaseClicked: () -> Unit = remember { { viewModel.onStopObserveSharedDatabaseClicked() } }
-    val scope: CoroutineScope = rememberCoroutineScope()
     val userData by viewModel.userData.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.startObserveSettingData()
-        viewModel.onError
-            .onEach { showSnackbarMutableSharedFlow.emit(it) }
+        viewModel.signOutCompleted
+            .onEach { navigateToUnauthorizedScreen() }
             .launchIn(scope)
     }
 

@@ -1,9 +1,10 @@
 package com.shjman.polygon2.ui.settings
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shjman.polygon2.data.TrustedUser
+import com.shjman.polygon2.repository.LogRepository
 import com.shjman.polygon2.repository.SpentRepository
+import com.shjman.polygon2.ui.BaseViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -11,25 +12,23 @@ import kotlinx.coroutines.withContext
 
 class SharingSettingViewModel(
     private val spentRepository: SpentRepository,
-) : ViewModel() {
+    logRepository: LogRepository,
+) : BaseViewModel(logRepository) {
 
     private val _onAddTrustedUserClicked = MutableSharedFlow<Unit>()
-    val onAddTrustedUserClicked = _onAddTrustedUserClicked.asSharedFlow()
-
-    private val _onError = MutableSharedFlow<String>()
-    val onError = _onError.asSharedFlow()
+    val onAddTrustedUserClicked: SharedFlow<Unit>
+        get() = _onAddTrustedUserClicked.asSharedFlow()
 
     private val _onSendInviteLinkButtonClicked = MutableSharedFlow<String>()
-    val onSendInviteLinkButtonClicked = _onSendInviteLinkButtonClicked.asSharedFlow()
+    val onSendInviteLinkButtonClicked: SharedFlow<String>
+        get() = _onSendInviteLinkButtonClicked.asSharedFlow()
 
     val trustedUsers = MutableStateFlow<List<TrustedUser>?>(null)
 
     fun startObserveTrustedEmails() {
-        viewModelScope.launch {
+        launchCatching {
             withContext(Dispatchers.IO) {
-                spentRepository.getTrustedUsers(
-                    onError = { launch { _onError.emit(it) } },
-                )
+                spentRepository.getTrustedUsers()
                     .onEach { trustedUsers.value = it }
                     .collect()
             }
@@ -43,10 +42,8 @@ class SharingSettingViewModel(
     }
 
     fun onSendInviteLinkButtonClicked() {
-        viewModelScope.launch {
-            val documentPath = spentRepository.getDocumentPath(
-                onError = { launch { _onError.emit(it) } },
-            )
+        launchCatching {
+            val documentPath = spentRepository.getDocumentPath()
             _onSendInviteLinkButtonClicked.emit(documentPath)
         }
     }

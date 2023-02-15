@@ -1,26 +1,25 @@
 package com.shjman.polygon2.ui.settings
 
 import android.util.Patterns
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.shjman.polygon2.repository.LogRepository
 import com.shjman.polygon2.repository.SpentRepository
+import com.shjman.polygon2.ui.BaseViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 class AddTrustedUserViewModel(
-    private val spentRepository: SpentRepository
-) : ViewModel() {
+    private val spentRepository: SpentRepository,
+    logRepository: LogRepository,
+) : BaseViewModel(logRepository) {
 
     val isProceedButtonEnabled = MutableStateFlow(false)
     val trustedUserEmail = MutableStateFlow("")
 
     private val _popBackStack = MutableSharedFlow<Unit>()
     val popBackStack = _popBackStack.asSharedFlow()
-
-    private val _onError = MutableSharedFlow<String>()
-    val onError = _onError.asSharedFlow()
 
     fun trustedUserEmailChanged(newValue: String) {
         trustedUserEmail.value = newValue
@@ -30,10 +29,9 @@ class AddTrustedUserViewModel(
     fun onDoneClicked() {
         isProceedButtonEnabled.value = false
 
-        viewModelScope.launch {
+        launchCatching {
             spentRepository.addTrustedUser(
                 trustedUserEmail = trustedUserEmail.value,
-                onError = { launch { _onError.emit(it) } },
             )
             trustedUserEmail.value = ""
             _popBackStack.emit(Unit)

@@ -3,7 +3,10 @@ package com.shjman.polygon2.ui.unauthorized
 import android.content.Intent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +27,7 @@ fun UnauthorizedScreen(
     unauthorizedViewModel: UnauthorizedViewModel
 ) {
     LaunchedEffect(Unit) {
+        unauthorizedViewModel.clearInitState()
         unauthorizedViewModel.checkIsUserSignIn()
         unauthorizedViewModel.isUserLoggedIn
             .onEach {

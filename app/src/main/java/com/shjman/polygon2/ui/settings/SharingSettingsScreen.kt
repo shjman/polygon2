@@ -11,7 +11,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.shjman.polygon2.data.TrustedUser
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.compose.koinViewModel
@@ -20,7 +19,6 @@ import org.koin.androidx.compose.koinViewModel
 fun SharingSettingsScreen(
     navigateToAddTrustedUser: () -> Unit,
     sendInviteLink: (String) -> Unit,
-    showSnackbarMutableSharedFlow: MutableSharedFlow<String>,
 ) {
     val scope: CoroutineScope = rememberCoroutineScope()
     val viewModel = koinViewModel<SharingSettingViewModel>()
@@ -30,9 +28,6 @@ fun SharingSettingsScreen(
 
     LaunchedEffect(Unit) {
         viewModel.startObserveTrustedEmails()
-        viewModel.onError
-            .onEach { showSnackbarMutableSharedFlow.emit(it) }
-            .launchIn(scope)
         viewModel.onAddTrustedUserClicked
             .onEach { navigateToAddTrustedUser() }
             .launchIn(scope)

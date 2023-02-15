@@ -1,6 +1,7 @@
 package com.shjman.polygon2.ui
 
 import android.content.Intent
+import android.content.res.Resources
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
@@ -13,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.sp
@@ -41,15 +43,12 @@ import com.shjman.polygon2.ui.settings.AddTrustedUserScreen
 import com.shjman.polygon2.ui.settings.AddTrustedUserViewModel
 import com.shjman.polygon2.ui.settings.SettingScreen
 import com.shjman.polygon2.ui.settings.SharingSettingsScreen
+import com.shjman.polygon2.ui.snackbar.SnackbarManager
 import com.shjman.polygon2.ui.spent.SpentScreen
 import com.shjman.polygon2.ui.theme.Polygon2Theme
 import com.shjman.polygon2.ui.unauthorized.UnauthorizedScreen
 import com.shjman.polygon2.ui.unauthorized.UnauthorizedViewModel
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
@@ -67,16 +66,16 @@ fun EntryPoint(
     val homeViewModel: HomeViewModel = koinViewModel()
     val unauthorizedViewModel: UnauthorizedViewModel = koinViewModel()
 
-    val showSnackbarSharedFlow = remember { MutableSharedFlow<String>() }
-    intent.data?.getQueryParameter(KEY_SHARED_DOCUMENT_PATH)?.let {
-        entryPointViewModel.saveSharedDocumentPath(it)
+    LaunchedEffect(Unit) {
+        intent.data?.getQueryParameter(KEY_SHARED_DOCUMENT_PATH)?.let {
+            entryPointViewModel.updateSharedDocumentPath(it)
+        }
     }
 
-    val scaffoldState = rememberScaffoldState()
-    val scope = rememberCoroutineScope()
+    val appState = rememberAppState()
 
     val loginLauncher = rememberLauncherForActivityResult(FirebaseAuthUIActivityResultContract()) {
-        scope.launch {
+        appState.coroutineScope.launch {
             if (it.resultCode == ComponentActivity.RESULT_OK) {
                 unauthorizedViewModel.updateDataAfterSuccessSignIn()
                 Timber.d("FirebaseAuthUIAuthenticationResult == RESULT_OK")
@@ -87,26 +86,16 @@ fun EntryPoint(
         }
     }
 
-    LaunchedEffect(Unit) {
-        showSnackbarSharedFlow
-            .distinctUntilChanged()
-            .onEach { message ->
-                showSnackbar(
-                    message = message,
-                    scaffoldState = scaffoldState,
-                    scope = scope,
-                )
-            }.launchIn(scope)
-    }
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val isShowingBottomBar = rememberSaveable { (mutableStateOf(true)) }
+
+    setupBottomBarVisibility(currentRoute, isShowingBottomBar)
     Polygon2Theme {
-        setupBottomBarVisibility(currentRoute, isShowingBottomBar)
         Scaffold(
             bottomBar = { AnimatedBottomNavigation(navController, currentRoute, isShowingBottomBar) },
-            scaffoldState = scaffoldState,
+            scaffoldState = appState.scaffoldState,
         ) { paddingValues ->
             Box(modifier = Modifier.padding(paddingValues)) {
                 NavigationGraph(
@@ -117,8 +106,7 @@ fun EntryPoint(
                     homeViewModel = homeViewModel,
                     loginLauncher = loginLauncher,
                     navHostController = navController,
-                    scaffoldState = scaffoldState,
-                    showSnackbarMutableSharedFlow = showSnackbarSharedFlow,
+                    scaffoldState = appState.scaffoldState,
                     unauthorizedViewModel = unauthorizedViewModel,
                 )
             }
@@ -126,6 +114,29 @@ fun EntryPoint(
     }
 }
 
+@Composable
+fun rememberAppState(
+    coroutineScope: CoroutineScope = rememberCoroutineScope(),
+    resources: Resources = resources(),
+    scaffoldState: ScaffoldState = rememberScaffoldState(),
+    snackbarManager: SnackbarManager = SnackbarManager,
+): AppState {
+    return remember(coroutineScope, resources, scaffoldState, snackbarManager) {
+        AppState(
+            coroutineScope = coroutineScope,
+            resources = resources,
+            scaffoldState = scaffoldState,
+            snackbarManager = snackbarManager,
+        )
+    }
+}
+
+@Composable
+@ReadOnlyComposable
+fun resources(): Resources {
+    LocalConfiguration.current
+    return LocalContext.current.resources
+}
 
 @Composable
 fun setupBottomBarVisibility(currentRoute: String?, isShowingBottomBar: MutableState<Boolean>) {
@@ -223,7 +234,6 @@ fun NavigationGraph(
     loginLauncher: ActivityResultLauncher<Intent>,
     navHostController: NavHostController,
     scaffoldState: ScaffoldState,
-    showSnackbarMutableSharedFlow: MutableSharedFlow<String>,
     unauthorizedViewModel: UnauthorizedViewModel,
 ) {
     NavHost(
@@ -238,7 +248,6 @@ fun NavigationGraph(
         }
         composable(Screens.BottomNavItem.Spent.screenRoute) {
             SpentScreen(
-                showSnackbarMutableSharedFlow = showSnackbarMutableSharedFlow,
             )
         }
         composable(Screens.BottomNavItem.Overview.screenRoute) {
@@ -267,7 +276,6 @@ fun NavigationGraph(
                         }
                     }
                 },
-                showSnackbarMutableSharedFlow = showSnackbarMutableSharedFlow,
             )
         }
         composable(
@@ -276,7 +284,6 @@ fun NavigationGraph(
             AddTrustedUserScreen(
                 addTrustedUserViewModel = addTrustedUserViewModel,
                 popBackStack = { navHostController.popBackStack() },
-                showSnackbarMutableSharedFlow = showSnackbarMutableSharedFlow,
             )
         }
         composable(
@@ -285,7 +292,6 @@ fun NavigationGraph(
             CategoriesScreen(
                 categoriesViewModel = categoriesViewModel,
                 navigateToEditCategory = { navHostController.navigate(Screens.EditCategory.screenRoute) },
-                showSnackbarMutableSharedFlow = showSnackbarMutableSharedFlow,
             )
         }
         composable(
@@ -294,7 +300,6 @@ fun NavigationGraph(
             EditCategoryScreen(
                 editCategoryViewModel = editCategoryViewModel,
                 popBackStack = { navHostController.popBackStack() },
-                showSnackbarMutableSharedFlow = showSnackbarMutableSharedFlow,
             )
         }
         composable(
@@ -309,7 +314,6 @@ fun NavigationGraph(
                     localDateTimeSpending = convertDateStringToLocalDateTime(it),
                     navigatePopBackClicked = { navHostController.popBackStack() },
                     scaffoldState = scaffoldState,
-                    showSnackbarMutableSharedFlow = showSnackbarMutableSharedFlow,
                 )
             }
         }
@@ -327,7 +331,6 @@ fun NavigationGraph(
                     }
                     context.startActivity(Intent.createChooser(sendIntent, "send invite link of your database"))
                 },
-                showSnackbarMutableSharedFlow = showSnackbarMutableSharedFlow,
             )
         }
         composable(
@@ -350,22 +353,3 @@ fun NavigationGraph(
     }
 
 }
-
-fun showSnackbar(
-    message: String,
-    scaffoldState: ScaffoldState,
-    scope: CoroutineScope,
-) {
-    scope.launch {
-        val snackbarHostState = scaffoldState.snackbarHostState
-        val snackbarResult = snackbarHostState.showSnackbar(
-            message = message,
-            duration = SnackbarDuration.Long,
-            actionLabel = "got it"
-        )
-        if (snackbarResult == SnackbarResult.ActionPerformed) {
-            snackbarHostState.currentSnackbarData?.dismiss()
-        }
-    }
-}
-

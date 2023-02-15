@@ -24,7 +24,6 @@ import com.shjman.polygon2.data.Category
 import com.shjman.polygon2.data.LOCALE_DATE_TIME_FORMATTER
 import com.shjman.polygon2.data.Spending
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -40,7 +39,6 @@ fun EditSpendingScreen(
     spendingState: MutableState<Spending?> = remember { mutableStateOf(null) },
     categories: MutableState<List<Category>?> = remember { mutableStateOf(null) },
     scaffoldState: ScaffoldState,
-    showSnackbarMutableSharedFlow: MutableSharedFlow<String>,
     navigatePopBackClicked: () -> Unit,
 ) {
     val scope: CoroutineScope = rememberCoroutineScope()
@@ -50,9 +48,6 @@ fun EditSpendingScreen(
         editSpendingViewModel.loadSpending(localDateTimeSpending)
         editSpendingViewModel.isLoading
             .onEach { isLoading.value = it }
-            .launchIn(scope)
-        editSpendingViewModel.onError
-            .onEach { showSnackbarMutableSharedFlow.emit(it) }
             .launchIn(scope)
         editSpendingViewModel.spending
             .onEach { spendingState.value = it }

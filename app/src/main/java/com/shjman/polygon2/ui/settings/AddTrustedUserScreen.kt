@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -21,7 +20,6 @@ import kotlinx.coroutines.flow.onEach
 fun AddTrustedUserScreen(
     addTrustedUserViewModel: AddTrustedUserViewModel,
     popBackStack: () -> Unit,
-    showSnackbarMutableSharedFlow: MutableSharedFlow<String>,
 ) {
     val isProceedButtonEnabled by addTrustedUserViewModel.isProceedButtonEnabled.collectAsState()
     val scope: CoroutineScope = rememberCoroutineScope()
@@ -30,9 +28,6 @@ fun AddTrustedUserScreen(
     BackHandler { addTrustedUserViewModel.onBackClicked() }
 
     LaunchedEffect(Unit) {
-        addTrustedUserViewModel.onError
-            .onEach { showSnackbarMutableSharedFlow.emit(it) }
-            .launchIn(scope)
         addTrustedUserViewModel.popBackStack
             .onEach { popBackStack() }
             .launchIn(scope)

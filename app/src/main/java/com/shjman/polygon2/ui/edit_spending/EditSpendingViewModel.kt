@@ -1,21 +1,25 @@
 package com.shjman.polygon2.ui.edit_spending
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.shjman.polygon2.BuildConfig
 import com.shjman.polygon2.data.Category
 import com.shjman.polygon2.data.Spending
+import com.shjman.polygon2.repository.LogRepository
 import com.shjman.polygon2.repository.SpentRepository
+import com.shjman.polygon2.ui.BaseViewModel
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.time.LocalDateTime
 
 class EditSpendingViewModel(
     private val spentRepository: SpentRepository,
-) : ViewModel() {
+    logRepository: LogRepository,
+) : BaseViewModel(logRepository) {
 
     companion object {
-        private const val DELAY_DURATION = BuildConfig.testDelayDuration
+        const val DELAY_DURATION = BuildConfig.testDelayDuration
     }
 
     private val _categories = MutableStateFlow<List<Category>?>(null)
@@ -23,9 +27,6 @@ class EditSpendingViewModel(
 
     private val _isLoading: MutableStateFlow<Boolean> = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
-
-    private val _onError = MutableSharedFlow<String>()
-    val onError = _onError.asSharedFlow()
 
     private val _showSpendingUpdated = MutableSharedFlow<Unit>()
     val showSpendingUpdated = _showSpendingUpdated.asSharedFlow()
@@ -46,13 +47,12 @@ class EditSpendingViewModel(
     }
 
     fun onSaveButtonClicked() {
-        viewModelScope.launch {
+        launchCatching {
             _isLoading.value = true
             delay(DELAY_DURATION)
             withContext(Dispatchers.IO) {
                 _spending.value?.let {
                     spentRepository.updateSpending(
-                        onError = { launch { _onError.emit(it) } },
                         spending = it,
                         showSpendingUpdated = _showSpendingUpdated,
                     )
@@ -63,21 +63,18 @@ class EditSpendingViewModel(
     }
 
     suspend fun loadSpending(localDateTime: LocalDateTime) {
-        viewModelScope.launch {
+        launchCatching {
             _isLoading.value = true
             awaitAll(
                 async {
                     delay(DELAY_DURATION)
                     _spending.value = spentRepository.getSpending(
                         localDateTime,
-                        onError = { launch { _onError.emit(it) } },
                     )
                 },
                 async {
                     delay(DELAY_DURATION)
-                    _categories.value = spentRepository.getCategories(
-                        onError = { launch { _onError.emit(it) } },
-                    )
+                    _categories.value = spentRepository.getCategories()
                 }
             )
             _isLoading.value = false

@@ -1,16 +1,15 @@
 package com.shjman.polygon2.ui
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
+import com.shjman.polygon2.repository.LogRepository
 import com.shjman.polygon2.repository.SpentRepository
-import kotlinx.coroutines.launch
 
 class EntryPointViewModel(
-    private val spentRepository: SpentRepository
-) : ViewModel() {
+    private val spentRepository: SpentRepository,
+    logRepository: LogRepository,
+) : BaseViewModel(logRepository) {
 
-    fun saveSharedDocumentPath(documentPath: String) {
-        viewModelScope.launch {
+    fun updateSharedDocumentPath(documentPath: String) {
+        launchCatching {
             spentRepository.updateSharedDocumentPath(documentPath)
         }
     }

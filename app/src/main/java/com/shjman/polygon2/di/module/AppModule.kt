@@ -6,8 +6,11 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import com.shjman.polygon2.repository.LogRepository
+import com.shjman.polygon2.repository.LogRepositoryImpl
 import com.shjman.polygon2.repository.SpentRepository
 import com.shjman.polygon2.repository.SpentRepositoryImpl
 import com.shjman.polygon2.ui.EntryPointViewModel
@@ -26,6 +29,10 @@ import org.koin.dsl.module
 
 val appModule = module {
 
+    single { FirebaseAuth.getInstance() }
+    single { Firebase.firestore }
+    single { provideDataStore(get()) }
+    single<LogRepository> { LogRepositoryImpl() }
     single<SpentRepository> {
         SpentRepositoryImpl(
             dataStore = get(),
@@ -34,28 +41,19 @@ val appModule = module {
         )
     }
 
-    single { provideFirebaseAuth() }
-    single { provideFireStore() }
-    single { provideDataStore(get()) }
-
-    viewModel { AddTrustedUserViewModel(get()) }
-    viewModel { CategoriesViewModel(get()) }
-    viewModel { EditCategoryViewModel(get()) }
-    viewModel { EditSpendingViewModel(get()) }
-    viewModel { EntryPointViewModel(get()) }
-    viewModel { HomeViewModel(get()) }
-    viewModel { OverviewViewModel(get()) }
-    viewModel { SettingViewModel(get()) }
-    viewModel { SharingSettingViewModel(get()) }
-    viewModel { SpentViewModel(get()) }
-    viewModel { UnauthorizedViewModel(get()) }
+    viewModel { AddTrustedUserViewModel(get(), get()) }
+    viewModel { CategoriesViewModel(get(), get()) }
+    viewModel { EditCategoryViewModel(get(), get()) }
+    viewModel { EditSpendingViewModel(get(), get()) }
+    viewModel { EntryPointViewModel(get(), get()) }
+    viewModel { HomeViewModel(get(), get()) }
+    viewModel { OverviewViewModel(get(), get()) }
+    viewModel { SettingViewModel(get(), get()) }
+    viewModel { SharingSettingViewModel(get(), get()) }
+    viewModel { SpentViewModel(get(), get()) }
+    viewModel { UnauthorizedViewModel(get(), get()) }
 }
 
-private fun provideFirebaseAuth() = FirebaseAuth.getInstance()
-private fun provideFireStore() = Firebase.firestore
-
-private fun provideDataStore(context: Context): DataStore<Preferences> {
-    return PreferenceDataStoreFactory.create(
-        produceFile = { context.preferencesDataStoreFile("user_preferences") }
-    )
-}
+private fun provideDataStore(context: Context) = PreferenceDataStoreFactory.create(
+    produceFile = { context.preferencesDataStoreFile("user_preferences") }
+)

@@ -1,37 +1,40 @@
 package com.shjman.polygon2.ui.unauthorized
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.shjman.polygon2.BuildConfig
+import com.shjman.polygon2.repository.LogRepository
 import com.shjman.polygon2.repository.SpentRepository
+import com.shjman.polygon2.ui.BaseViewModel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.*
 
 class UnauthorizedViewModel(
     private val spentRepository: SpentRepository,
-) : ViewModel() {
+    logRepository: LogRepository,
+) : BaseViewModel(logRepository) {
 
     private val _isLoading = MutableStateFlow(true)
-    val isLoading = _isLoading.asStateFlow()
+    val isLoading: StateFlow<Boolean>
+        get() = _isLoading.asStateFlow()
 
     private val _isUserLoggedIn = MutableStateFlow<Boolean?>(null)
-    val isUserLoggedIn = _isUserLoggedIn.asStateFlow()
-
-    private val _onError = MutableSharedFlow<String>()
-    val onError = _onError.asSharedFlow()
+    val isUserLoggedIn: StateFlow<Boolean?>
+        get() = _isUserLoggedIn.asStateFlow()
 
     private val _requestToSignIn = MutableSharedFlow<Unit>()
-    val requestToSignIn = _requestToSignIn.asSharedFlow()
+    val requestToSignIn: SharedFlow<Unit>
+        get() = _requestToSignIn.asSharedFlow()
 
-    suspend fun checkIsUserSignIn() {
-        _isLoading.value = true
-        delay(BuildConfig.testDelayDuration)
-        _isUserLoggedIn.value = spentRepository.checkIsUserSignIn()
-        _isLoading.value = false
+    fun checkIsUserSignIn() {
+        launchCatching {
+            _isLoading.value = true
+            delay(BuildConfig.testDelayDuration)
+            _isUserLoggedIn.value = spentRepository.checkIsUserSignIn()
+            _isLoading.value = false
+        }
+    }
+
+    fun clearInitState() {
+        _isUserLoggedIn.value = null
     }
 
     suspend fun onSignInClicked() {
@@ -40,10 +43,8 @@ class UnauthorizedViewModel(
     }
 
     fun updateDataAfterSuccessSignIn() {
-        viewModelScope.launch {
-            spentRepository.updateDataAfterSuccessSignIn(
-                onError = { launch { _onError.emit(it) } },
-            )
+        launchCatching {
+            spentRepository.updateDataAfterSuccessSignIn()
         }
     }
 }

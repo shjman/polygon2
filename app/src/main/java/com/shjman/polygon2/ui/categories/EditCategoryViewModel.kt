@@ -1,22 +1,23 @@
 package com.shjman.polygon2.ui.categories
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shjman.polygon2.data.Category
+import com.shjman.polygon2.repository.LogRepository
 import com.shjman.polygon2.repository.SpentRepository
-import kotlinx.coroutines.flow.*
+import com.shjman.polygon2.ui.BaseViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import java.util.*
 
 class EditCategoryViewModel(
-    private val spentRepository: SpentRepository
-) : ViewModel() {
+    private val spentRepository: SpentRepository,
+    logRepository: LogRepository,
+) : BaseViewModel(logRepository) {
 
     val categoryName = MutableStateFlow("")
     val isProceedButtonEnabled = MutableStateFlow(false)
-
-    private val _onError = MutableSharedFlow<String>()
-    val onError = _onError.asSharedFlow()
 
     private val _popBackStack = MutableSharedFlow<Unit>()
     val popBackStack = _popBackStack.asSharedFlow()
@@ -30,10 +31,9 @@ class EditCategoryViewModel(
         isProceedButtonEnabled.value = false
         val category = Category(UUID.randomUUID().toString(), categoryName.value.trim())
 
-        viewModelScope.launch {
+        launchCatching {
             spentRepository.saveCategory(
                 category = category,
-                onError = { viewModelScope.launch { _onError.emit(it) } },
             )
             categoryName.value = ""
             _popBackStack.emit(Unit)

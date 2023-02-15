@@ -3,18 +3,15 @@ package com.shjman.polygon2.ui.home
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.ScaffoldState
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
-    homeViewModel: HomeViewModel, // todo resolve or fix it
+    homeViewModel: HomeViewModel, // todo
     onClickGoNext: () -> Unit,
 ) {
     Column(
@@ -39,15 +36,11 @@ fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Button(
-                onClick = onClickGoNext,
+                onClick = onClickGoNext, // todo make by viewModel
                 colors = ButtonDefaults.buttonColors(backgroundColor = Color.White)
             ) {
                 Text(text = "go spent screen", color = Color.Black)
             }
         }
     }
-}
-
-private fun showSnackBar(message: String?, scope: CoroutineScope, scaffoldState: ScaffoldState) {
-    message?.let { scope.launch { scaffoldState.snackbarHostState.showSnackbar(it) } }
 }

@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">polygon2</string>
+    <string name="generic_error">something went wrong =(</string>
 </resources>

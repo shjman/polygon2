@@ -1,54 +1,51 @@
 package com.shjman.polygon2.ui.settings
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseUser
 import com.shjman.polygon2.BuildConfig
+import com.shjman.polygon2.repository.LogRepository
 import com.shjman.polygon2.repository.SpentRepository
+import com.shjman.polygon2.ui.BaseViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class SettingViewModel(
     private val spentRepository: SpentRepository,
-) : ViewModel() {
+    logRepository: LogRepository,
+) : BaseViewModel(logRepository) {
 
     val isLoading: MutableStateFlow<Boolean> = MutableStateFlow(true)
     val isUserOwner: MutableStateFlow<Boolean?> = MutableStateFlow(null)
-    private val _onError = MutableSharedFlow<String>()
-    val onError = _onError.asSharedFlow()
+    private val _signOutCompleted = MutableSharedFlow<Unit>()
+    val signOutCompleted: SharedFlow<Unit>
+        get() = _signOutCompleted.asSharedFlow()
     val userData = MutableStateFlow<FirebaseUser?>(null)
 
     suspend fun startObserveSettingData() {
         delay(BuildConfig.testDelayDuration)
-        viewModelScope.launch {
+        launchCatching {
             withContext(Dispatchers.IO) {
-                userData.value = spentRepository.getCurrentUserData(
-                    onError = { launch { _onError.emit(it) } },
-                )
-                spentRepository.isUserOwner(
-                    onError = { launch { _onError.emit(it) } },
-                ).onEach {
-                    isUserOwner.value = it
-                }.collect()
+                userData.value = spentRepository.getCurrentUserData()
+                spentRepository.isUserOwner()
+                    .onEach {
+                        isUserOwner.value = it
+                    }.collect()
             }
         }
         isLoading.value = false // todo could be updated because isUserOwner ignores
     }
 
     fun onSignOutClicked() {
-        viewModelScope.launch {
+        launchCatching {
             spentRepository.signOut()
+            _signOutCompleted.emit(Unit)
         }
     }
 
     fun onStopObserveSharedDatabaseClicked() {
-        viewModelScope.launch {
-            spentRepository.removeSharedDocumentPath(
-                onError = { launch { _onError.emit(it) } },
-            )
+        launchCatching {
+            spentRepository.removeSharedDocumentPath()
         }
     }
 }
