@@ -182,9 +182,12 @@ class SpentRepositoryImpl(
             .await()
     }
 
-    override suspend fun updateSharedDocumentPath(documentPath: String) {
-        dataStore.edit { preferences ->
-            preferences[SHARED_DOCUMENT_PATH] = documentPath
+    override suspend fun updateSharedDocumentPath(sharedDocumentPath: String) {
+        val ownerDocumentPath = getCurrentUserData()?.uid
+        if (ownerDocumentPath != sharedDocumentPath) {
+            dataStore.edit { preferences ->
+                preferences[SHARED_DOCUMENT_PATH] = sharedDocumentPath
+            }
         }
     }
 
@@ -220,7 +223,6 @@ class SpentRepositoryImpl(
         dataStore.edit {
             it.clear()
         }
-        Timber.e("aaaa firebaseAuth.signOut()")
         firebaseAuth.signOut()
     }
 
@@ -233,7 +235,6 @@ class SpentRepositoryImpl(
                 .document(getDocumentPath())
                 .set(newData)
                 .await()
-
         }
     }
 

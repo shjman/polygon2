@@ -2,9 +2,6 @@ package com.shjman.polygon2.ui
 
 import android.content.Intent
 import android.content.res.Resources
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
@@ -26,7 +23,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
 import com.shjman.polygon2.R
 import com.shjman.polygon2.data.LOCALE_DATE_TIME_FORMATTER
 import com.shjman.polygon2.data.convertDateStringToLocalDateTime
@@ -37,54 +33,28 @@ import com.shjman.polygon2.ui.categories.EditCategoryViewModel
 import com.shjman.polygon2.ui.edit_spending.EditSpendingScreen
 import com.shjman.polygon2.ui.edit_spending.EditSpendingViewModel
 import com.shjman.polygon2.ui.home.HomeScreen
-import com.shjman.polygon2.ui.home.HomeViewModel
 import com.shjman.polygon2.ui.overview.OverviewScreen
 import com.shjman.polygon2.ui.settings.AddTrustedUserScreen
-import com.shjman.polygon2.ui.settings.AddTrustedUserViewModel
 import com.shjman.polygon2.ui.settings.SettingScreen
 import com.shjman.polygon2.ui.settings.SharingSettingsScreen
 import com.shjman.polygon2.ui.snackbar.SnackbarManager
 import com.shjman.polygon2.ui.spent.SpentScreen
 import com.shjman.polygon2.ui.theme.Polygon2Theme
 import com.shjman.polygon2.ui.unauthorized.UnauthorizedScreen
-import com.shjman.polygon2.ui.unauthorized.UnauthorizedViewModel
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
-import timber.log.Timber
 import java.time.format.DateTimeFormatter
 
 @Composable
 fun EntryPoint(
-    intent: Intent,
+    entryIntent: Intent,
 ) {
-    val addTrustedUserViewModel: AddTrustedUserViewModel = koinViewModel()
     val categoriesViewModel: CategoriesViewModel = koinViewModel()
     val editCategoryViewModel: EditCategoryViewModel = koinViewModel()
     val editSpendingViewModel: EditSpendingViewModel = koinViewModel()
-    val entryPointViewModel: EntryPointViewModel = koinViewModel()
-    val homeViewModel: HomeViewModel = koinViewModel()
-    val unauthorizedViewModel: UnauthorizedViewModel = koinViewModel()
-
-    LaunchedEffect(Unit) {
-        intent.data?.getQueryParameter(KEY_SHARED_DOCUMENT_PATH)?.let {
-            entryPointViewModel.updateSharedDocumentPath(it)
-        }
-    }
+//    val entryPointViewModel: EntryPointViewModel = koinViewModel() todo
 
     val appState = rememberAppState()
-
-    val loginLauncher = rememberLauncherForActivityResult(FirebaseAuthUIActivityResultContract()) {
-        appState.coroutineScope.launch {
-            if (it.resultCode == ComponentActivity.RESULT_OK) {
-                unauthorizedViewModel.updateDataAfterSuccessSignIn()
-                Timber.d("FirebaseAuthUIAuthenticationResult == RESULT_OK")
-            } else {
-                Timber.d("FirebaseAuthUIAuthenticationResult == idpResponse?.error == ${it.idpResponse?.error}")
-            }
-            unauthorizedViewModel.checkIsUserSignIn()
-        }
-    }
 
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -99,15 +69,12 @@ fun EntryPoint(
         ) { paddingValues ->
             Box(modifier = Modifier.padding(paddingValues)) {
                 NavigationGraph(
-                    addTrustedUserViewModel = addTrustedUserViewModel,
                     categoriesViewModel = categoriesViewModel,
                     editCategoryViewModel = editCategoryViewModel,
                     editSpendingViewModel = editSpendingViewModel,
-                    homeViewModel = homeViewModel,
-                    loginLauncher = loginLauncher,
+                    entryIntent = entryIntent,
                     navHostController = navController,
                     scaffoldState = appState.scaffoldState,
-                    unauthorizedViewModel = unauthorizedViewModel,
                 )
             }
         }
@@ -226,15 +193,12 @@ fun BottomNavigation(
 
 @Composable
 fun NavigationGraph(
-    addTrustedUserViewModel: AddTrustedUserViewModel,
     categoriesViewModel: CategoriesViewModel,
     editCategoryViewModel: EditCategoryViewModel,
     editSpendingViewModel: EditSpendingViewModel,
-    homeViewModel: HomeViewModel,
-    loginLauncher: ActivityResultLauncher<Intent>,
+    entryIntent: Intent,
     navHostController: NavHostController,
     scaffoldState: ScaffoldState,
-    unauthorizedViewModel: UnauthorizedViewModel,
 ) {
     NavHost(
         navController = navHostController,
@@ -242,7 +206,6 @@ fun NavigationGraph(
     ) {
         composable(Screens.BottomNavItem.Home.screenRoute) {
             HomeScreen(
-                homeViewModel = homeViewModel,
                 onClickGoNext = { navHostController.navigate(Screens.BottomNavItem.Spent.screenRoute) },
             )
         }
@@ -282,7 +245,6 @@ fun NavigationGraph(
             route = Screens.AddTrustedUserScreen.screenRoute
         ) {
             AddTrustedUserScreen(
-                addTrustedUserViewModel = addTrustedUserViewModel,
                 popBackStack = { navHostController.popBackStack() },
             )
         }
@@ -337,8 +299,7 @@ fun NavigationGraph(
             route = Screens.Unauthorized.screenRoute
         ) {
             UnauthorizedScreen(
-                loginLauncher = loginLauncher,
-                unauthorizedViewModel = unauthorizedViewModel,
+                entryIntent = entryIntent,
                 navigateToHomeScreen = {
                     navHostController.navigate(Screens.BottomNavItem.Home.screenRoute) {
                         navHostController.graph.startDestinationRoute?.let { startDestinationRoute ->
@@ -351,5 +312,4 @@ fun NavigationGraph(
             )
         }
     }
-
 }

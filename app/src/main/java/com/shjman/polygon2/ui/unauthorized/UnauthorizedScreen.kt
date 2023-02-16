@@ -1,6 +1,8 @@
 package com.shjman.polygon2.ui.unauthorized
 
 import android.content.Intent
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
@@ -12,24 +14,43 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.firebase.ui.auth.AuthUI
+import com.firebase.ui.auth.FirebaseAuthUIActivityResultContract
+import com.shjman.polygon2.ui.KEY_SHARED_DOCUMENT_PATH
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
+import timber.log.Timber
 
 @Composable
 fun UnauthorizedScreen(
     isLoading: MutableState<Boolean> = remember { mutableStateOf(true) },
     isUserLoggedIn: MutableState<Boolean?> = remember { mutableStateOf(null) },
-    loginLauncher: ActivityResultLauncher<Intent>,
+    entryIntent: Intent,
     navigateToHomeScreen: () -> Unit,
-    scope: CoroutineScope = rememberCoroutineScope(),
-    unauthorizedViewModel: UnauthorizedViewModel
 ) {
+    val scope: CoroutineScope = rememberCoroutineScope()
+    val viewModel = koinViewModel<UnauthorizedViewModel>()
+    val signInLauncher = rememberLauncherForActivityResult(FirebaseAuthUIActivityResultContract()) {
+        scope.launch {
+            if (it.resultCode == ComponentActivity.RESULT_OK) {
+                viewModel.updateDataAfterSuccessSignIn()
+                Timber.d("FirebaseAuthUIAuthenticationResult == RESULT_OK")
+            } else {
+                Timber.e("FirebaseAuthUIAuthenticationResult == idpResponse?.error == ${it.idpResponse?.error}")
+            }
+            viewModel.checkIsUserSignIn()
+        }
+    }
+
     LaunchedEffect(Unit) {
-        unauthorizedViewModel.clearInitState()
-        unauthorizedViewModel.checkIsUserSignIn()
-        unauthorizedViewModel.isUserLoggedIn
+        entryIntent.data?.getQueryParameter(KEY_SHARED_DOCUMENT_PATH)?.let {
+            viewModel.updateSharedDocumentPath(it)
+        }
+        viewModel.clearInitState()
+        viewModel.checkIsUserSignIn()
+        viewModel.isUserLoggedIn
             .onEach {
                 when (it) {
                     true -> navigateToHomeScreen()
@@ -37,11 +58,11 @@ fun UnauthorizedScreen(
                 }
             }
             .launchIn(scope)
-        unauthorizedViewModel.isLoading
+        viewModel.isLoading
             .onEach { isLoading.value = it }
             .launchIn(scope)
-        unauthorizedViewModel.requestToSignIn
-            .onEach { requestToSignIn(loginLauncher) }
+        viewModel.requestToSignIn
+            .onEach { requestToSignIn(signInLauncher) }
             .launchIn(scope)
     }
     Column(
@@ -74,7 +95,7 @@ fun UnauthorizedScreen(
                         Button(
                             onClick = {
                                 scope.launch {
-                                    unauthorizedViewModel.onSignInClicked()
+                                    viewModel.onSignInClicked()
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(backgroundColor = Color.White)

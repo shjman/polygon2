@@ -8,9 +8,5 @@ class EntryPointViewModel(
     logRepository: LogRepository,
 ) : BaseViewModel(logRepository) {
 
-    fun updateSharedDocumentPath(documentPath: String) {
-        launchCatching {
-            spentRepository.updateSharedDocumentPath(documentPath)
-        }
-    }
+
 }

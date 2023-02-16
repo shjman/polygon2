@@ -47,4 +47,10 @@ class UnauthorizedViewModel(
             spentRepository.updateDataAfterSuccessSignIn()
         }
     }
+
+    fun updateSharedDocumentPath(documentPath: String) {
+        launchCatching {
+            spentRepository.updateSharedDocumentPath(documentPath)
+        }
+    }
 }

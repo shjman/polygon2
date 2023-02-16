@@ -45,7 +45,7 @@ interface SpentRepository {
         popularCategoryID: String,
     )
 
-    suspend fun updateSharedDocumentPath(documentPath: String)
+    suspend fun updateSharedDocumentPath(sharedDocumentPath: String)
     suspend fun updateSpending(
         spending: Spending,
         showSpendingUpdated: MutableSharedFlow<Unit>,

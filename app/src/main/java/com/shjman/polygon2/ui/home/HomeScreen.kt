@@ -8,12 +8,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import com.shjman.polygon2.ui.settings.SettingViewModel
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun HomeScreen(
-    homeViewModel: HomeViewModel, // todo
     onClickGoNext: () -> Unit,
 ) {
+    val viewModel = koinViewModel<HomeViewModel>()
     Column(
         modifier = Modifier
             .fillMaxSize()

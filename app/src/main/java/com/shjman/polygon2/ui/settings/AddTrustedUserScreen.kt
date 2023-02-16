@@ -15,20 +15,21 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun AddTrustedUserScreen(
-    addTrustedUserViewModel: AddTrustedUserViewModel,
     popBackStack: () -> Unit,
 ) {
-    val isProceedButtonEnabled by addTrustedUserViewModel.isProceedButtonEnabled.collectAsState()
+    val viewModel = koinViewModel<AddTrustedUserViewModel>()
+    val isProceedButtonEnabled by viewModel.isProceedButtonEnabled.collectAsState()
     val scope: CoroutineScope = rememberCoroutineScope()
-    val trustedUserEmail by addTrustedUserViewModel.trustedUserEmail.collectAsState()
+    val trustedUserEmail by viewModel.trustedUserEmail.collectAsState()
 
-    BackHandler { addTrustedUserViewModel.onBackClicked() }
+    BackHandler { viewModel.onBackClicked() }
 
     LaunchedEffect(Unit) {
-        addTrustedUserViewModel.popBackStack
+        viewModel.popBackStack
             .onEach { popBackStack() }
             .launchIn(scope)
     }
@@ -47,19 +48,19 @@ fun AddTrustedUserScreen(
             keyboardActions = KeyboardActions(
                 onDone = {
                     if (isProceedButtonEnabled) {
-                        addTrustedUserViewModel.onDoneClicked()
+                        viewModel.onDoneClicked()
                     }
                 },
             ),
             shape = RoundedCornerShape(12.dp),
-            onValueChange = { addTrustedUserViewModel.trustedUserEmailChanged(it) },
+            onValueChange = { viewModel.trustedUserEmailChanged(it) },
         )
 
         Button(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(8.dp),
-            onClick = { addTrustedUserViewModel.onDoneClicked() },
+            onClick = { viewModel.onDoneClicked() },
             enabled = isProceedButtonEnabled,
         ) {
             Text(
