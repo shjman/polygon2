@@ -183,11 +183,8 @@ class SpentRepositoryImpl(
     }
 
     override suspend fun updateSharedDocumentPath(sharedDocumentPath: String) {
-        val ownerDocumentPath = getCurrentUserData()?.uid
-        if (ownerDocumentPath != sharedDocumentPath) {
-            dataStore.edit { preferences ->
-                preferences[SHARED_DOCUMENT_PATH] = sharedDocumentPath
-            }
+        dataStore.edit { preferences ->
+            preferences[SHARED_DOCUMENT_PATH] = sharedDocumentPath
         }
     }
 

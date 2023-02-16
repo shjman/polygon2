@@ -1,9 +1,11 @@
 package com.shjman.polygon2.ui.unauthorized
 
 import com.shjman.polygon2.BuildConfig
+import com.shjman.polygon2.R
 import com.shjman.polygon2.repository.LogRepository
 import com.shjman.polygon2.repository.SpentRepository
 import com.shjman.polygon2.ui.BaseViewModel
+import com.shjman.polygon2.ui.snackbar.SnackbarManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 
@@ -50,7 +52,12 @@ class UnauthorizedViewModel(
 
     fun updateSharedDocumentPath(documentPath: String) {
         launchCatching {
-            spentRepository.updateSharedDocumentPath(documentPath)
+            val ownerDocumentPath = spentRepository.getCurrentUserData()?.uid
+            if (ownerDocumentPath == documentPath) {
+                SnackbarManager.showMessage(R.string.own_self_observing)
+            } else {
+                spentRepository.updateSharedDocumentPath(documentPath)
+            }
         }
     }
 }

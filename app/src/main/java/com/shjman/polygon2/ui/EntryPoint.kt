@@ -282,17 +282,8 @@ fun NavigationGraph(
         composable(
             route = Screens.SharingSettings.screenRoute
         ) {
-            val context = LocalContext.current
             SharingSettingsScreen(
                 navigateToAddTrustedUser = { navHostController.navigate(Screens.AddTrustedUserScreen.screenRoute) },
-                sendInviteLink = { documentPath ->
-                    val sendIntent: Intent = Intent().apply {
-                        action = Intent.ACTION_SEND
-                        putExtra(Intent.EXTRA_TEXT, "https://shjman/spendings?$KEY_SHARED_DOCUMENT_PATH=$documentPath")
-                        type = "text/plain"
-                    }
-                    context.startActivity(Intent.createChooser(sendIntent, "send invite link of your database"))
-                },
             )
         }
         composable(
