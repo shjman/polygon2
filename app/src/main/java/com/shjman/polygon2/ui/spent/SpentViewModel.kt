@@ -2,6 +2,8 @@ package com.shjman.polygon2.ui.spent
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.perf.ktx.performance
 import com.shjman.polygon2.BuildConfig
 import com.shjman.polygon2.data.Category
 import com.shjman.polygon2.repository.LogRepository
@@ -90,6 +92,8 @@ class SpentViewModel(
     }
 
     private fun updatePopularCategoryInStorage() {
+        val myTrace = Firebase.performance.newTrace("updatePopularCategoryInStorage")
+        myTrace.start()
         launchCatching {
             val spendings = spentRepository.getSpendings()
             val last15Spendings = spendings
@@ -105,5 +109,6 @@ class SpentViewModel(
                 )
             }
         }
+        myTrace.stop()
     }
 }

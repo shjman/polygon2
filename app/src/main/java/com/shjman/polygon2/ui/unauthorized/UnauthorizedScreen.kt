@@ -43,13 +43,17 @@ fun UnauthorizedScreen(
             viewModel.checkIsUserSignIn()
         }
     }
+    val showError = remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         entryIntent.data?.getQueryParameter(KEY_SHARED_DOCUMENT_PATH)?.let {
             viewModel.updateSharedDocumentPath(it)
         }
-        viewModel.clearInitState()
+        viewModel.setInitState()
         viewModel.checkIsUserSignIn()
+        viewModel.onShowError
+            .onEach { showError.value = it }
+            .launchIn(scope)
         viewModel.isUserLoggedIn
             .onEach {
                 when (it) {
@@ -75,37 +79,51 @@ fun UnauthorizedScreen(
                 color = Color.Green,
             )
         } else {
-            if (isUserLoggedIn.value == false) {
+            if (showError.value) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
+                    Button(
+                        onClick = { viewModel.checkIsUserSignIn() },
                     ) {
-                        Text(
-                            text = "please sing in to start"
-                        )
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Button(
-                            onClick = {
-                                scope.launch {
-                                    viewModel.onSignInClicked()
-                                }
-                            },
-                            colors = ButtonDefaults.buttonColors(backgroundColor = Color.White)
-                        ) {
-                            Text(text = "sign in", color = Color.Black)
-                        }
+                        Text(text = "Retry")
                     }
                 }
             } else {
+                if (isUserLoggedIn.value == false) {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                        ) {
+                            Text(
+                                text = "please sing in to start"
+                            )
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Button(
+                                onClick = {
+                                    scope.launch {
+                                        viewModel.onSignInClicked()
+                                    }
+                                },
+                                colors = ButtonDefaults.buttonColors(backgroundColor = Color.White)
+                            ) {
+                                Text(text = "sign in", color = Color.Black)
+                            }
+                        }
+                    }
+                } else {
 // white screen and navigation to home screen
+                }
             }
         }
     }

@@ -11,7 +11,6 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.sp
@@ -27,11 +26,8 @@ import com.shjman.polygon2.R
 import com.shjman.polygon2.data.LOCALE_DATE_TIME_FORMATTER
 import com.shjman.polygon2.data.convertDateStringToLocalDateTime
 import com.shjman.polygon2.ui.categories.CategoriesScreen
-import com.shjman.polygon2.ui.categories.CategoriesViewModel
 import com.shjman.polygon2.ui.categories.EditCategoryScreen
-import com.shjman.polygon2.ui.categories.EditCategoryViewModel
 import com.shjman.polygon2.ui.edit_spending.EditSpendingScreen
-import com.shjman.polygon2.ui.edit_spending.EditSpendingViewModel
 import com.shjman.polygon2.ui.home.HomeScreen
 import com.shjman.polygon2.ui.overview.OverviewScreen
 import com.shjman.polygon2.ui.settings.AddTrustedUserScreen
@@ -42,40 +38,32 @@ import com.shjman.polygon2.ui.spent.SpentScreen
 import com.shjman.polygon2.ui.theme.Polygon2Theme
 import com.shjman.polygon2.ui.unauthorized.UnauthorizedScreen
 import kotlinx.coroutines.CoroutineScope
-import org.koin.androidx.compose.koinViewModel
 import java.time.format.DateTimeFormatter
 
 @Composable
 fun EntryPoint(
     entryIntent: Intent,
 ) {
-    val categoriesViewModel: CategoriesViewModel = koinViewModel()
-    val editCategoryViewModel: EditCategoryViewModel = koinViewModel()
-    val editSpendingViewModel: EditSpendingViewModel = koinViewModel()
 //    val entryPointViewModel: EntryPointViewModel = koinViewModel() todo
 
-    val appState = rememberAppState()
-
-    val navController = rememberNavController()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-    val isShowingBottomBar = rememberSaveable { (mutableStateOf(true)) }
-
-    setupBottomBarVisibility(currentRoute, isShowingBottomBar)
     Polygon2Theme {
-        Scaffold(
-            bottomBar = { AnimatedBottomNavigation(navController, currentRoute, isShowingBottomBar) },
-            scaffoldState = appState.scaffoldState,
-        ) { paddingValues ->
-            Box(modifier = Modifier.padding(paddingValues)) {
-                NavigationGraph(
-                    categoriesViewModel = categoriesViewModel,
-                    editCategoryViewModel = editCategoryViewModel,
-                    editSpendingViewModel = editSpendingViewModel,
-                    entryIntent = entryIntent,
-                    navHostController = navController,
-                    scaffoldState = appState.scaffoldState,
-                )
+        Surface(color = MaterialTheme.colors.background) {
+            val appState = rememberAppState()
+            val navBackStackEntry by appState.navHostController.currentBackStackEntryAsState()
+            val currentRoute = navBackStackEntry?.destination?.route
+            val isShowingBottomBar = remember { (mutableStateOf(false)) }
+
+            setupBottomBarVisibility(currentRoute, isShowingBottomBar)
+            Scaffold(
+                bottomBar = { AnimatedBottomNavigation(appState.navHostController, currentRoute, isShowingBottomBar) },
+                scaffoldState = appState.scaffoldState,
+            ) { paddingValues ->
+                Box(modifier = Modifier.padding(paddingValues)) {
+                    NavigationGraph(
+                        appState = appState,
+                        entryIntent = entryIntent,
+                    )
+                }
             }
         }
     }
@@ -84,6 +72,7 @@ fun EntryPoint(
 @Composable
 fun rememberAppState(
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
+    navHostController: NavHostController = rememberNavController(),
     resources: Resources = resources(),
     scaffoldState: ScaffoldState = rememberScaffoldState(),
     snackbarManager: SnackbarManager = SnackbarManager,
@@ -91,6 +80,7 @@ fun rememberAppState(
     return remember(coroutineScope, resources, scaffoldState, snackbarManager) {
         AppState(
             coroutineScope = coroutineScope,
+            navHostController = navHostController,
             resources = resources,
             scaffoldState = scaffoldState,
             snackbarManager = snackbarManager,
@@ -101,11 +91,9 @@ fun rememberAppState(
 @Composable
 @ReadOnlyComposable
 fun resources(): Resources {
-    LocalConfiguration.current
     return LocalContext.current.resources
 }
 
-@Composable
 fun setupBottomBarVisibility(currentRoute: String?, isShowingBottomBar: MutableState<Boolean>) {
     when (currentRoute) {
         Screens.BottomNavItem.Setting.screenRoute,
@@ -193,20 +181,16 @@ fun BottomNavigation(
 
 @Composable
 fun NavigationGraph(
-    categoriesViewModel: CategoriesViewModel,
-    editCategoryViewModel: EditCategoryViewModel,
-    editSpendingViewModel: EditSpendingViewModel,
+    appState: AppState,
     entryIntent: Intent,
-    navHostController: NavHostController,
-    scaffoldState: ScaffoldState,
 ) {
     NavHost(
-        navController = navHostController,
+        navController = appState.navHostController,
         startDestination = Screens.Unauthorized.screenRoute,
     ) {
         composable(Screens.BottomNavItem.Home.screenRoute) {
             HomeScreen(
-                onClickGoNext = { navHostController.navigate(Screens.BottomNavItem.Spent.screenRoute) },
+                onClickGoNext = { appState.navHostController.navigate(Screens.BottomNavItem.Spent.screenRoute) },
             )
         }
         composable(Screens.BottomNavItem.Spent.screenRoute) {
@@ -217,7 +201,7 @@ fun NavigationGraph(
             OverviewScreen(
                 onEditSpendingClicked = { localDateTime -> // todo rework to use id of spending
                     val localDateTimeString = localDateTime.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER))
-                    navHostController.navigate(Screens.EditSpending.screenRoute + "/$localDateTimeString") {
+                    appState.navHostController.navigate(Screens.EditSpending.screenRoute + "/$localDateTimeString") {
                         launchSingleTop = true
                         restoreState = true
                     }
@@ -227,13 +211,13 @@ fun NavigationGraph(
         composable(Screens.BottomNavItem.Setting.screenRoute) {
             SettingScreen(
                 navigateToCategoriesScreen = {
-                    navHostController.navigate(Screens.Categories.screenRoute)
+                    appState.navHostController.navigate(Screens.Categories.screenRoute)
                 },
                 navigateToSharingSettingsScreen = {
-                    navHostController.navigate(Screens.SharingSettings.screenRoute)
+                    appState.navHostController.navigate(Screens.SharingSettings.screenRoute)
                 },
                 navigateToUnauthorizedScreen = {
-                    navHostController.navigate(Screens.Unauthorized.screenRoute) {
+                    appState.navHostController.navigate(Screens.Unauthorized.screenRoute) {
                         popUpTo(Screens.BottomNavItem.Home.screenRoute) {
                             inclusive = true
                         }
@@ -245,23 +229,21 @@ fun NavigationGraph(
             route = Screens.AddTrustedUserScreen.screenRoute
         ) {
             AddTrustedUserScreen(
-                popBackStack = { navHostController.popBackStack() },
+                popBackStack = { appState.navHostController.popBackStack() },
             )
         }
         composable(
             route = Screens.Categories.screenRoute
         ) {
             CategoriesScreen(
-                categoriesViewModel = categoriesViewModel,
-                navigateToEditCategory = { navHostController.navigate(Screens.EditCategory.screenRoute) },
+                navigateToEditCategory = { appState.navHostController.navigate(Screens.EditCategory.screenRoute) },
             )
         }
         composable(
             route = Screens.EditCategory.screenRoute
         ) {
             EditCategoryScreen(
-                editCategoryViewModel = editCategoryViewModel,
-                popBackStack = { navHostController.popBackStack() },
+                popBackStack = { appState.navHostController.popBackStack() },
             )
         }
         composable(
@@ -272,10 +254,8 @@ fun NavigationGraph(
             val localDateTimeString = backStackEntry.arguments?.getString("localDateTimeString")
             localDateTimeString?.let {
                 EditSpendingScreen(
-                    editSpendingViewModel = editSpendingViewModel,
+                    appState = appState,
                     localDateTimeSpending = convertDateStringToLocalDateTime(it),
-                    navigatePopBackClicked = { navHostController.popBackStack() },
-                    scaffoldState = scaffoldState,
                 )
             }
         }
@@ -283,7 +263,7 @@ fun NavigationGraph(
             route = Screens.SharingSettings.screenRoute
         ) {
             SharingSettingsScreen(
-                navigateToAddTrustedUser = { navHostController.navigate(Screens.AddTrustedUserScreen.screenRoute) },
+                navigateToAddTrustedUser = { appState.navHostController.navigate(Screens.AddTrustedUserScreen.screenRoute) },
             )
         }
         composable(
@@ -292,8 +272,8 @@ fun NavigationGraph(
             UnauthorizedScreen(
                 entryIntent = entryIntent,
                 navigateToHomeScreen = {
-                    navHostController.navigate(Screens.BottomNavItem.Home.screenRoute) {
-                        navHostController.graph.startDestinationRoute?.let { startDestinationRoute ->
+                    appState.navHostController.navigate(Screens.BottomNavItem.Home.screenRoute) {
+                        appState.navHostController.graph.startDestinationRoute?.let { startDestinationRoute ->
                             popUpTo(startDestinationRoute) {
                                 inclusive = true
                             }

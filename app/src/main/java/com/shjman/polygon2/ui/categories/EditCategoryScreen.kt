@@ -17,12 +17,13 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun EditCategoryScreen(
-    editCategoryViewModel: EditCategoryViewModel,
     popBackStack: () -> Unit,
 ) {
+    val editCategoryViewModel = koinViewModel<EditCategoryViewModel>()
     val categoryName by editCategoryViewModel.categoryName.collectAsState()
     val isProceedButtonEnabled by editCategoryViewModel.isProceedButtonEnabled.collectAsState()
     val scope: CoroutineScope = rememberCoroutineScope()

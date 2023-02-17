@@ -18,6 +18,10 @@ class UnauthorizedViewModel(
     val isLoading: StateFlow<Boolean>
         get() = _isLoading.asStateFlow()
 
+    private val _onShowError = MutableStateFlow(false)
+    val onShowError: StateFlow<Boolean>
+        get() = _onShowError.asStateFlow()
+
     private val _isUserLoggedIn = MutableStateFlow<Boolean?>(null)
     val isUserLoggedIn: StateFlow<Boolean?>
         get() = _isUserLoggedIn.asStateFlow()
@@ -30,13 +34,20 @@ class UnauthorizedViewModel(
         launchCatching {
             _isLoading.value = true
             delay(BuildConfig.testDelayDuration)
-            _isUserLoggedIn.value = spentRepository.checkIsUserSignIn()
+            try {
+                _isUserLoggedIn.value = spentRepository.checkIsUserSignIn()
+            } catch (ex: Exception) {
+                _onShowError.value = true
+                _isLoading.value = false
+                throw ex
+            }
             _isLoading.value = false
         }
     }
 
-    fun clearInitState() {
+    fun setInitState() {
         _isUserLoggedIn.value = null
+        _isLoading.value = true
     }
 
     suspend fun onSignInClicked() {

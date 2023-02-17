@@ -48,7 +48,10 @@ class SpentRepositoryImpl(
             .await()
     }
 
-    override fun checkIsUserSignIn() = firebaseAuth.currentUser != null
+    override fun checkIsUserSignIn(): Boolean {
+//        throw Exception()
+        return firebaseAuth.currentUser != null
+    }
 
     override suspend fun getCategories(): List<Category> {
         return fireStore

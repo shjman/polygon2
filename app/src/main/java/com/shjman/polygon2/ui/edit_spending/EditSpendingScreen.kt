@@ -23,39 +23,42 @@ import androidx.compose.ui.unit.dp
 import com.shjman.polygon2.data.Category
 import com.shjman.polygon2.data.LOCALE_DATE_TIME_FORMATTER
 import com.shjman.polygon2.data.Spending
+import com.shjman.polygon2.ui.AppState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import org.koin.androidx.compose.koinViewModel
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Composable
 fun EditSpendingScreen(
-    editSpendingViewModel: EditSpendingViewModel,
+    appState: AppState,
     isDropdownMenuExpanded: MutableState<Boolean> = remember { mutableStateOf(false) },
     isLoading: MutableState<Boolean> = remember { mutableStateOf(true) },
     localDateTimeSpending: LocalDateTime,
     spendingState: MutableState<Spending?> = remember { mutableStateOf(null) },
     categories: MutableState<List<Category>?> = remember { mutableStateOf(null) },
-    scaffoldState: ScaffoldState,
-    navigatePopBackClicked: () -> Unit,
 ) {
     val scope: CoroutineScope = rememberCoroutineScope()
     val focusManager: FocusManager = LocalFocusManager.current
+    val navigatePopBackClicked: () -> Unit = remember { { appState.navHostController.popBackStack() } }
+    val scaffoldState = remember { appState.scaffoldState }
+    val viewModel = koinViewModel<EditSpendingViewModel>()
 
     LaunchedEffect(Unit) {
-        editSpendingViewModel.loadSpending(localDateTimeSpending)
-        editSpendingViewModel.isLoading
+        viewModel.loadSpending(localDateTimeSpending)
+        viewModel.isLoading
             .onEach { isLoading.value = it }
             .launchIn(scope)
-        editSpendingViewModel.spending
+        viewModel.spending
             .onEach { spendingState.value = it }
             .launchIn(scope)
-        editSpendingViewModel.categories
+        viewModel.categories
             .onEach { categories.value = it }
             .launchIn(scope)
-        editSpendingViewModel.showSpendingUpdated
+        viewModel.showSpendingUpdated
             .onEach {
                 scope.launch {
                     val snackbarResult = scaffoldState.snackbarHostState.showSnackbar(
@@ -85,22 +88,22 @@ fun EditSpendingScreen(
             else -> {
                 DateRowView(
                     date = spending.date,
-                    editSpendingViewModel = editSpendingViewModel,
+                    editSpendingViewModel = viewModel,
                 )
                 AmountRowView(
                     amountSpent = spending.spentAmount,
-                    editSpendingViewModel = editSpendingViewModel,
+                    editSpendingViewModel = viewModel,
                 )
                 NoteRowView(
                     note = spending.note,
-                    editSpendingViewModel = editSpendingViewModel,
+                    editSpendingViewModel = viewModel,
                 )
                 InputCategoryView(
                     categories = categories.value,
                     selectedCategory = spending.category,
                     isDropdownMenuExpanded = isDropdownMenuExpanded,
                     onDropdownMenuItemClicked = {
-                        editSpendingViewModel.onSelectedCategoryChanged(it)
+                        viewModel.onSelectedCategoryChanged(it)
                         isDropdownMenuExpanded.value = false
                     }
                 )
@@ -123,7 +126,7 @@ fun EditSpendingScreen(
                     Button(
                         onClick = {
                             focusManager.clearFocus()
-                            editSpendingViewModel.onSaveButtonClicked()
+                            viewModel.onSaveButtonClicked()
                         },
                         modifier = Modifier
                             .align(alignment = Alignment.CenterVertically)

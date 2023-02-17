@@ -15,21 +15,23 @@ import com.shjman.polygon2.data.Category
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun CategoriesScreen(
-    categoriesViewModel: CategoriesViewModel,
-    scope: CoroutineScope = rememberCoroutineScope(),
     categoriesState: MutableState<List<Category>?> = remember { mutableStateOf(null) },
     navigateToEditCategory: () -> Unit,
-    addNewCategoryClicked: () -> Unit = { categoriesViewModel.addNewCategoryClicked() },
 ) {
+    val viewModel = koinViewModel< CategoriesViewModel>()
+    val scope: CoroutineScope = rememberCoroutineScope()
+    val onAddNewCategoryClicked: () -> Unit = { viewModel.addNewCategoryClicked() }
+
     LaunchedEffect(Unit) {
-        categoriesViewModel.loadCategories()
-        categoriesViewModel.categories
+        viewModel.loadCategories()
+        viewModel.categories
             .onEach { categoriesState.value = it }
             .launchIn(scope)
-        categoriesViewModel.onAddNewCategoryClicked
+        viewModel.onAddNewCategoryClicked
             .onEach { navigateToEditCategory() }
             .launchIn(scope)
     }
@@ -71,7 +73,7 @@ fun CategoriesScreen(
             }
         }
         AddNewCategoryButton(
-            addNewCategoryClicked = addNewCategoryClicked,
+            addNewCategoryClicked = onAddNewCategoryClicked,
         )
     }
 }
