@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.snapshots
 import com.shjman.polygon2.BuildConfig
@@ -39,9 +40,7 @@ class SpentRepositoryImpl(
     override suspend fun addTrustedUser(trustedUserEmail: String) {
         val newData = mutableMapOf<String, String>()
         newData["email"] = trustedUserEmail
-        fireStore
-            .collection(COLLECTION_ENTRY_POINT)
-            .document(getDocumentPath())
+        getEntryPoint()
             .collection(COLLECTION_TRUSTED_EMAILS)
             .document(trustedUserEmail)
             .set(newData)
@@ -54,26 +53,29 @@ class SpentRepositoryImpl(
     }
 
     override suspend fun getCategories(): List<Category> {
-        return fireStore
-            .collection(COLLECTION_ENTRY_POINT)
-            .document(getDocumentPath())
+        return getEntryPoint()
             .collection(COLLECTION_CATEGORIES)
             .get()
             .await()
             .documents
             .mapNotNull { it.toObject(CategoryRemote::class.java) }
             .map { it.toCategory() }
-
     }
 
     override suspend fun getCategoriesFlow(): Flow<List<Category>> {
-        return fireStore
-            .collection(COLLECTION_ENTRY_POINT)
-            .document(getDocumentPath())
+        return getEntryPoint()
             .collection(COLLECTION_CATEGORIES)
             .snapshots()
             .map { it.toObjects(CategoryRemote::class.java) }
             .map { it.map { categoryRemote -> categoryRemote.toCategory() } }
+    }
+
+    private fun getCollectionSpendingsPath(): String {
+        return if (BuildConfig.mainCollectionPath == "testing_family") {
+            COLLECTION_SPENDINGS
+        } else {
+            "spending"
+        }
     }
 
     override fun getCurrentUserData(): FirebaseUser? {
@@ -90,6 +92,20 @@ class SpentRepositoryImpl(
         return documentPath
     }
 
+    private suspend fun getEntryPoint(): DocumentReference {
+        return if (BuildConfig.mainCollectionPath == "testing_family") { // todo its a place to fix
+            val sharedDocumentPath = dataStore.data.first()[SHARED_DOCUMENT_PATH]
+            val documentPath = sharedDocumentPath ?: getCurrentUserData()?.uid ?: "" // todo think about this place
+            fireStore
+                .collection(COLLECTION_ENTRY_POINT)
+                .document(documentPath)
+        } else {
+            fireStore // custom single version
+                .collection(BuildConfig.mainCollectionPath)
+                .document("spending")
+        }
+    }
+
     override suspend fun getPopularCategory(): Category {
         val popularCategoryID = dataStore.data.first()[POPULAR_CATEGORY_ID]
         return getCategories().firstOrNull { it.id == popularCategoryID } ?: Category.empty()
@@ -98,25 +114,20 @@ class SpentRepositoryImpl(
     override suspend fun getSpending(
         localDateTime: LocalDateTime,
     ): Spending? {
-        return fireStore
-            .collection(COLLECTION_ENTRY_POINT)
-            .document(getDocumentPath())
-            .collection(COLLECTION_SPENDINGS)
+        return getEntryPoint()
+            .collection(getCollectionSpendingsPath())
             .get()
             .await()
             .documents
             .mapNotNull { it.toObject(SpendingRemote::class.java) }
             .firstOrNull { localDateTime.isEqual(convertDateStringToLocalDateTime(it.date)) }
             ?.toSpending(getCategories())
-
     }
 
     override suspend fun getSpendings(): List<Spending> {
         val categories = getCategories()
-        return fireStore
-            .collection(COLLECTION_ENTRY_POINT)
-            .document(getDocumentPath())
-            .collection(COLLECTION_SPENDINGS)
+        return getEntryPoint()
+            .collection(getCollectionSpendingsPath())
             .get()
             .await()
             .documents
@@ -125,10 +136,8 @@ class SpentRepositoryImpl(
     }
 
     override suspend fun getSpendingsFlow(): Flow<List<Spending>> {
-        return fireStore
-            .collection(COLLECTION_ENTRY_POINT)
-            .document(getDocumentPath())
-            .collection(COLLECTION_SPENDINGS)
+        return getEntryPoint()
+            .collection(getCollectionSpendingsPath())
             .snapshots()
             .map { it.toObjects(SpendingRemote::class.java) }
             .map { it to getCategories() }
@@ -137,9 +146,7 @@ class SpentRepositoryImpl(
 
     override suspend fun getTrustedUsers(): Flow<List<TrustedUser>> {
         delay(BuildConfig.testDelayDuration)
-        return fireStore
-            .collection(COLLECTION_ENTRY_POINT)
-            .document(getDocumentPath())
+        return getEntryPoint()
             .collection(COLLECTION_TRUSTED_EMAILS)
             .snapshots()
             .map { it.toObjects(TrustedUser::class.java) }
@@ -160,10 +167,8 @@ class SpentRepositoryImpl(
     override suspend fun removeSpending(
         uuid: String,
     ) {
-        fireStore
-            .collection(COLLECTION_ENTRY_POINT)
-            .document(getDocumentPath())
-            .collection(COLLECTION_SPENDINGS)
+        getEntryPoint()
+            .collection(getCollectionSpendingsPath())
             .document(uuid)
             .delete()
     }
@@ -176,9 +181,7 @@ class SpentRepositoryImpl(
         newData["id"] = id
         newData["name"] = category.name
 
-        fireStore
-            .collection(COLLECTION_ENTRY_POINT)
-            .document(getDocumentPath())
+        getEntryPoint()
             .collection(COLLECTION_CATEGORIES)
             .document(id)
             .set(newData)
@@ -210,10 +213,8 @@ class SpentRepositoryImpl(
         newData["note"] = note
         Timber.d("newData == $newData")
 
-        fireStore
-            .collection(COLLECTION_ENTRY_POINT)
-            .document(getDocumentPath())
-            .collection(COLLECTION_SPENDINGS)
+        getEntryPoint()
+            .collection(getCollectionSpendingsPath())
             .document(uuid)
             .set(newData)
             .await()
@@ -230,9 +231,7 @@ class SpentRepositoryImpl(
         getCurrentUserData()?.email?.let { emailOwner ->
             val newData = mutableMapOf<String, String>()
             newData["email_owner"] = emailOwner
-            fireStore
-                .collection(COLLECTION_ENTRY_POINT)
-                .document(getDocumentPath())
+            getEntryPoint()
                 .set(newData)
                 .await()
         }
@@ -257,10 +256,8 @@ class SpentRepositoryImpl(
         newData["categoryID"] = spending.category.id
         newData["note"] = spending.note
 
-        fireStore
-            .collection(COLLECTION_ENTRY_POINT)
-            .document(getDocumentPath())
-            .collection(COLLECTION_SPENDINGS)
+        getEntryPoint()
+            .collection(getCollectionSpendingsPath())
             .document(spending.uuid)
             .set(newData)
             .await()
