@@ -1,13 +1,16 @@
 package com.shjman.polygon2.ui.settings
 
 import com.google.firebase.auth.FirebaseUser
-import com.shjman.polygon2.BuildConfig
 import com.shjman.polygon2.repository.LogRepository
 import com.shjman.polygon2.repository.SpentRepository
 import com.shjman.polygon2.ui.BaseViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 
 class SettingViewModel(
@@ -15,35 +18,33 @@ class SettingViewModel(
     logRepository: LogRepository,
 ) : BaseViewModel(logRepository) {
 
-    val isLoading: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    val isUserOwner: MutableStateFlow<Boolean?> = MutableStateFlow(null)
+    internal val isLoading: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    internal val isUserObserveSomebody: MutableStateFlow<Boolean?> = MutableStateFlow(null)
     private val _signOutCompleted = MutableSharedFlow<Unit>()
-    val signOutCompleted: SharedFlow<Unit>
-        get() = _signOutCompleted.asSharedFlow()
-    val userData = MutableStateFlow<FirebaseUser?>(null)
+    internal val signOutCompleted: SharedFlow<Unit> = _signOutCompleted.asSharedFlow()
+    internal val userData = MutableStateFlow<FirebaseUser?>(null)
 
-    suspend fun startObserveSettingData() {
-        delay(BuildConfig.testDelayDuration)
+    init {
         launchCatching {
             withContext(Dispatchers.IO) {
                 userData.value = spentRepository.getCurrentUserData()
-                spentRepository.isUserOwner()
+                spentRepository.isUserObserveSomebody()
                     .onEach {
-                        isUserOwner.value = it
+                        isUserObserveSomebody.value = it
                     }.collect()
             }
         }
         isLoading.value = false // todo could be updated because isUserOwner ignores
     }
 
-    fun onSignOutClicked() {
+    internal fun onSignOutClicked() {
         launchCatching {
             spentRepository.signOut()
             _signOutCompleted.emit(Unit)
         }
     }
 
-    fun onStopObserveSharedDatabaseClicked() {
+    internal fun onStopObserveSharedDatabaseClicked() {
         launchCatching {
             spentRepository.removeSharedDocumentPath()
         }

@@ -7,10 +7,12 @@ import kotlinx.coroutines.flow.asStateFlow
 
 object SnackbarManager {
     private val messages: MutableStateFlow<SnackbarMessage?> = MutableStateFlow(null)
-    val snackbarMessages: StateFlow<SnackbarMessage?>
+    internal val snackbarMessages: StateFlow<SnackbarMessage?>
         get() = messages.asStateFlow()
 
-    fun showMessage(@StringRes messageInt: Int) {
+    fun showMessage(
+        @StringRes messageInt: Int,
+    ) {
         messages.value = SnackbarMessage.ResourceSnackbar(messageInt)
     }
 

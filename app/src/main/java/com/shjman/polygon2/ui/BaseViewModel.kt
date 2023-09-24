@@ -9,7 +9,9 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-open class BaseViewModel(private val logRepository: LogRepository) : ViewModel() {
+open class BaseViewModel(
+    private val logRepository: LogRepository,
+) : ViewModel() {
 
     fun launchCatching(
         useSnackbar: Boolean = true,

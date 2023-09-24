@@ -23,7 +23,7 @@ interface SpentRepository {
     suspend fun getSpendings(): List<Spending>
     suspend fun getSpendingsFlow(): Flow<List<Spending>>
     suspend fun getTrustedUsers(): Flow<List<TrustedUser>>
-    suspend fun isUserOwner(): Flow<Boolean>
+    suspend fun isUserObserveSomebody(): Flow<Boolean>
     suspend fun removeSharedDocumentPath()
     suspend fun removeSpending(
         uuid: String,
