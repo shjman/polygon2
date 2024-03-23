@@ -22,25 +22,14 @@ android {
         }
     }
 
-    flavorDimensions "environment"
-    productFlavors {
-        for_all {
-            dimension "environment"
-            buildConfigField "String", "mainCollectionPath", "\"testing_family\""
+    buildTypes {
+        debug {
             buildConfigField "long", "testDelayDuration", "2000"
         }
-        my_custom {
-            dimension "environment"
-            applicationIdSuffix ".custom"
-            buildConfigField "String", "mainCollectionPath", "\"family\""
-            buildConfigField "long", "testDelayDuration", "0"
-        }
-    }
-
-    buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField "long", "testDelayDuration", "0"
         }
     }
     compileOptions {

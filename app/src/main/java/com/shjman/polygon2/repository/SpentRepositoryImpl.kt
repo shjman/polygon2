@@ -58,7 +58,6 @@ class SpentRepositoryImpl(
     }
 
     override fun checkIsUserSignIn(): Boolean {
-//        throw Exception()
         return firebaseAuth.currentUser != null
     }
 
@@ -80,49 +79,27 @@ class SpentRepositoryImpl(
             .map { it.map { categoryRemote -> categoryRemote.toCategory() } }
     }
 
-    private fun getCollectionSpendingsPath(): String {
-        return if (BuildConfig.mainCollectionPath == "testing_family") {
-            COLLECTION_SPENDINGS
-        } else {
-            "spending"
-        }
-    }
-
     override fun getCurrentUserData(): FirebaseUser {
         return firebaseAuth.currentUser ?: throw Exception("firebaseAuth.currentUser == null")
     }
 
     override suspend fun getDocumentPath(): String {
-        val documentPath = if (BuildConfig.mainCollectionPath == "testing_family") { // todo its a place to fix
-            // for all
-            if (dataStore.data.first()[IS_USER_OBSERVE_SOMEBODY] == true) {
-                dataStore.data.first()[SHARED_DOCUMENT_PATH] ?: throw Exception("SHARED_DOCUMENT_PATH == null")
-            } else {
-                getCurrentUserData().uid
-            }
+        return if (dataStore.data.first()[IS_USER_OBSERVE_SOMEBODY] == true) {
+            dataStore.data.first()[SHARED_DOCUMENT_PATH] ?: throw Exception("SHARED_DOCUMENT_PATH == null")
         } else {
-            // my custom own spendings single version
-            BuildConfig.mainCollectionPath
+            getCurrentUserData().uid
         }
-        return documentPath
     }
 
     private suspend fun getEntryPoint(): DocumentReference {
-        return if (BuildConfig.mainCollectionPath == "testing_family") { // todo its a place to fix
-            val documentPath = if (dataStore.data.first()[IS_USER_OBSERVE_SOMEBODY] == true) {
-                dataStore.data.first()[SHARED_DOCUMENT_PATH] ?: throw Exception("SHARED_DOCUMENT_PATH == null")
-            } else {
-                getCurrentUserData().uid
-            }
-            fireStore
-                .collection(COLLECTION_ENTRY_POINT)
-                .document(documentPath)
+        val documentPath = if (dataStore.data.first()[IS_USER_OBSERVE_SOMEBODY] == true) {
+            dataStore.data.first()[SHARED_DOCUMENT_PATH] ?: throw Exception("SHARED_DOCUMENT_PATH == null")
         } else {
-            // my custom own spendings single version
-            fireStore
-                .collection(BuildConfig.mainCollectionPath)
-                .document("spending")
+            getCurrentUserData().uid
         }
+        return fireStore
+            .collection(COLLECTION_ENTRY_POINT)
+            .document(documentPath)
     }
 
     override suspend fun getPopularCategory(): Category {
@@ -134,7 +111,7 @@ class SpentRepositoryImpl(
         localDateTime: LocalDateTime,
     ): Spending? {
         return getEntryPoint()
-            .collection(getCollectionSpendingsPath())
+            .collection(COLLECTION_SPENDINGS)
             .get()
             .await()
             .documents
@@ -146,7 +123,7 @@ class SpentRepositoryImpl(
     override suspend fun getSpendings(): List<Spending> {
         val categories = getCategories()
         return getEntryPoint()
-            .collection(getCollectionSpendingsPath())
+            .collection(COLLECTION_SPENDINGS)
             .get()
             .await()
             .documents
@@ -156,7 +133,7 @@ class SpentRepositoryImpl(
 
     override suspend fun getSpendingsFlow(): Flow<List<Spending>> {
         return getEntryPoint()
-            .collection(getCollectionSpendingsPath())
+            .collection(COLLECTION_SPENDINGS)
             .snapshots()
             .map { it.toObjects(SpendingRemote::class.java) }
             .map { it to getCategories() }
@@ -189,7 +166,7 @@ class SpentRepositoryImpl(
         uuid: String,
     ) {
         getEntryPoint()
-            .collection(getCollectionSpendingsPath())
+            .collection(COLLECTION_SPENDINGS)
             .document(uuid)
             .delete()
     }
@@ -236,7 +213,7 @@ class SpentRepositoryImpl(
         Timber.d("newData == $newData")
 
         getEntryPoint()
-            .collection(getCollectionSpendingsPath())
+            .collection(COLLECTION_SPENDINGS)
             .document(uuid)
             .set(newData)
             .await()
@@ -279,7 +256,7 @@ class SpentRepositoryImpl(
         newData["note"] = spending.note
 
         getEntryPoint()
-            .collection(getCollectionSpendingsPath())
+            .collection(COLLECTION_SPENDINGS)
             .document(spending.uuid)
             .set(newData)
             .await()
