@@ -1,109 +1,120 @@
 package com.shjman.polygon2.ui.overview
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.*
+import androidx.compose.material.Card
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.Scaffold
+import androidx.compose.material.Switch
+import androidx.compose.material.Text
+import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.shjman.polygon2.R
 import com.shjman.polygon2.data.Category
 import com.shjman.polygon2.data.LOCALE_DATE_TIME_FORMATTER
 import com.shjman.polygon2.data.Spending
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import org.koin.androidx.compose.koinViewModel
 import timber.log.Timber
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun OverviewScreen(
-    isLoadingUIState: MutableState<Boolean> = remember { mutableStateOf(false) },
-    allSpending: MutableState<List<Spending>?> = remember { mutableStateOf(null) },
     onEditSpendingClicked: (LocalDateTime) -> Unit,
-    scope: CoroutineScope = rememberCoroutineScope(),
 ) {
     val viewModel: OverviewViewModel = koinViewModel()
-
+    val allSpending = viewModel.spendingsFlow.collectAsStateWithLifecycle()
+    val isLoading = viewModel.isLoading
     LaunchedEffect(Unit) {
         viewModel.startObserveSpendings()
-        viewModel.spendingsFlow
-            .onEach { allSpending.value = it }
-            .launchIn(scope)
-        viewModel.isLoading
-            .onEach { isLoadingUIState.value = it }
-            .launchIn(scope)
     }
-    val onSpendingClicked = { spending: Spending -> Timber.d("clicked on == $spending") }
-    val onSpendingLongClicked = { spending: Spending, isDropdownMenuExpanded: MutableState<Boolean> ->
-        Timber.d("clicked long on == $spending")
-        isDropdownMenuExpanded.value = !isDropdownMenuExpanded.value
-    }
-    val onRemoveSpendingClicked = { uuid: String ->
-        viewModel.onRemoveSpendingClicked(uuid)
+    val onSpendingClicked = remember { { spending: Spending -> Timber.d("clicked on == $spending") } }
+    val onSpendingLongClicked = remember {
+        { spending: Spending, isDropdownMenuExpanded: MutableState<Boolean> ->
+            Timber.d("clicked long on == $spending")
+            isDropdownMenuExpanded.value = !isDropdownMenuExpanded.value
+        }
     }
     var overviewType by remember { mutableStateOf(OverviewType.STANDARD) } // isMonthlyComparison: Boolean -> can be simplified
+    val onMonthlyComparisonTypeChanged = remember { { _: Boolean -> overviewType = overviewType.switch() } }
     Scaffold(
         topBar = {
-            topBar(
+            TopBar(
                 overviewType = overviewType,
-                onMonthlyComparisonTypeChanged = { overviewType = overviewType.switch() }
+                onMonthlyComparisonTypeChanged = onMonthlyComparisonTypeChanged
             )
         },
-        content = {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                if (isLoadingUIState.value) {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        CircularProgressIndicator(color = Color.Green)
-                    }
-                } else {
-                    val allSpendingValue = allSpending.value
-                    when {
-                        allSpendingValue == null -> Text(text = "is loading...")
-                        allSpendingValue.isEmpty() -> Text(text = "no data / empty")
-                        else -> {
-                            LazyColumn {
-                                val beginOfCurrentMonth = LocalDateTime.now().beginOfCurrentMonth()
-                                val allSpendingValueFilteredByLastMonth = allSpendingValue.filter { it.date.isAfter(beginOfCurrentMonth) }
-                                item { summaryOfMonth(beginOfCurrentMonth, allSpendingValueFilteredByLastMonth) }
-                                if (overviewType == OverviewType.STANDARD) {
-                                    allSpendingValue.onEach {
-                                        item(key = it.uuid) {
-                                            SpendingItem(
-                                                spending = it,
-                                                onSpendingClicked = onSpendingClicked,
-                                                onSpendingLongClicked = onSpendingLongClicked,
-                                                onEditSpendingClicked = onEditSpendingClicked,
-                                                onRemoveSpendingClicked = onRemoveSpendingClicked,
-                                            )
-                                        }
+        content = {// todo update without scaffold
+            if (isLoading) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    CircularProgressIndicator(color = Color.Green)
+                }
+            } else {
+                val allSpendingValue = allSpending.value
+                when {
+                    allSpendingValue == null -> Text(text = "is loading...")
+                    allSpendingValue.isEmpty() -> Text(text = "no data / empty")
+                    else -> {
+                        LazyColumn {
+                            val beginOfCurrentMonth = LocalDateTime.now().beginOfCurrentMonth()
+                            val allSpendingValueFilteredByLastMonth = allSpendingValue.filter { it.date.isAfter(beginOfCurrentMonth) }
+                            item { SummaryOfMonth(beginOfCurrentMonth, allSpendingValueFilteredByLastMonth) }
+                            if (overviewType == OverviewType.STANDARD) {
+                                allSpendingValue.onEach {
+                                    item(key = it.uuid) {
+                                        SpendingItem(
+                                            spending = it,
+                                            onSpendingClicked = onSpendingClicked,
+                                            onSpendingLongClicked = onSpendingLongClicked,
+                                            onEditSpendingClicked = onEditSpendingClicked,
+                                            onRemoveSpendingClicked = viewModel::onRemoveSpendingClicked,
+                                        )
                                     }
-                                } else {
-                                    var beginOfPreviousMonth = beginOfCurrentMonth.minusMonths(1)
-                                    var allSpendingMinusPreviousMonth: List<Spending> = allSpendingValue.minus(allSpendingValueFilteredByLastMonth.toSet())
-                                    while (allSpendingMinusPreviousMonth.isNotEmpty()) {
-                                        val beginOfMonth = beginOfPreviousMonth
-                                        val allSpendingFilteredByLastMonth = allSpendingMinusPreviousMonth.filter { it.date.isAfter(beginOfPreviousMonth) }
-                                        item { summaryOfMonth(beginOfMonth, allSpendingFilteredByLastMonth) }
-                                        beginOfPreviousMonth = beginOfPreviousMonth.minusMonths(1)
-                                        allSpendingMinusPreviousMonth = allSpendingMinusPreviousMonth.minus(allSpendingFilteredByLastMonth.toSet())
-                                    }
+                                }
+                            } else {
+                                var beginOfPreviousMonth = beginOfCurrentMonth.minusMonths(1)
+                                var allSpendingMinusPreviousMonth: List<Spending> =
+                                    allSpendingValue.minus(allSpendingValueFilteredByLastMonth.toSet())
+                                while (allSpendingMinusPreviousMonth.isNotEmpty()) {
+                                    val beginOfMonth = beginOfPreviousMonth
+                                    val allSpendingFilteredByLastMonth =
+                                        allSpendingMinusPreviousMonth.filter { it.date.isAfter(beginOfPreviousMonth) }
+                                    item { SummaryOfMonth(beginOfMonth, allSpendingFilteredByLastMonth) }
+                                    beginOfPreviousMonth = beginOfPreviousMonth.minusMonths(1)
+                                    allSpendingMinusPreviousMonth = allSpendingMinusPreviousMonth.minus(allSpendingFilteredByLastMonth.toSet())
                                 }
                             }
                         }
@@ -114,9 +125,10 @@ fun OverviewScreen(
 }
 
 @Composable
-fun topBar(
+fun TopBar(
     overviewType: OverviewType,
     onMonthlyComparisonTypeChanged: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     var isTopAppBarDropdownMenuExpanded by remember { mutableStateOf(false) }
     TopAppBar(
@@ -138,12 +150,13 @@ fun topBar(
                     )
                 }
             }
-        }
+        },
+        modifier = modifier,
     )
 }
 
 @Composable
-fun summaryOfMonth(beginOfCurrentMonth: LocalDateTime, allSpendingFilteredByMonth: List<Spending>) {
+fun SummaryOfMonth(beginOfCurrentMonth: LocalDateTime, allSpendingFilteredByMonth: List<Spending>) {
     val date = beginOfCurrentMonth.month.toString() + "." + beginOfCurrentMonth.year.toString()
     var amountByMonth = 0
     allSpendingFilteredByMonth.onEach { spending -> spending.spentAmount.let { amountByMonth += it } }
