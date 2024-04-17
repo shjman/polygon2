@@ -60,7 +60,7 @@ fun OverviewScreen(
     val onSpendingClicked = remember { { spending: Spending -> Timber.d("clicked on == $spending") } }
     val onSpendingLongClicked = remember {
         { spending: Spending, isDropdownMenuExpanded: MutableState<Boolean> ->
-            Timber.d("clicked long on == $spending")
+            Timber.d("clicked long on  == $spending")
             isDropdownMenuExpanded.value = !isDropdownMenuExpanded.value
         }
     }
