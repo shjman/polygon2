@@ -1,7 +1,11 @@
 package com.shjman.polygon2.ui
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.Segment
+import androidx.compose.material.icons.filled.AddTask
+import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class Screens(var screenRoute: String) {
@@ -12,10 +16,21 @@ sealed class Screens(var screenRoute: String) {
     data object SharingSettings : Screens("SharingSettings")
     data object Unauthorized : Screens("Unauthorized")
 
-    open class BottomNavItem(var title: String, var icon: ImageVector, screenRoute: String) : Screens(screenRoute) {
-        object Home : BottomNavItem("Home", Icons.Default.Home, "home")
-        object Spent : BottomNavItem("Spent", Icons.Filled.AttachMoney, "spent")
-        object Overview : BottomNavItem("Overview", Icons.Default.Segment, "overview")
-        object Setting : BottomNavItem("Setting", Icons.Default.Settings, "setting")
+    sealed class BottomNavItem(val title: String, val icon: ImageVector, screenRoute: String) : Screens(screenRoute) {
+        data object Home : BottomNavItem("Home", Icons.Default.Home, "home")
+        data object Spent : BottomNavItem("Spent", Icons.Filled.AttachMoney, "spent")
+        data object Overview : BottomNavItem("Overview", Icons.AutoMirrored.Filled.Segment, "overview")
+        data object Planned : BottomNavItem("Planned", Icons.Filled.AddTask, "planned")
+        data object Setting : BottomNavItem("Setting", Icons.Default.Settings, "setting")
+
+        companion object {
+            fun values(): List<BottomNavItem> = listOf(
+                Home,
+                Spent,
+                Overview,
+                Planned,
+                Setting,
+            )
+        }
     }
 }

@@ -16,6 +16,7 @@ import com.shjman.polygon2.ui.categories.EditCategoryViewModel
 import com.shjman.polygon2.ui.edit_spending.EditSpendingViewModel
 import com.shjman.polygon2.ui.home.HomeViewModel
 import com.shjman.polygon2.ui.overview.OverviewViewModel
+import com.shjman.polygon2.ui.planned.PlannedViewModel
 import com.shjman.polygon2.ui.settings.AddTrustedUserViewModel
 import com.shjman.polygon2.ui.settings.SettingViewModel
 import com.shjman.polygon2.ui.settings.SharingSettingViewModel
@@ -44,6 +45,7 @@ val appModule = module {
     viewModel { EditSpendingViewModel(get(), get()) }
     viewModel { EntryPointViewModel(get(), get()) }
     viewModel { HomeViewModel(get(), get()) }
+    viewModel { PlannedViewModel(get()) }
     viewModel { OverviewViewModel(get(), get()) }
     viewModel { SettingViewModel(get(), get()) }
     viewModel { SharingSettingViewModel(get(), get()) }

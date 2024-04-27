@@ -2,13 +2,29 @@ package com.shjman.polygon2.ui
 
 import android.content.Intent
 import android.content.res.Resources
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.*
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.material.BottomNavigation
+import androidx.compose.material.BottomNavigationItem
+import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Scaffold
+import androidx.compose.material.ScaffoldState
+import androidx.compose.material.Surface
+import androidx.compose.material.Text
+import androidx.compose.material.rememberScaffoldState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -30,6 +46,7 @@ import com.shjman.polygon2.ui.categories.EditCategoryScreen
 import com.shjman.polygon2.ui.edit_spending.EditSpendingScreen
 import com.shjman.polygon2.ui.home.HomeScreen
 import com.shjman.polygon2.ui.overview.OverviewScreen
+import com.shjman.polygon2.ui.planned.PlannedScreen
 import com.shjman.polygon2.ui.settings.AddTrustedUserScreen
 import com.shjman.polygon2.ui.settings.SettingScreen
 import com.shjman.polygon2.ui.settings.SharingSettingsScreen
@@ -51,9 +68,13 @@ fun EntryPoint(
             val appState = rememberAppState()
             val navBackStackEntry by appState.navHostController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
-            val isShowingBottomBar = remember { (mutableStateOf(false)) }
-
-            setupBottomBarVisibility(currentRoute, isShowingBottomBar)
+            val isShowingBottomBar by remember(currentRoute) {
+                derivedStateOf {
+                    Screens.BottomNavItem.values()
+                        .map { it.screenRoute }
+                        .contains(currentRoute)
+                }
+            }
             Scaffold(
                 bottomBar = { AnimatedBottomNavigation(appState.navHostController, currentRoute, isShowingBottomBar) },
                 scaffoldState = appState.scaffoldState,
@@ -94,25 +115,6 @@ fun resources(): Resources {
     return LocalContext.current.resources
 }
 
-fun setupBottomBarVisibility(currentRoute: String?, isShowingBottomBar: MutableState<Boolean>) {
-    when (currentRoute) {
-        Screens.BottomNavItem.Setting.screenRoute,
-        Screens.BottomNavItem.Home.screenRoute,
-        Screens.BottomNavItem.Spent.screenRoute,
-        Screens.BottomNavItem.Overview.screenRoute -> {
-            isShowingBottomBar.value = true
-        }
-        Screens.Categories.screenRoute,
-        Screens.EditCategory.screenRoute,
-        Screens.EditSpending.screenRoute -> {
-            isShowingBottomBar.value = false
-        }
-        else -> {
-            isShowingBottomBar.value = false
-        }
-    }
-}
-
 const val SHOW_HIDE_BOTTOM_BAR_ANIMATION_SPEED = 350
 const val KEY_SHARED_DOCUMENT_PATH = "dp"
 
@@ -120,10 +122,10 @@ const val KEY_SHARED_DOCUMENT_PATH = "dp"
 fun AnimatedBottomNavigation(
     navController: NavController,
     currentRoute: String?,
-    isShowingBottomBar: MutableState<Boolean>,
+    isShowingBottomBar: Boolean,
 ) {
     AnimatedVisibility(
-        visible = isShowingBottomBar.value,
+        visible = isShowingBottomBar,
         enter = fadeIn(
             animationSpec = tween(durationMillis = SHOW_HIDE_BOTTOM_BAR_ANIMATION_SPEED),
         ) + expandVertically(
@@ -139,21 +141,15 @@ fun AnimatedBottomNavigation(
 }
 
 @Composable
-fun BottomNavigation(
+internal fun BottomNavigation(
     navController: NavController,
     currentRoute: String?,
 ) {
-    val bottomItems = listOf(
-        Screens.BottomNavItem.Home,
-        Screens.BottomNavItem.Spent,
-        Screens.BottomNavItem.Overview,
-        Screens.BottomNavItem.Setting
-    )
     BottomNavigation(
         backgroundColor = colorResource(id = R.color.teal_200),
         contentColor = Color.Black
     ) {
-        bottomItems.forEach { item ->
+        Screens.BottomNavItem.values().forEach { item ->
             BottomNavigationItem(
                 icon = { Icon(imageVector = item.icon, contentDescription = item.title) },
                 label = {
@@ -207,6 +203,9 @@ fun NavigationGraph(
                     }
                 },
             )
+        }
+        composable(Screens.BottomNavItem.Planned.screenRoute) {
+            PlannedScreen()
         }
         composable(Screens.BottomNavItem.Setting.screenRoute) {
             SettingScreen(
