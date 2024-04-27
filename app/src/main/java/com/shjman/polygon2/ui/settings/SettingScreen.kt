@@ -7,11 +7,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Category
 import androidx.compose.material.icons.outlined.Close
@@ -72,7 +72,7 @@ fun SettingScreen(
                     )
                     Button(
                         onClick = onSignOutClick,
-                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.White),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                     ) {
                         Text(
                             text = "sign out",
@@ -109,7 +109,7 @@ fun StopObserveSharedDatabaseButton(
 ) {
     Button(
         onClick = { onStopObserveSharedDatabaseClicked() },
-        colors = ButtonDefaults.buttonColors(backgroundColor = Color.White),
+        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth()
@@ -131,7 +131,7 @@ fun StopObserveSharedDatabaseButton(
 fun CategoriesScreenButton(navigateToCategoriesScreen: () -> Unit) {
     Button(
         onClick = navigateToCategoriesScreen,
-        colors = ButtonDefaults.buttonColors(backgroundColor = Color.White),
+        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth()
@@ -155,7 +155,7 @@ fun SharingSettingsButton(
 ) {
     Button(
         onClick = navigateToSharingSettingsScreen,
-        colors = ButtonDefaults.buttonColors(backgroundColor = Color.White),
+        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth()

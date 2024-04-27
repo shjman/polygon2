@@ -10,15 +10,15 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.BottomNavigation
-import androidx.compose.material.BottomNavigationItem
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
-import androidx.compose.material.ScaffoldState
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
-import androidx.compose.material.rememberScaffoldState
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.derivedStateOf
@@ -64,7 +64,7 @@ fun EntryPoint(
 //    val entryPointViewModel: EntryPointViewModel = koinViewModel() todo
 
     Polygon2Theme {
-        Surface(color = MaterialTheme.colors.background) {
+        Surface(color = MaterialTheme.colorScheme.background) {
             val appState = rememberAppState()
             val navBackStackEntry by appState.navHostController.currentBackStackEntryAsState()
             val currentRoute = navBackStackEntry?.destination?.route
@@ -77,7 +77,6 @@ fun EntryPoint(
             }
             Scaffold(
                 bottomBar = { AnimatedBottomNavigation(appState.navHostController, currentRoute, isShowingBottomBar) },
-                scaffoldState = appState.scaffoldState,
             ) { paddingValues ->
                 Box(modifier = Modifier.padding(paddingValues)) {
                     NavigationGraph(
@@ -95,15 +94,15 @@ fun rememberAppState(
     coroutineScope: CoroutineScope = rememberCoroutineScope(),
     navHostController: NavHostController = rememberNavController(),
     resources: Resources = resources(),
-    scaffoldState: ScaffoldState = rememberScaffoldState(),
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     snackbarManager: SnackbarManager = SnackbarManager,
 ): AppState {
-    return remember(coroutineScope, resources, scaffoldState, snackbarManager) {
+    return remember(coroutineScope, resources, snackbarHostState, snackbarManager) {
         AppState(
             coroutineScope = coroutineScope,
             navHostController = navHostController,
             resources = resources,
-            scaffoldState = scaffoldState,
+            snackbarHostState = snackbarHostState,
             snackbarManager = snackbarManager,
         )
     }
@@ -145,12 +144,12 @@ internal fun BottomNavigation(
     navController: NavController,
     currentRoute: String?,
 ) {
-    BottomNavigation(
-        backgroundColor = colorResource(id = R.color.teal_200),
+    NavigationBar(
+        containerColor = colorResource(id = R.color.teal_200),
         contentColor = Color.Black
     ) {
         Screens.BottomNavItem.values().forEach { item ->
-            BottomNavigationItem(
+            NavigationBarItem(
                 icon = { Icon(imageVector = item.icon, contentDescription = item.title) },
                 label = {
                     Text(
@@ -158,8 +157,12 @@ internal fun BottomNavigation(
                         fontSize = 12.sp
                     )
                 },
-                selectedContentColor = Color.Black,
-                unselectedContentColor = Color.Black.copy(0.4f),
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = Color.Black,
+                    selectedTextColor = Color.Black,
+                    unselectedIconColor = Color.Black.copy(0.4f),
+                    unselectedTextColor = Color.Black.copy(0.4f),
+                ),
                 alwaysShowLabel = true,
                 selected = currentRoute == item.screenRoute,
                 onClick = {

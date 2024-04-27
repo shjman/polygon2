@@ -7,7 +7,7 @@ import android.widget.DatePicker
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.runtime.*
@@ -44,7 +44,7 @@ fun EditSpendingScreen(
     val scope: CoroutineScope = rememberCoroutineScope()
     val focusManager: FocusManager = LocalFocusManager.current
     val navigatePopBackClicked: () -> Unit = remember { { appState.navHostController.popBackStack() } }
-    val scaffoldState = remember { appState.scaffoldState }
+    val snackbarHostState = remember { appState.snackbarHostState }
     val viewModel = koinViewModel<EditSpendingViewModel>()
 
     LaunchedEffect(Unit) {
@@ -61,7 +61,7 @@ fun EditSpendingScreen(
         viewModel.showSpendingUpdated
             .onEach {
                 scope.launch {
-                    val snackbarResult = scaffoldState.snackbarHostState.showSnackbar(
+                    val snackbarResult = snackbarHostState.showSnackbar(
                         message = "Spending updated. You will be moved back",
                         actionLabel = "OK.Go"
                     )
@@ -116,7 +116,7 @@ fun EditSpendingScreen(
                             .align(alignment = Alignment.CenterVertically)
                             .weight(0.5f)
                             .padding(8.dp),
-                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.DarkGray)
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray)
                     ) {
                         Text(
                             text = "Cancel",
@@ -132,7 +132,7 @@ fun EditSpendingScreen(
                             .align(alignment = Alignment.CenterVertically)
                             .weight(0.5f)
                             .padding(8.dp),
-                        colors = ButtonDefaults.buttonColors(backgroundColor = Color.Gray)
+                        colors = ButtonDefaults.buttonColors(containerColor = Color.Gray)
                     ) {
                         Text(text = "Save")
                     }
@@ -258,22 +258,23 @@ fun InputCategoryView(
                 ) {
                     categories.forEach { category ->
                         DropdownMenuItem(
-                            onClick = { onDropdownMenuItemClicked(category) }
-                        ) {
-                            val isSelected = category == selectedCategory
-                            val style = if (isSelected) {
-                                MaterialTheme.typography.body1.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colors.secondary
-                                )
-                            } else {
-                                MaterialTheme.typography.body1.copy(
-                                    fontWeight = FontWeight.Normal,
-                                    color = MaterialTheme.colors.onSurface
-                                )
-                            }
-                            Text(text = category.name, style = style)
-                        }
+                            onClick = { onDropdownMenuItemClicked(category) },
+                            text = {
+                                val isSelected = category == selectedCategory
+                                val style = if (isSelected) {
+                                    MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.secondary
+                                    )
+                                } else {
+                                    MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Normal,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                                Text(text = category.name, style = style)
+                            },
+                        )
                     }
                 }
             }

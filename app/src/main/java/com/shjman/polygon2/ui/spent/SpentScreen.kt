@@ -3,7 +3,7 @@ package com.shjman.polygon2.ui.spent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.outlined.Face
@@ -135,22 +135,23 @@ fun InputCategoryView(
                 ) {
                     categories.forEach { category ->
                         DropdownMenuItem(
-                            onClick = { onDropdownMenuItemClicked(category) }
-                        ) {
-                            val isSelected = category == selectedCategory
-                            val style = if (isSelected) {
-                                MaterialTheme.typography.body1.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colors.secondary,
-                                )
-                            } else {
-                                MaterialTheme.typography.body1.copy(
-                                    fontWeight = FontWeight.Normal,
-                                    color = MaterialTheme.colors.onSurface,
-                                )
-                            }
-                            Text(text = category.name, style = style)
-                        }
+                            onClick = { onDropdownMenuItemClicked(category) },
+                            text = {
+                                val isSelected = category == selectedCategory
+                                val style = if (isSelected) {
+                                    MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.secondary,
+                                    )
+                                } else {
+                                    MaterialTheme.typography.bodyMedium.copy(
+                                        fontWeight = FontWeight.Normal,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                    )
+                                }
+                                Text(text = category.name, style = style)
+                            },
+                        )
                     }
                 }
             }
@@ -194,7 +195,7 @@ fun InputNoteView(
 fun SaveButton(isLoading: MutableState<Boolean>, onSaveAmountClicked: () -> Unit) {
     Button(
         onClick = onSaveAmountClicked,
-        colors = ButtonDefaults.buttonColors(backgroundColor = Color.DarkGray),
+        colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
     ) {
         if (isLoading.value) {
             CircularProgressIndicator(color = Color.Green)

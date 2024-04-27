@@ -10,10 +10,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -125,7 +125,7 @@ fun UnauthorizedScreen(
                                         viewModel.onSignInClicked()
                                     }
                                 },
-                                colors = ButtonDefaults.buttonColors(backgroundColor = Color.White)
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
                             ) {
                                 Text(text = "sign in", color = Color.Black)
                             }

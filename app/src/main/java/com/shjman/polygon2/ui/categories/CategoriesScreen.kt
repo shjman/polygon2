@@ -2,10 +2,11 @@ package com.shjman.polygon2.ui.categories
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Card
-import androidx.compose.material.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -22,7 +23,7 @@ fun CategoriesScreen(
     categoriesState: MutableState<List<Category>?> = remember { mutableStateOf(null) },
     navigateToEditCategory: () -> Unit,
 ) {
-    val viewModel = koinViewModel< CategoriesViewModel>()
+    val viewModel = koinViewModel<CategoriesViewModel>()
     val scope: CoroutineScope = rememberCoroutineScope()
     val onAddNewCategoryClicked: () -> Unit = { viewModel.addNewCategoryClicked() }
 
@@ -52,6 +53,7 @@ fun CategoriesScreen(
                         )
                     }
                 }
+
                 categories.isEmpty() -> {
                     item {
                         Text(
@@ -61,6 +63,7 @@ fun CategoriesScreen(
                         )
                     }
                 }
+
                 else -> {
                     categories.onEach {
                         item(key = it.id) {
@@ -87,7 +90,7 @@ fun AddNewCategoryButton(
             .fillMaxWidth()
             .padding(8.dp),
         onClick = addNewCategoryClicked,
-        colors = ButtonDefaults.buttonColors(backgroundColor = Color.Black),
+        colors = ButtonDefaults.buttonColors(containerColor = Color.Black),
     ) {
         Text(
             text = "add new category",
@@ -104,7 +107,7 @@ fun CategoryView(
         modifier = Modifier
             .fillMaxWidth()
             .padding(4.dp),
-        elevation = 4.dp,
+        elevation = CardDefaults.cardElevation(4.dp),
     ) {
         Row()
         {
