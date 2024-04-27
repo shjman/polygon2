@@ -5,12 +5,12 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class Screens(var screenRoute: String) {
-    object AddTrustedUserScreen : Screens("AddTrustedUser")
-    object Categories : Screens("Categories")
-    object EditCategory : Screens("EditCategory")
-    object EditSpending : Screens("EditSpending")
-    object SharingSettings : Screens("SharingSettings")
-    object Unauthorized : Screens("Unauthorized")
+    data object AddTrustedUserScreen : Screens("AddTrustedUser")
+    data object Categories : Screens("Categories")
+    data object EditCategory : Screens("EditCategory")
+    data object EditSpending : Screens("EditSpending")
+    data object SharingSettings : Screens("SharingSettings")
+    data object Unauthorized : Screens("Unauthorized")
 
     open class BottomNavItem(var title: String, var icon: ImageVector, screenRoute: String) : Screens(screenRoute) {
         object Home : BottomNavItem("Home", Icons.Default.Home, "home")
