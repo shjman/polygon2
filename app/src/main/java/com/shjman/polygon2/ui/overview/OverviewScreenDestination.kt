@@ -1,6 +1,5 @@
 package com.shjman.polygon2.ui.overview
 
-import android.annotation.SuppressLint
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -22,13 +21,13 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.shjman.polygon2.R
@@ -48,9 +48,8 @@ import timber.log.Timber
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
-fun OverviewScreen(
+fun OverviewScreenDestination(
     onEditSpendingClicked: (LocalDateTime) -> Unit,
 ) {
     val viewModel: OverviewViewModel = koinViewModel()
@@ -59,7 +58,7 @@ fun OverviewScreen(
     LaunchedEffect(Unit) {
         viewModel.startObserveSpendings()
     }
-    val onSpendingClicked = remember { { spending: Spending -> Timber.d("clicked on == $spending") } }
+    val onSpendingClicked = remember { { spending: Spending -> Timber.d("clicked on == $spending") } } //todo move actions to viewmodel
     val onSpendingLongClicked = remember {
         { spending: Spending, isDropdownMenuExpanded: MutableState<Boolean> ->
             Timber.d("clicked long on  == $spending")
@@ -68,63 +67,85 @@ fun OverviewScreen(
     }
     var overviewType by remember { mutableStateOf(OverviewType.STANDARD) } // isMonthlyComparison: Boolean -> can be simplified
     val onMonthlyComparisonTypeChanged = remember { { _: Boolean -> overviewType = overviewType.switch() } }
-    Scaffold(
-        topBar = {
-            TopBar(
-                overviewType = overviewType,
-                onMonthlyComparisonTypeChanged = onMonthlyComparisonTypeChanged
-            )
-        },
-        content = {// todo update without scaffold
-            println("aaaa $it")
-            if (isLoading) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    CircularProgressIndicator(color = Color.Green)
-                }
-            } else {
-                val allSpendingValue = allSpending.value
-                when {
-                    allSpendingValue == null -> Text(text = "is loading...")
-                    allSpendingValue.isEmpty() -> Text(text = "no data / empty")
-                    else -> {
-                        LazyColumn {
-                            val beginOfCurrentMonth = LocalDateTime.now().beginOfCurrentMonth()
-                            val allSpendingValueFilteredByLastMonth = allSpendingValue.filter { it.date.isAfter(beginOfCurrentMonth) }
-                            item { SummaryOfMonth(beginOfCurrentMonth, allSpendingValueFilteredByLastMonth) }
-                            if (overviewType == OverviewType.STANDARD) {
-                                allSpendingValue.onEach {
-                                    item(key = it.uuid) {
-                                        SpendingItem(
-                                            spending = it,
-                                            onSpendingClicked = onSpendingClicked,
-                                            onSpendingLongClicked = onSpendingLongClicked,
-                                            onEditSpendingClicked = onEditSpendingClicked,
-                                            onRemoveSpendingClicked = viewModel::onRemoveSpendingClicked,
-                                        )
-                                    }
+    OverviewScreenContent(
+        isLoading = isLoading,
+        allSpending = allSpending,
+        overviewType = overviewType,
+        onSpendingClicked = onSpendingClicked,
+        onSpendingLongClicked = onSpendingLongClicked,
+        onEditSpendingClicked = onEditSpendingClicked,
+        onRemoveSpendingClicked = viewModel::onRemoveSpendingClicked,
+        onMonthlyComparisonTypeChanged = onMonthlyComparisonTypeChanged,
+    )
+}
+
+@Composable
+private fun OverviewScreenContent(
+    isLoading: Boolean,
+    allSpending: State<List<Spending>?>,
+    overviewType: OverviewType,
+    onMonthlyComparisonTypeChanged: (Boolean) -> Unit,
+    onSpendingClicked: (Spending) -> Unit,
+    onSpendingLongClicked: (Spending, MutableState<Boolean>) -> Unit,
+    onEditSpendingClicked: (LocalDateTime) -> Unit,
+    onRemoveSpendingClicked: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier,
+    ) {
+        TopBar(
+            overviewType = overviewType,
+            onMonthlyComparisonTypeChanged = onMonthlyComparisonTypeChanged
+        )
+        if (isLoading) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                CircularProgressIndicator(color = Color.Green)
+            }
+        } else {
+            val allSpendingValue = allSpending.value
+            when {
+                allSpendingValue == null -> Text(text = "is loading...")
+                allSpendingValue.isEmpty() -> Text(text = "no data / empty")
+                else -> {
+                    LazyColumn {
+                        val beginOfCurrentMonth = LocalDateTime.now().beginOfCurrentMonth()
+                        val allSpendingValueFilteredByLastMonth = allSpendingValue.filter { it.date.isAfter(beginOfCurrentMonth) }
+                        item { SummaryOfMonth(beginOfCurrentMonth, allSpendingValueFilteredByLastMonth) }
+                        if (overviewType == OverviewType.STANDARD) {
+                            allSpendingValue.onEach {
+                                item(key = it.uuid) {
+                                    SpendingItem(
+                                        spending = it,
+                                        onSpendingClicked = onSpendingClicked,
+                                        onSpendingLongClicked = onSpendingLongClicked,
+                                        onEditSpendingClicked = onEditSpendingClicked,
+                                        onRemoveSpendingClicked = onRemoveSpendingClicked,
+                                    )
                                 }
-                            } else {
-                                var beginOfPreviousMonth = beginOfCurrentMonth.minusMonths(1)
-                                var allSpendingMinusPreviousMonth: List<Spending> =
-                                    allSpendingValue.minus(allSpendingValueFilteredByLastMonth.toSet())
-                                while (allSpendingMinusPreviousMonth.isNotEmpty()) {
-                                    val beginOfMonth = beginOfPreviousMonth
-                                    val allSpendingFilteredByLastMonth =
-                                        allSpendingMinusPreviousMonth.filter { it.date.isAfter(beginOfPreviousMonth) }
-                                    item { SummaryOfMonth(beginOfMonth, allSpendingFilteredByLastMonth) }
-                                    beginOfPreviousMonth = beginOfPreviousMonth.minusMonths(1)
-                                    allSpendingMinusPreviousMonth = allSpendingMinusPreviousMonth.minus(allSpendingFilteredByLastMonth.toSet())
-                                }
+                            }
+                        } else {
+                            var beginOfPreviousMonth = beginOfCurrentMonth.minusMonths(1)
+                            var allSpendingMinusPreviousMonth: List<Spending> =
+                                allSpendingValue.minus(allSpendingValueFilteredByLastMonth.toSet())
+                            while (allSpendingMinusPreviousMonth.isNotEmpty()) {
+                                val beginOfMonth = beginOfPreviousMonth
+                                val allSpendingFilteredByLastMonth =
+                                    allSpendingMinusPreviousMonth.filter { it.date.isAfter(beginOfPreviousMonth) }
+                                item { SummaryOfMonth(beginOfMonth, allSpendingFilteredByLastMonth) }
+                                beginOfPreviousMonth = beginOfPreviousMonth.minusMonths(1)
+                                allSpendingMinusPreviousMonth = allSpendingMinusPreviousMonth.minus(allSpendingFilteredByLastMonth.toSet())
                             }
                         }
                     }
                 }
             }
-        })
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -264,4 +285,25 @@ enum class OverviewType {
 private fun OverviewType.switch() = when (this) {
     OverviewType.STANDARD -> OverviewType.MONTHLY_COMPARISON
     OverviewType.MONTHLY_COMPARISON -> OverviewType.STANDARD
+}
+
+@Preview(showSystemUi = true, showBackground = true)
+@Composable
+private fun OverviewScreenPreview() {
+    OverviewScreenContent(
+        isLoading = false,
+        allSpending = remember {
+            mutableStateOf(
+                listOf(
+                    Spending.preview()
+                )
+            )
+        },
+        overviewType = OverviewType.STANDARD,
+        onMonthlyComparisonTypeChanged = { _ -> },
+        onSpendingClicked = { },
+        onSpendingLongClicked = { _: Spending, _: MutableState<Boolean> -> },
+        onEditSpendingClicked = { },
+        onRemoveSpendingClicked = { },
+    )
 }

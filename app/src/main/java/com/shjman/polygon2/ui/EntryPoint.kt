@@ -45,7 +45,7 @@ import com.shjman.polygon2.ui.categories.CategoriesScreen
 import com.shjman.polygon2.ui.categories.EditCategoryScreen
 import com.shjman.polygon2.ui.edit_spending.EditSpendingScreen
 import com.shjman.polygon2.ui.home.HomeScreenDestination
-import com.shjman.polygon2.ui.overview.OverviewScreen
+import com.shjman.polygon2.ui.overview.OverviewScreenDestination
 import com.shjman.polygon2.ui.planned.PlannedScreen
 import com.shjman.polygon2.ui.settings.AddTrustedUserScreen
 import com.shjman.polygon2.ui.settings.SettingScreen
@@ -197,7 +197,7 @@ fun NavigationGraph(
             )
         }
         composable(Screens.BottomNavItem.Overview.screenRoute) {
-            OverviewScreen(
+            OverviewScreenDestination(
                 onEditSpendingClicked = { localDateTime -> // todo rework to use id of spending
                     val localDateTimeString = localDateTime.format(DateTimeFormatter.ofPattern(LOCALE_DATE_TIME_FORMATTER))
                     appState.navHostController.navigate(Screens.EditSpending.screenRoute + "/$localDateTimeString") {

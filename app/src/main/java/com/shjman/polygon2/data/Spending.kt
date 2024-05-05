@@ -2,7 +2,10 @@ package com.shjman.polygon2.data
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.UUID
+import kotlin.random.Random
+import kotlin.random.nextUInt
+import kotlin.random.nextULong
 
 
 data class SpendingRemote(
@@ -23,7 +26,18 @@ data class Spending(
     val spentAmount: Int,
     val currency: String? = null,
     val note: String,
-)
+) {
+    companion object {
+        fun preview() = Spending(
+            uuid = UUID.randomUUID().toString(),
+            date = LocalDateTime.now().minusMinutes(Random.nextULong(100u).toLong()),
+            category = Category.empty(),
+            spentAmount = Random.nextUInt(100u).toInt(),
+            currency = null,
+            note = UUID.randomUUID().toString(),
+        )
+    }
+}
 
 fun SpendingRemote.toSpending(categories: List<Category>): Spending {
     return Spending(
