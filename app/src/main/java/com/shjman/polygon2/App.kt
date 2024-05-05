@@ -14,7 +14,7 @@ class App : Application() {
         if (BuildConfig.DEBUG) {
             Timber.plant(Timber.DebugTree())
         }
-        startKoin{
+        startKoin {
             androidLogger()
             androidContext(this@App)
             modules(appModule)

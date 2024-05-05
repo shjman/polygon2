@@ -44,7 +44,7 @@ import com.shjman.polygon2.data.convertDateStringToLocalDateTime
 import com.shjman.polygon2.ui.categories.CategoriesScreen
 import com.shjman.polygon2.ui.categories.EditCategoryScreen
 import com.shjman.polygon2.ui.edit_spending.EditSpendingScreen
-import com.shjman.polygon2.ui.home.HomeScreen
+import com.shjman.polygon2.ui.home.HomeScreenDestination
 import com.shjman.polygon2.ui.overview.OverviewScreen
 import com.shjman.polygon2.ui.planned.PlannedScreen
 import com.shjman.polygon2.ui.settings.AddTrustedUserScreen
@@ -188,7 +188,7 @@ fun NavigationGraph(
         startDestination = Screens.Unauthorized.screenRoute,
     ) {
         composable(Screens.BottomNavItem.Home.screenRoute) {
-            HomeScreen(
+            HomeScreenDestination(
                 onClickGoNext = { appState.navHostController.navigate(Screens.BottomNavItem.Spent.screenRoute) },
             )
         }

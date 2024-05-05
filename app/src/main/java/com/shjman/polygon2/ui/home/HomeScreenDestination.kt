@@ -14,13 +14,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import org.koin.androidx.compose.koinViewModel
+import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
-fun HomeScreen(
+fun HomeScreenDestination(
     onClickGoNext: () -> Unit,
 ) {
-    val viewModel = koinViewModel<HomeViewModel>()
+//    val viewModel = koinViewModel<HomeViewModel>() // todo check this sound
+    HomeScreenContent(
+        onClickGoNext = onClickGoNext
+    )
+}
+
+@Composable
+private fun HomeScreenContent(
+    onClickGoNext: () -> Unit,
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -43,11 +52,24 @@ fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Button(
-                onClick = onClickGoNext, // todo make by viewModel
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                onClick = onClickGoNext,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Gray,
+                    contentColor = Color.Black,
+                )
             ) {
-                Text(text = "go spent screen", color = Color.Black)
+                Text(
+                    text = "go spent screen",
+                )
             }
         }
     }
+}
+
+@Preview(showSystemUi = true, showBackground = true)
+@Composable
+fun HomeScreenPreview() {
+    HomeScreenContent(
+        onClickGoNext = {}
+    )
 }
