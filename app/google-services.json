@@ -2,7 +2,7 @@
   "project_info": {
     "project_number": "996226360847",
     "project_id": "spendings-2c0d0",
-    "storage_bucket": "spendings-2c0d0.appspot.com"
+    "storage_bucket": "spendings-2c0d0.firebasestorage.app"
   },
   "client": [
     {
@@ -13,6 +13,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "996226360847-1t7g267mjdulrkbmjir1n7o6merc46s7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.shjman.polygon2",
+            "certificate_hash": "214f64d1ed9ea4c7926386813aa0839a80b4b6c9"
+          }
+        },
         {
           "client_id": "996226360847-4mr8gslfv9r0vaopie1skmhpvlv126v7.apps.googleusercontent.com",
           "client_type": 1,
